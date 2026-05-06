@@ -1,5 +1,6 @@
 import os  # <--- ESTA LÍNEA ES LA QUE SOLUCIONA EL NAMEERROR
 from pathlib import Path
+import dj_database_url
 
 # Directorio base del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -62,12 +63,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'atencionpsi.wsgi.application'
 
-# Base de datos
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL', 'postgresql://atencionpsi_user:1NqMJ7fbwN7ujSmN7aqGaEdX5HbBCYBL@dpg-d7tak8jrjlhs73e1jqb0-a/atencionpsi'),
+        conn_max_age=600
+    )
 }
 
 # Idioma y zona horaria
