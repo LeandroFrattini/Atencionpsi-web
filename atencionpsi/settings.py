@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SEGURIDAD
 SECRET_KEY = 'Carmela%70769177.'
 DEBUG = False
-ALLOWED_HOSTS = ['atencionpsi.com.ar', '[www.atencionpsi.com.ar](https://www.atencionpsi.com.ar)]
+ALLOWED_HOSTS = ['atencionpsi.com.ar', 'www.atencionpsi.com.ar', 'atencion-psi-web.onrender.com', 'localhost', '127.0.0.1']
 
 # Aplicaciones instaladas
 INSTALLED_APPS = [
