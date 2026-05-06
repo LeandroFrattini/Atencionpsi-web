@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atención Psi | Bienestar Mental</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.1">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="{% url 'inicio' %}" class="logo"><span class="logo-verde">Atención</span><span class="logo-rosa">Psi</span></a>
+            <ul class="nav-links">
+                <li><a href="{% url 'inicio' %}">Inicio</a></li>
+                <li><a href="{% url 'buscador' %}">Buscador</a></li>
+                <li><a href="{% url 'unete' %}" class="btn-unete-nav">Únete al Equipo</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <h1>Tu bienestar mental,<br>nuestra prioridad.</h1>
+            <p>Conecta con profesionales de la salud mental de forma sencilla, humana y segura.</p>
+            <a href="{% url 'buscador' %}" class="btn-view" style="padding: 18px 45px; font-size: 1.1rem; display: inline-block;">Encontrar mi profesional</a>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <span>🛋️💻</span>
+                <h3>Atención Presencial y Online</h3>
+                <p>Adaptamos la terapia a tu ritmo de vida con modalidades presenciales y virtuales.</p>
+            </div>
+            <div class="feature-card">
+                <span>🧠</span>
+                <h3>Especialistas</h3>
+                <p>Encontrá el enfoque terapéutico que mejor se adapte a tu búsqueda.</p>
+            </div>
+            <div class="feature-card">
+                <span>📅</span>
+                <h3>Tu Turno</h3>
+                <p>Coordiná directamente con el profesional sin vueltas.</p>
+            </div>
+</section>
+    </main>
+
+    <footer>
+        <p>&copy;  2026 Atención Psi - Todos los derechos reservados</p>
+    </footer>
+</body>
+</html>

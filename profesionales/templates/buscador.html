@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador | Atención Psi</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.5">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="{% url 'inicio' %}" class="logo">
+                <span class="logo-verde">Atención</span><span class="logo-rosa">Psi</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="{% url 'inicio' %}">Inicio</a></li>
+                <li><a href="{% url 'buscador' %}">Buscador</a></li>
+                <li><a href="{% url 'unete' %}" class="btn-unete-nav">Únete al Equipo</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="filter-section">
+        <form method="GET" class="filter-form">
+            <select name="modalidad">
+                <option value="">Modalidad (Todas)</option>
+                {% for mod in modalidades_list %}
+                    <option value="{{ mod.id }}" {% if request.GET.modalidad == mod.id|stringformat:"i" %}selected{% endif %}>
+                        {{ mod.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <select name="dirigido_a">
+                <option value="">¿A quién va dirigido?</option>
+                {% for dest in destinatarios_list %}
+                    <option value="{{ dest.id }}" {% if request.GET.dirigido_a == dest.id|stringformat:"i" %}selected{% endif %}>
+                        {{ dest.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <input type="text" name="ciudad" placeholder="Ciudad..." value="{{ request.GET.ciudad }}">
+            <button type="submit" class="btn-unete-nav" style="border:none; cursor:pointer; padding: 12px 30px;">Filtrar</button>
+        </form>
+    </section>
+
+    <!-- Cambiá la etiqueta <main> por esta en buscador.html -->
+<main class="buscador-main">
+    <div class="results-container">
+        {% for p in psicologos %}
+            <div class="card">
+                <div class="card-img-container">
+                    {% if p.foto %}
+                        <img src="{{ p.foto.url }}" alt="{{ p.nombre }}">
+                    {% else %}
+                        <img src="{% static 'img/default.png' %}" alt="Perfil">
+                    {% endif %}
+                </div>
+                
+                <div class="card-info">
+                    <h3 style="margin-bottom: 10px;">{{ p.nombre }}</h3>
+                    <p class="info-line">📍 {{ p.ciudad }}</p>
+                    <p class="info-line">
+                        {% for mod in p.modalidades.all %}
+                            {% if "Online" in mod.nombre %}💻{% endif %}
+                            {% if "Presencial" in mod.nombre %}🛋️{% endif %}
+                            {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
+                        {% endfor %}
+                    </p>
+
+                    <div class="tags-wrapper">
+                        {% for d in p.destinatarios.all %}
+                            <span class="dirigido-label">{{ d.nombre }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card-buttons">
+                    <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view">Ver Perfil</a>
+                    <a href="https://wa.me/{{ p.whatsapp }}" class="btn-ws" target="_blank">WhatsApp</a>
+                </div>
+            </div>
+        {% empty %}
+            <div style="text-align: center; width: 100%; grid-column: 1 / -1; padding: 50px;">
+                <p>No se encontraron profesionales.</p>
+            </div>
+        {% endfor %}
+    </div>
+</main>
+    <footer>
+        <p>&copy; 2026 Atención Psi</p>
+    </footer>
+</body>
+</html>

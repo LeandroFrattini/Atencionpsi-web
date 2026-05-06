@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Cambiado a p.nombre -->
+    <title>{{ p.nombre }} | Perfil</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="{% url 'inicio' %}" class="logo"><span class="logo-verde">Atención</span><span class="logo-rosa">Psi</span></a>
+            <ul class="nav-links">
+                <li><a href="{% url 'inicio' %}">Inicio</a></li>
+                <li><a href="{% url 'buscador' %}">Buscador</a></li>
+                <li><a href="{% url 'unete' %}" class="btn-unete-nav">Únete al Equipo</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main style="padding: 20px;">
+        <div class="perfil-wrapper">
+            <div class="perfil-header">
+                <!-- Cambiado a p.foto y p.nombre -->
+                {% if p.foto %}
+                    <img src="{{ p.foto.url }}" alt="{{ p.nombre }}">
+                {% else %}
+                    <img src="{% static 'img/default.png' %}" alt="Imagen predeterminada">
+                {% endif %}
+                
+                <h2>{{ p.nombre }}</h2>
+                <p style="color:#e9a8a6; font-weight:700;">{{ p.orientacion }}</p>
+                
+                <!-- Cambiado a p.whatsapp -->
+                <a href="https://wa.me/{{ p.whatsapp }}" class="btn-ws" style="display:block; margin-top:30px; padding:15px;">Contactar por WhatsApp</a>
+            </div>
+
+            <div class="perfil-body">
+                <div class="perfil-section">
+                    <h3 style="color:#7da87b;">Sobre el Profesional</h3>
+                    <!-- Cambiado a p.descripcion -->
+                    <p style="line-height:1.8;">{{ p.descripcion|linebreaks }}</p>
+                </div>
+
+            <div class="perfil-section">
+                <h3 style="color:#7da87b; margin-top:10px">Información de Atención</h3>
+                
+                <p><strong>Ubicación:</strong> {{ p.ciudad }}</p>
+                
+                <p><strong>Modalidad:</strong> 
+                    {% for mod in p.modalidades.all %}
+                        {{ mod.nombre }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        No especificada
+                    {% endfor %}
+                </p>
+
+                <p><strong>Público:</strong> 
+                    {% for d in p.destinatarios.all %}
+                        {{ d.nombre }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        No especificado
+                    {% endfor %}
+                </p>
+            </div>
+            <div class="perfil-section">
+
+                <h3 style="color:#7da87b; margin-top:10px">Obras Sociales / Prepagas</h3>
+
+                <!-- Cambiado a p.obras_sociales -->
+
+                <p>{{ p.obras_sociales|default:"Particular / Reintegros" }}</p>
+            </div>
+        </div>
+    </main>
+
+    <footer><p>&copy; 2026 Atención Psi</p></footer>
+</body>
+</html>
