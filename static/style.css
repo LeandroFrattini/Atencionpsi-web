@@ -184,6 +184,25 @@ nav {
     margin: 0 auto;
 }
 
+.btn-hero {
+    display: inline-block;
+    width: fit-content;      /* IMPORTANTE: Para que no se estire */
+    padding: 18px 45px;
+    background-color: #e9a8a6; /* Rosa relleno */
+    color: white !important;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    border: none;
+    margin: 20px auto;       /* Lo centra y le da aire */
+}
+
+.btn-hero:hover {
+    background-color: #d89694;
+    transform: scale(1.05);
+}
 .card {
     background: #fff;
     border-radius: 20px;
