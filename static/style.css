@@ -176,30 +176,24 @@ nav {
 /* Contenedor de resultados CENTRADO */
 .results-container {
     display: grid;
-    /* Tarjetas de 360px: más anchas y robustas */
     grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); 
     gap: 35px;
     padding: 40px 20px; 
-    
-    /* ESTO ES LO QUE LAS CENTRA */
-    justify-content: center; 
-    max-width: 1300px; 
-    margin: 0 auto; 
-    width: 100%;
+    justify-content: center; /* Esto centra las tarjetas si hay pocas */
+    max-width: 1200px; 
+    margin: 0 auto;
 }
 
 .card {
     background: #fff;
-    border-radius: 25px;
-    padding: 35px 25px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    text-align: center;
     display: flex;
     flex-direction: column;
-    height: 100%; 
-    transition: transform 0.3s ease;
-    text-align: center;
+    align-items: center;
 }
-
 .card:hover {
     transform: translateY(-10px);
 }
