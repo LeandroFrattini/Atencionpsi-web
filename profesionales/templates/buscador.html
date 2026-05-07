@@ -51,17 +51,19 @@
         <div class="results-container">
             {% for p in psicologos %}
                 <div class="card">
-                    <div class="card-img-container">
+                    <div class="card-img-container" style="text-align: center; padding-top: 20px;">
                         {% if p.foto %}
-                            <img src="{{ p.foto.url }}" alt="{{ p.nombre }}">
+                            <img src="{{ p.foto.url }}" alt="{{ p.nombre }}" 
+                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;">
                         {% else %}
-                            <img src="{% static 'img/default.png' %}" alt="Perfil">
+                            <img src="{% static 'img/default.png' %}" alt="Perfil" 
+                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
                         {% endif %}
                     </div>
                     
                     <div class="card-info">
                         <h3>{{ p.nombre }}</h3>
-                        <p class="info-line"> {{ p.ciudad }}</p>
+                        <p class="info-line">📍 {{ p.ciudad }}</p>
                         <p class="info-line">
                             {% for mod in p.modalidades.all %}
                                 {% if "Online" in mod.nombre %}💻{% endif %}
@@ -84,11 +86,11 @@
                 </div>
             {% empty %}
                 <div style="text-align: center; width: 100%; padding: 50px;">
-                    <p>No se encontraron profesionales.</p>
+                    <p>No se encontraron profesionales con esos filtros.</p>
                 </div>
             {% endfor %}
         </div>
-</main>
+    </main>
 </main>
     <footer>
         <p>&copy; 2026 Atención Psi</p>
