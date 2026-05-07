@@ -173,23 +173,28 @@ nav {
     font-family: inherit;
 }
 
+/* Contenedor de resultados CENTRADO */
 .results-container {
     display: grid;
-    /* Subimos de 300px a 350px para que sean más anchas */
+    /* Tarjetas de 350px de ancho mínimo */
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
-    gap: 30px; /* Un poco más de aire entre tarjetas */
-    padding: 20px;
-    align-items: stretch;
+    gap: 35px;
+    padding: 40px 20px; 
+    justify-content: center; /* Centra las tarjetas si hay pocas */
+    max-width: 1300px; 
+    margin: 0 auto;    /* Centra el bloque entero en la pantalla */
 }
 
 .card {
     background: #fff;
-    border-radius: 20px;
-    padding: 25px; /* Más espacio interno */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-radius: 25px;
+    padding: 35px 25px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
     display: flex;
     flex-direction: column;
-    height: 100%; /* Obliga a todas a ser igual de altas que la más larga */
+    height: 100%; 
+    transition: transform 0.3s ease;
+    text-align: center;
 }
 
 .card:hover {
@@ -197,27 +202,37 @@ nav {
 }
 
 .card-img-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Ajusta la foto sin deformarla */
+    width: 130px; 
+    height: 130px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 4px solid #fdfbf9;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    margin-bottom: 15px;
 }
 
-/* Espaciado interno de la info */
+/* Info que crece para empujar botones */
 .card-info {
-    flex-grow: 1; /* Esto estira la info y empuja los botones al fondo */
+    flex-grow: 1; 
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
+    justify-content: flex-start;
+}
+
+.info-line { 
+    font-size: 1rem; 
+    color: #666; 
+    margin-bottom: 8px; 
 }
 
 .tags-wrapper {
-    margin-top: auto; /* Empuja las etiquetas hacia el final del área de info */
-    padding-top: 10px;
+    margin-top: 15px;
+    margin-bottom: 25px;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 5px;
+    gap: 10px;
 }
 
 .info-line { 
@@ -226,40 +241,41 @@ nav {
     margin-bottom: 6px; 
 }
 
-.dirigido-label {
-    background: #fff0f3; /* Color rosita suave */
-    color: #ff4d6d;
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 0.85rem;
-    font-weight: 500;
+.dirigido-label { 
+    background: #faf0ee; 
+    color: #e9a8a6; 
+    padding: 8px 16px; 
+    border-radius: 50px; 
+    font-weight: 700; 
+    font-size: 0.8rem; 
 }
 
 /* Botones siempre alineados abajo */
 .card-buttons {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column; /* Botones uno arriba del otro como en tu imagen */
-    gap: 12px;
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
     width: 100%;
+    margin-top: auto; 
 }
 
 .btn-view, .btn-ws {
     width: 100%;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 14px;
+    border-radius: 12px;
     text-align: center;
-    font-weight: bold;
+    font-weight: 700;
     text-decoration: none;
+    transition: 0.3s;
 }
 
 .btn-view {
-    border: 1px solid #ff4d6d;
-    color: #ff4d6d;
+    border: 2px solid #e9a8a6;
+    color: #e9a8a6;
 }
 
 .btn-view:hover {
-    background: #ff4d6d;
+    background: #e9a8a6;
     color: #fff;
 }
 
@@ -270,8 +286,8 @@ nav {
 
 .btn-ws:hover {
     background: #128c7e;
+    transform: scale(1.02);
 }
-
 /* --- 5. PERFIL DETALLE --- */
 .perfil-wrapper { 
     max-width: 1000px; 
