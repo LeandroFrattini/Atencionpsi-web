@@ -17,20 +17,20 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
-    'cloudinary_storage',  # DEBE ir antes de staticfiles
+    'cloudinary_storage',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cloudinary',          # La librería base
+    'cloudinary',
     'profesionales', 
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Vital para el CSS
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Prioridad para el CSS
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -59,7 +59,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'atencionpsi.wsgi.application'
 
-# Base de datos
 if 'RENDER' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
@@ -75,33 +74,27 @@ else:
         }
     }
 
-# --- CONFIGURACIÓN DE ARCHIVOS (MODO MANUAL) ---
+# --- CONFIGURACIÓN DE ARCHIVOS (MODO COMPATIBILIDAD MÁXIMA) ---
 
-# 1. Forzamos a que NO use almacenamiento externo para CSS
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",
-    },
-}
+# 1. ESTÁTICOS (CSS/JS) -> WhiteNoise
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 
-# Verificá que estas credenciales sean exactas (sin espacios extras)
+# 2. MEDIA (FOTOS) -> Cloudinary
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dkzniwqq2',
     'API_KEY': '338272543389882',
     'API_SECRET': 'Fratto121030.'
 }
 
-# 2. Rutas críticas
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# 3. Parches de compatibilidad para evitar errores de Render
+# 3. EXTRAS
 WHITENOISE_MANIFEST_STRICT = False
+LANGUAGE_CODE = 'es-ar'
+TIME_ZONE = 'America/Argentina/Buenos_Aires'
+USE_I18N = True
+USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
