@@ -2,10 +2,8 @@ import os
 from pathlib import Path
 import dj_database_url
 
-# Directorio base
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SEGURIDAD
 SECRET_KEY = 'Carmela%70769177.'
 DEBUG = False
 
@@ -18,7 +16,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
 ]
 
-# APLICACIONES
 INSTALLED_APPS = [
     'cloudinary_storage',
     'django.contrib.admin',
@@ -33,7 +30,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Sirve los CSS de forma súper rápida
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,11 +59,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'atencionpsi.wsgi.application'
 
-# BASE DE DATOS
 if 'RENDER' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL', 'postgresql://atencionpsi_user:1NqMJ7fbwN7ujSmN7aqGaEdX5HbBCYBL@dpg-d7tak8jrjlhs73e1jqb0-a/atencionpsi'),
+            default=os.environ.get('DATABASE_URL'),
             conn_max_age=600
         )
     }
@@ -78,39 +74,30 @@ else:
         }
     }
 
-# --- CONFIGURACIÓN DE ALMACENAMIENTO (SOLUCIÓN DEFINITIVA) ---
-
+# ALMACENAMIENTO ESTABLE (Django 5.0)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # Usamos el almacenamiento simple de WhiteNoise para evitar errores de archivos faltantes
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# Parche para la librería de Cloudinary y WhiteNoise
-STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
-WHITENOISE_MANIFEST_STRICT = False
-
-# CLOUDINARY
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dkzniwqq2',
     'API_KEY': '338272543389882',
     'API_SECRET': 'Fratto121030.'
 }
 
-# INTERNACIONALIZACIÓN
 LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_TZ = True
 
-# ESTÁTICOS Y MEDIA
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
