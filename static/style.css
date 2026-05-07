@@ -43,8 +43,8 @@ nav {
     font-size: 1.5rem; 
 }
 
-.logo-verde { color: #7da87b; } 
-.logo-rosa { color: #e9a8a6; }
+.logo-verde { color: #7FA88D; } 
+.logo-rosa { color: #D79A9F; }
 
 .nav-links { 
     display: flex; 
@@ -257,14 +257,18 @@ nav {
     margin-top: auto; 
 }
 
+/* Estilo Base para ambos (para que midan lo mismo) */
 .btn-view, .btn-ws {
-    width: 100%;
-    padding: 14px;
+    width: 100%;           /* Ocupan todo el ancho de la card */
+    padding: 14px;         /* Misma altura para ambos */
     border-radius: 12px;
     text-align: center;
     font-weight: 700;
     text-decoration: none;
-    transition: 0.3s;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    display: block;
+    box-sizing: border-box; /* Evita que el padding sume al ancho */
 }
 
 .hero {
@@ -277,16 +281,9 @@ nav {
 
 /* Ajuste específico para el botón para que no se estire */
 .btn-view {
-    display: inline-block;  /* Evita que se comporte como bloque de ancho completo */
-    width: fit-content;     /* Se ajusta solo al ancho del texto + padding */
-    margin: 20px auto;      /* Asegura margen y centrado */
-    background-color: #e9a8a6; /* El rosa de Atención Psi */
-    color: white !important;   /* Fuerza el color blanco del texto */
-    text-decoration: none;
-    border-radius: 50px;
-    font-weight: bold;
-    transition: transform 0.3s ease, background-color 0.3s ease;
-    border: none;
+    background-color: transparent;
+    color: #e9a8a6;         /* El rosa de tu logo */
+    border: 2px solid #e9a8a6;
 }
 
 .btn-view:hover {
@@ -295,13 +292,15 @@ nav {
 }
 
 .btn-ws {
-    background: #25d366;
-    color: #fff;
+    background-color: #25d366;
+    color: #ffffff !important;
+    border: 2px solid #25d366; /* Borde del mismo color para que mida igual que el otro */
 }
 
 .btn-ws:hover {
-    background: #128c7e;
-    transform: scale(1.02);
+    background-color: #128c7e;
+    border-color: #128c7e;
+    transform: translateY(-2px); /* Un pequeño salto para darle vida */
 }
 
 /* --- 5. PERFIL DETALLE --- */
