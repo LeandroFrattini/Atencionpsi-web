@@ -33,7 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # SERVIDOR DE ESTILOS
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,7 +62,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'atencionpsi.wsgi.application'
 
-# BASE DE DATOS (Detecta si es Render o PC local)
+# BASE DE DATOS
 if 'RENDER' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
@@ -78,44 +78,40 @@ else:
         }
     }
 
-# ALMACENAMIENTO (STORAGES)
+# --- CONFIGURACIÓN DE ALMACENAMIENTO ---
+
+# 1. Configuración moderna para Django 5.x
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# CLOUDINARY
+# 2. PARCHE DE COMPATIBILIDAD (Esto soluciona tu AttributeError)
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+
+# 3. Configuración de Cloudinary
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dkzniwqq2',
     'API_KEY': '338272543389882',
     'API_SECRET': 'Fratto121030.'
 }
 
-# CONFIGURACIÓN DE ESTÁTICOS (Aquí está el truco)
-STATIC_URL = '/static/'
-
-# Esto le dice a Django dónde están tus carpetas de CSS/JS originales
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-
-# Esto le dice a Render dónde juntar todos los archivos para servirlos
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# PARCHE PARA WHITENOISE
-WHITENOISE_MANIFEST_STRICT = False
-
-# MEDIA
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# OTROS
+# INTERNACIONALIZACIÓN
 LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_TZ = True
+
+# ESTÁTICOS Y MEDIA
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
