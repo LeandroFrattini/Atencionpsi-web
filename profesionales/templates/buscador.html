@@ -47,47 +47,48 @@
     </section>
 
     <!-- Cambiá la etiqueta <main> por esta en buscador.html -->
-<main class="buscador-main">
-    <div class="results-container">
-        {% for p in psicologos %}
-            <div class="card">
-                <div class="card-img-container">
-                    {% if p.foto %}
-                        <img src="{{ p.foto.url }}" alt="{{ p.nombre }}">
-                    {% else %}
-                        <img src="{% static 'img/default.png' %}" alt="Perfil">
-                    {% endif %}
-                </div>
-                
-                <div class="card-info">
-                    <h3 style="margin-bottom: 10px;">{{ p.nombre }}</h3>
-                    <p class="info-line">📍 {{ p.ciudad }}</p>
-                    <p class="info-line">
-                        {% for mod in p.modalidades.all %}
-                            {% if "Online" in mod.nombre %}💻{% endif %}
-                            {% if "Presencial" in mod.nombre %}🛋️{% endif %}
-                            {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
-                        {% endfor %}
-                    </p>
+    <main class="buscador-main">
+        <div class="results-container">
+            {% for p in psicologos %}
+                <div class="card">
+                    <div class="card-img-container">
+                        {% if p.foto %}
+                            <img src="{{ p.foto.url }}" alt="{{ p.nombre }}">
+                        {% else %}
+                            <img src="{% static 'img/default.png' %}" alt="Perfil">
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-info">
+                        <h3>{{ p.nombre }}</h3>
+                        <p class="info-line"> {{ p.ciudad }}</p>
+                        <p class="info-line">
+                            {% for mod in p.modalidades.all %}
+                                {% if "Online" in mod.nombre %}💻{% endif %}
+                                {% if "Presencial" in mod.nombre %}🛋️{% endif %}
+                                {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
+                            {% endfor %}
+                        </p>
 
-                    <div class="tags-wrapper">
-                        {% for d in p.destinatarios.all %}
-                            <span class="dirigido-label">{{ d.nombre }}</span>
-                        {% endfor %}
+                        <div class="tags-wrapper">
+                            {% for d in p.destinatarios.all %}
+                                <span class="dirigido-label">{{ d.nombre }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="card-buttons">
+                        <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view">Ver Perfil</a>
+                        <a href="https://wa.me/{{ p.whatsapp }}" class="btn-ws" target="_blank">WhatsApp</a>
                     </div>
                 </div>
-
-                <div class="card-buttons">
-                    <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view">Ver Perfil</a>
-                    <a href="https://wa.me/{{ p.whatsapp }}" class="btn-ws" target="_blank">WhatsApp</a>
+            {% empty %}
+                <div style="text-align: center; width: 100%; padding: 50px;">
+                    <p>No se encontraron profesionales.</p>
                 </div>
-            </div>
-        {% empty %}
-            <div style="text-align: center; width: 100%; grid-column: 1 / -1; padding: 50px;">
-                <p>No se encontraron profesionales.</p>
-            </div>
-        {% endfor %}
-    </div>
+            {% endfor %}
+        </div>
+</main>
 </main>
     <footer>
         <p>&copy; 2026 Atención Psi</p>

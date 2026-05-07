@@ -173,41 +173,56 @@ nav {
     font-family: inherit;
 }
 
-.results-container { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-    gap: 30px; 
-    max-width: 1200px; 
-    margin: 50px auto; 
-    padding: 0 20px;
-    width: 100%; /* Agregá esto */
-    overflow: hidden; /* Agregá esto para evitar que algo se escape */
+.results-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center; /* Centra las tarjetas si hay pocas */
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.card { 
-    background: white; 
-    border-radius: 25px; 
-    padding: 25px 25px 20px 25px; 
-    box-shadow: 0 8px 25px rgba(0,0,0,0.05); 
-    display: flex; 
-    flex-direction: column; 
+.card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    
+    /* TAMAÑO FIJO INNEGOCIABLE */
+    width: 320px; 
+    min-width: 320px;
+    max-width: 320px;
+    
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    border: 1px solid #f0f0f0;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+}
+
+.card-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ajusta la foto sin deformarla */
+}
+
+/* Espaciado interno de la info */
+.card-info {
+    padding: 20px;
+    flex-grow: 1; /* Empuja los botones hacia abajo */
     text-align: center;
-    height: auto; 
 }
 
-.card-img-container { 
-    width: 130px; 
-    height: 130px; 
-    margin: 0 auto 15px; 
-    border-radius: 50%; 
-    overflow: hidden; 
-    border: 3px solid #fdfbf9; 
-}
-
-.card-img-container img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: cover; 
+.tags-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 15px;
 }
 
 .info-line { 
@@ -216,52 +231,49 @@ nav {
     margin-bottom: 6px; 
 }
 
-.dirigido-label { 
-    display: inline-block; 
-    background: #faf0ee; 
-    color: #e9a8a6; 
-    padding: 6px 16px; 
-    border-radius: 50px; 
-    font-weight: 700; 
-    font-size: 0.8rem; 
-    margin-top: 10px;
-    align-self: center;
+.dirigido-label {
+    background: #fff0f3; /* Color rosita suave */
+    color: #ff4d6d;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
-.card-buttons { 
-    margin-top: 20px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px; 
+/* Botones siempre alineados abajo */
+.card-buttons {
+    padding: 0 20px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.btn-view { 
-    border: 2px solid #e9a8a6; 
-    color: #e9a8a6; 
-    text-decoration: none; 
-    padding: 10px; 
-    border-radius: 15px; 
-    font-weight: 700; 
-    transition: 0.3s; 
-}
-
-.btn-view:hover { 
-    background: #e9a8a6; 
-    color: white; 
-}
-
-.btn-ws { 
-    background: #25D366; 
-    color: white; 
-    text-decoration: none; 
-    padding: 12px; 
-    border-radius: 15px; 
-    font-weight: 700; 
+.btn-view, .btn-ws {
+    text-decoration: none;
+    text-align: center;
+    padding: 10px;
+    border-radius: 10px;
+    font-weight: 600;
     transition: 0.3s;
 }
 
-.btn-ws:hover { 
-    background: #1eb954; 
+.btn-view {
+    border: 1px solid #ff4d6d;
+    color: #ff4d6d;
+}
+
+.btn-view:hover {
+    background: #ff4d6d;
+    color: #fff;
+}
+
+.btn-ws {
+    background: #25d366;
+    color: #fff;
+}
+
+.btn-ws:hover {
+    background: #128c7e;
 }
 
 /* --- 5. PERFIL DETALLE --- */
