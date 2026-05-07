@@ -2,12 +2,12 @@ import os
 from pathlib import Path
 import dj_database_url
 
-# Directorio base del proyecto
+# Directorio base
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SEGURIDAD
 SECRET_KEY = 'Carmela%70769177.'
-DEBUG = False # Cambialo a True solo si necesitás ver errores detallados en local
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'atencionpsi.com.ar', 
@@ -18,15 +18,15 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
 ]
 
-# --- APLICACIONES INSTALADAS ---
+# APLICACIONES
 INSTALLED_APPS = [
-    'cloudinary_storage', # DEBE IR ANTES QUE STATICFILES
+    'cloudinary_storage',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary',         # AGREGADA
+    'cloudinary',
     'django.contrib.staticfiles',
     'profesionales', 
 ]
@@ -62,7 +62,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'atencionpsi.wsgi.application'
 
-# --- BASE DE DATOS ---
+# BASE DE DATOS (Detección automática PC / Render)
 if 'RENDER' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
@@ -78,28 +78,10 @@ else:
         }
     }
 
-# --- CONFIGURACIÓN DE CLOUDINARY ---
-# Corregido: Las claves van directo o se sacan de las variables de Render
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dkzniwqq2', # El nombre que aparece en tu URL de Cloudinary
-    'API_KEY': '338272543389882', # Sacalo de tu Dashboard de Cloudinary
-    'API_SECRET': 'Fratto121030.' # Sacalo de tu Dashboard de Cloudinary
-}
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# Idioma y zona horaria
-LANGUAGE_CODE = 'es-ar'
-TIME_ZONE = 'America/Argentina/Buenos_Aires'
-USE_I18N = True
-USE_TZ = True
-
-# --- ARCHIVOS ESTÁTICOS Y MEDIA ---
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# CONFIGURACIÓN DE ALMACENAMIENTO (FOTOS Y ESTILOS)
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND":
