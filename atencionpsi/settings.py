@@ -17,14 +17,14 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
+    'cloudinary_storage',  # DEBE ir antes de staticfiles
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cloudinary_storage', # Solo para fotos
-    'cloudinary',
+    'cloudinary',          # La librería base
     'profesionales', 
 ]
 
@@ -87,6 +87,7 @@ STORAGES = {
     },
 }
 
+# Verificá que estas credenciales sean exactas (sin espacios extras)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dkzniwqq2',
     'API_KEY': '338272543389882',
