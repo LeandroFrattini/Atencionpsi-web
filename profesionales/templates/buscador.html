@@ -48,48 +48,48 @@
 
     <!-- Cambiá la etiqueta <main> por esta en buscador.html -->
     <main class="buscador-main">
-        <div class="results-container">
-            {% for p in psicologos %}
-                <div class="card">
-                    <div class="card-img-container" style="text-align: center; padding-top: 20px;">
-                        {% if p.foto %}
-                            <img src="{{ p.foto.url }}" alt="{{ p.nombre }}" 
-                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;">
-                        {% else %}
-                            <img src="{% static 'img/default.png' %}" alt="Perfil" 
-                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
-                        {% endif %}
-                    </div>
-                    
-                    <div class="card-info">
-                        <h3>{{ p.nombre }}</h3>
-                        <p class="info-line">📍 {{ p.ciudad }}</p>
-                        <p class="info-line">
-                            {% for mod in p.modalidades.all %}
-                                {% if "Online" in mod.nombre %}💻{% endif %}
-                                {% if "Presencial" in mod.nombre %}🛋️{% endif %}
-                                {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
-                            {% endfor %}
-                        </p>
+    <div class="results-container">
+        {% for p in psicologos %}
+            <div class="card">
+                <div class="card-img-container" style="display: flex; justify-content: center; margin-bottom: 15px;">
+                    {% if p.foto %}
+                        <img src="{{ p.foto.url }}" alt="{{ p.nombre }}" 
+                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;">
+                    {% else %}
+                        <img src="{% static 'img/default.png' %}" alt="Perfil" 
+                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
+                    {% endif %}
+                </div>
+                
+                <div class="card-info">
+                    <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
+                    <p class="info-line">📍 {{ p.ciudad }}</p>
+                    <p class="info-line">
+                        {% for mod in p.modalidades.all %}
+                            {% if "Online" in mod.nombre %}💻{% endif %}
+                            {% if "Presencial" in mod.nombre %}🛋️{% endif %}
+                            {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
+                        {% endfor %}
+                    </p>
 
-                        <div class="tags-wrapper">
-                            {% for d in p.destinatarios.all %}
-                                <span class="dirigido-label">{{ d.nombre }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="card-buttons">
-                        <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view">Ver Perfil</a>
-                        <a href="https://wa.me/{{ p.whatsapp }}" class="btn-ws" target="_blank">WhatsApp</a>
+                    <div class="tags-wrapper">
+                        {% for d in p.destinatarios.all %}
+                            <span class="dirigido-label">{{ d.nombre }}</span>
+                        {% endfor %}
                     </div>
                 </div>
-            {% empty %}
-                <div style="text-align: center; width: 100%; padding: 50px;">
-                    <p>No se encontraron profesionales con esos filtros.</p>
+
+                <div class="card-buttons">
+                    <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view" style="flex: 1; text-align: center;">Ver Perfil</a>
+                    <a href="https://wa.me/{{ p.whatsapp }}" class="btn-ws" target="_blank" style="flex: 1; text-align: center;">WhatsApp</a>
                 </div>
-            {% endfor %}
-        </div>
+            </div>
+        {% empty %}
+            <div style="text-align: center; width: 100%; padding: 50px;">
+                <p>No se encontraron profesionales.</p>
+            </div>
+        {% endfor %}
+    </div>
     </main>
 </main>
     <footer>

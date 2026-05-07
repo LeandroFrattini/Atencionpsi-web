@@ -184,20 +184,14 @@ nav {
 }
 
 .card {
-    background: #fff;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
     display: flex;
     flex-direction: column;
-    
-    /* TAMAÑO FIJO INNEGOCIABLE */
-    width: 320px; 
-    min-width: 320px;
-    max-width: 320px;
-    
-    overflow: hidden;
-    transition: transform 0.3s ease;
-    border: 1px solid #f0f0f0;
+    height: 100%; /* Ocupa todo el alto disponible en la fila */
+    background: #fff;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
 }
 
 .card:hover {
@@ -212,17 +206,19 @@ nav {
 
 /* Espaciado interno de la info */
 .card-info {
-    padding: 20px;
-    flex-grow: 1; /* Empuja los botones hacia abajo */
+    flex-grow: 1; /* ¡ESTO ES LO MÁS IMPORTANTE! Empuja los botones hacia abajo */
+    display: flex;
+    flex-direction: column;
     text-align: center;
 }
 
 .tags-wrapper {
+    margin-top: auto; /* Empuja las etiquetas hacia el final del área de info */
+    padding-top: 10px;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
     justify-content: center;
-    margin-top: 15px;
+    gap: 5px;
 }
 
 .info-line { 
@@ -242,9 +238,8 @@ nav {
 
 /* Botones siempre alineados abajo */
 .card-buttons {
-    padding: 0 20px 20px 20px;
+    margin-top: 15px;
     display: flex;
-    flex-direction: column;
     gap: 10px;
 }
 
