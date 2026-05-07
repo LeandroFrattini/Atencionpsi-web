@@ -30,7 +30,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Sirve los CSS de forma súper rápida
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -74,13 +74,12 @@ else:
         }
     }
 
-# ALMACENAMIENTO ESTABLE (Django 5.0)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.StaticFilesStorage", # Sin compresión para evitar tildes
     },
 }
 
@@ -89,6 +88,9 @@ CLOUDINARY_STORAGE = {
     'API_KEY': '338272543389882',
     'API_SECRET': 'Fratto121030.'
 }
+
+# Parche de compatibilidad para librerías
+STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 
 LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
