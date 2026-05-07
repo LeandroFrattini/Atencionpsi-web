@@ -97,25 +97,19 @@ if 'RENDER' in os.environ:
         DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
         AWS_S3_ENDPOINT_URL = f'https://{SUBDOMAIN}.supabase.co/storage/v1/s3'
         
-        # URL pública para evitar imágenes rotas
-        AWS_S3_CUSTOM_DOMAIN = f'{SUBDOMAIN}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}'
-        
-        # --- AJUSTES PARA EVITAR EL ERROR 500 AL SUBIR ---
-        AWS_QUERYSTRING_AUTH = False       
-        AWS_S3_FILE_OVERWRITE = False      
-        AWS_DEFAULT_ACL = None             
-        AWS_S3_VERIFY = True               
+        # Configuración de compatibilidad S3
+        AWS_S3_SIGNATURE_VERSION = 's3v4'
+        AWS_S3_FILE_OVERWRITE = False
+        AWS_DEFAULT_ACL = None
+        AWS_QUERYSTRING_AUTH = False
+        AWS_S3_VERIFY = True
         AWS_S3_ADDRESSING_STYLE = 'path'
         AWS_S3_REGION_NAME = 'us-east-1'
-        
-        # Esto obliga a Django a no intentar acciones que Supabase bloquea
-        AWS_S3_SIGNATURE_VERSION = 's3v4'
+
+        # URL pública para que las imágenes se vean (Usar solo para visualización)
+        AWS_S3_CUSTOM_DOMAIN = f'{SUBDOMAIN}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}'
     else:
         DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-else:
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # EXTRAS
 WHITENOISE_MANIFEST_STRICT = False
