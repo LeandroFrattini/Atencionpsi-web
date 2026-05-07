@@ -194,6 +194,7 @@ nav {
     flex-direction: column;
     align-items: center;
 }
+
 .card:hover {
     transform: translateY(-10px);
 }
@@ -266,14 +267,31 @@ nav {
     transition: 0.3s;
 }
 
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;    /* Centra horizontalmente los elementos hijos */
+    text-align: center;
+    padding: 80px 20px;
+}
+
+/* Ajuste específico para el botón para que no se estire */
 .btn-view {
-    border: 2px solid #e9a8a6;
-    color: #e9a8a6;
+    display: inline-block;  /* Evita que se comporte como bloque de ancho completo */
+    width: fit-content;     /* Se ajusta solo al ancho del texto + padding */
+    margin: 20px auto;      /* Asegura margen y centrado */
+    background-color: #e9a8a6; /* El rosa de Atención Psi */
+    color: white !important;   /* Fuerza el color blanco del texto */
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: bold;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    border: none;
 }
 
 .btn-view:hover {
-    background: #e9a8a6;
-    color: #fff;
+    background-color: #d89694; /* Un tono más oscuro al pasar el mouse */
+    transform: scale(1.05);    /* Efecto de crecimiento suave */
 }
 
 .btn-ws {
