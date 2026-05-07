@@ -74,12 +74,14 @@ else:
         }
     }
 
+# --- ALMACENAMIENTO (SOLO MODO MODERNO) ---
+# Eliminamos STATICFILES_STORAGE para evitar el error de "mutually exclusive"
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage", # Sin compresión para evitar tildes
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
     },
 }
 
@@ -88,9 +90,6 @@ CLOUDINARY_STORAGE = {
     'API_KEY': '338272543389882',
     'API_SECRET': 'Fratto121030.'
 }
-
-# Parche de compatibilidad para librerías
-STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 
 LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
