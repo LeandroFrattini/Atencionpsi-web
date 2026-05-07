@@ -1,6 +1,7 @@
 import random
 from django.shortcuts import render
-from .models import Psicologo, Modalidad, Destinatario 
+# Cambiamos Destinatario por Publico
+from .models import Psicologo, Modalidad, Publico 
 
 def buscador(request):
     modalidad_id = request.GET.get('modalidad')
@@ -9,11 +10,11 @@ def buscador(request):
 
     queryset = Psicologo.objects.all()
 
-    # CAMBIO: Usar __id para que coincida con el value="{{ mod.id }}" del HTML
     if modalidad_id:
         queryset = queryset.filter(modalidades__id=modalidad_id)
     
     if dirigido_a_id:
+        # Filtramos por el ID del modelo Publico
         queryset = queryset.filter(destinatarios__id=dirigido_a_id)
     
     if ciudad:
@@ -24,11 +25,10 @@ def buscador(request):
     random.shuffle(comunes)
     lista_final = destacados + comunes
 
-    # CAMBIO: Agregar las listas al return para que se carguen los selects
     return render(request, 'buscador.html', {
         'psicologos': lista_final,
         'modalidades_list': Modalidad.objects.all(),
-        'destinatarios_list': Destinatario.objects.all(),
+        'destinatarios_list': Publico.objects.all(), # Usamos Publico.objects
     })
 
 def detalle_psicologo(request, slug):
