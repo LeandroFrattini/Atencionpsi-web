@@ -33,7 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # DEBE ESTAR AQUÍ
+    'whitenoise.middleware.WhiteNoiseMiddleware', # SERVIDOR DE ESTILOS
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,7 +62,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'atencionpsi.wsgi.application'
 
-# BASE DE DATOS
+# BASE DE DATOS (Detecta si es Render o PC local)
 if 'RENDER' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
@@ -84,13 +84,9 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage", # Versión simple sin compresión
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
     },
 }
-
-# Parches para Render/WhiteNoise
-STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
-WHITENOISE_MANIFEST_STRICT = False
 
 # CLOUDINARY
 CLOUDINARY_STORAGE = {
@@ -99,18 +95,27 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': 'Fratto121030.'
 }
 
-# INTERNACIONALIZACIÓN
+# CONFIGURACIÓN DE ESTÁTICOS (Aquí está el truco)
+STATIC_URL = '/static/'
+
+# Esto le dice a Django dónde están tus carpetas de CSS/JS originales
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# Esto le dice a Render dónde juntar todos los archivos para servirlos
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# PARCHE PARA WHITENOISE
+WHITENOISE_MANIFEST_STRICT = False
+
+# MEDIA
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# OTROS
 LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_TZ = True
-
-# ESTÁTICOS Y MEDIA
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
