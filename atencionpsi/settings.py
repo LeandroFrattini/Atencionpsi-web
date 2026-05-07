@@ -17,20 +17,20 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
-    'cloudinary_storage',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary',
     'django.contrib.staticfiles',
+    'cloudinary_storage', # Solo para fotos
+    'cloudinary',
     'profesionales', 
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # ESTA LÍNEA SIRVE EL CSS
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Vital para el CSS
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -59,6 +59,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'atencionpsi.wsgi.application'
 
+# Base de datos
 if 'RENDER' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
@@ -74,13 +75,15 @@ else:
         }
     }
 
-# --- CONFIGURACIÓN DE ALMACENAMIENTO (REVISADA) ---
+# --- CONFIGURACIÓN DE ARCHIVOS (MODO MANUAL) ---
+
+# 1. Forzamos a que NO use almacenamiento externo para CSS
 STORAGES = {
     "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage", # Solo para fotos
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage", # Solo para CSS/JS
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
     },
 }
 
@@ -90,18 +93,14 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': 'Fratto121030.'
 }
 
-LANGUAGE_CODE = 'es-ar'
-TIME_ZONE = 'America/Argentina/Buenos_Aires'
-USE_I18N = True
-USE_TZ = True
-
-# --- ESTÁTICOS ---
+# 2. Rutas críticas
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# --- MEDIA ---
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# 3. Parches de compatibilidad para evitar errores de Render
+WHITENOISE_MANIFEST_STRICT = False
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

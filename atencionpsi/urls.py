@@ -1,8 +1,8 @@
 from django.contrib import admin
-from django.urls import path
-from profesionales import views  # Importamos las vistas de tu app
+from django.urls import path, re_path
+from profesionales import views
 from django.conf import settings
-from django.conf.urls.static import static
+from django.views.static import serve # Esto es lo que va a rescatar tus estilos
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -10,10 +10,11 @@ urlpatterns = [
     path('buscador/', views.buscador, name='buscador'),
     path('psicologo/<slug:slug>/', views.detalle_psicologo, name='perfil_psicologo'),
     path('unete-al-equipo/', views.unete, name='unete'),
-    path('psicologo/<slug:slug>/', views.detalle_psicologo, name='perfil_psicologo'),
 ]
 
-
-# Esto permite que las fotos se vean durante el desarrollo
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# ESTA ES LA CLAVE: Forzamos a Django a servir estáticos y media 
+# ignorando si el DEBUG es True o False.
+urlpatterns += [
+    re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]
