@@ -81,7 +81,11 @@
 
                 <div class="card-buttons">
                     <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view">Ver Perfil</a>
-                    <a href="https://wa.me/{{ p.whatsapp }}" class="btn-ws" target="_blank">WhatsApp</a>
+                    <a href="https://wa.me/{{ p.whatsapp }}?text=Hola,%20te%20escribo%20desde%20Atención%20Psi,%20me%20gustaría%20coordinar%20un%20turno%20con%20vos!" 
+                    class="btn-ws" 
+                    target="_blank">
+                    WhatsApp
+                    </a>
                 </div>
             </div>
         {% empty %}
