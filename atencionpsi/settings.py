@@ -84,12 +84,14 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # Cambiamos a la versión básica de WhiteNoise para evitar que falle por archivos faltantes
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
 # --- PARCHE PARA CLOUDINARY EN DJANGO 5 ---
 # Agregamos esta línea para que la librería no explote en el collectstatic
+WHITENOISE_MANIFEST_STRICT = False
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ------------------------------------------
 
