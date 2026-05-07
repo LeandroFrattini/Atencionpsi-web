@@ -78,22 +78,23 @@ else:
         }
     }
 
-# ALMACENAMIENTO (STORAGES) - CONFIGURACIÓN FINAL
+# --- ALMACENAMIENTO (CONFIGURACIÓN ANTI-ERRORES) ---
+
+# Usamos el almacenamiento base de Django para evitar que WhiteNoise busque archivos inexistentes
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-# Parches de compatibilidad
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+# Parches para evitar que las librerías viejas busquen variables borradas
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 WHITENOISE_MANIFEST_STRICT = False
-WHITENOISE_USE_FINDERS = True
 
-# CLOUDINARY
+# CONFIGURACIÓN DE CLOUDINARY
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dkzniwqq2',
     'API_KEY': '338272543389882',
