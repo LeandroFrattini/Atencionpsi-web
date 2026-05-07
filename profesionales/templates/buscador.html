@@ -63,7 +63,7 @@
                 
                 <div class="card-info">
                     <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
-                    <p class="info-line">📍 {{ p.ciudad }}</p>
+                    <p class="info-line"> {{ p.ciudad }}</p>
                     <p class="info-line">
                         {% for mod in p.modalidades.all %}
                             {% if "Online" in mod.nombre %}💻{% endif %}
