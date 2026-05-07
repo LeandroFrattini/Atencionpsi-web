@@ -16,21 +16,20 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
 ]
 
+# 1. Sacamos Cloudinary de acá
 INSTALLED_APPS = [
-    'cloudinary_storage',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cloudinary',
     'profesionales', 
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Prioridad para el CSS
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Esto va a arreglar tus estilos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -74,24 +73,16 @@ else:
         }
     }
 
-# --- CONFIGURACIÓN DE ARCHIVOS (MODO COMPATIBILIDAD MÁXIMA) ---
-
-# 1. ESTÁTICOS (CSS/JS) -> WhiteNoise
+# 2. Configuración PURA de WhiteNoise para estilos
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 
-# 2. MEDIA (FOTOS) -> Cloudinary
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# 3. Media local (Temporal en Render)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dkzniwqq2',
-    'API_KEY': '338272543389882',
-    'API_SECRET': 'Fratto121030.'
-}
-
-# 3. EXTRAS
 WHITENOISE_MANIFEST_STRICT = False
 LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
