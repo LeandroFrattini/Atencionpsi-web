@@ -62,7 +62,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'atencionpsi.wsgi.application'
 
-# BASE DE DATOS (Detección automática PC / Render)
+# BASE DE DATOS
 if 'RENDER' in os.environ:
     DATABASES = {
         'default': dj_database_url.config(
@@ -78,10 +78,36 @@ else:
         }
     }
 
-# CONFIGURACIÓN DE ALMACENAMIENTO (FOTOS Y ESTILOS)
+# ALMACENAMIENTO (STORAGES)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND":
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# CLOUDINARY
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dkzniwqq2',
+    'API_KEY': '338272543389882',
+    'API_SECRET': 'Fratto121030.'
+}
+
+# INTERNACIONALIZACIÓN
+LANGUAGE_CODE = 'es-ar'
+TIME_ZONE = 'America/Argentina/Buenos_Aires'
+USE_I18N = True
+USE_TZ = True
+
+# ESTÁTICOS
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# MEDIA
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
