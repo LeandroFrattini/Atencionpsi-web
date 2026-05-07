@@ -88,6 +88,11 @@ STORAGES = {
     },
 }
 
+# --- PARCHE PARA CLOUDINARY EN DJANGO 5 ---
+# Agregamos esta línea para que la librería no explote en el collectstatic
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# ------------------------------------------
+
 # CLOUDINARY
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dkzniwqq2',
