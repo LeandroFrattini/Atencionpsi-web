@@ -98,15 +98,15 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 if 'RENDER' in os.environ:
-    # Configuración para la NUBE (Postgres)
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
+            # Si no encuentra la variable de entorno, usa la URL directa
+            default=os.environ.get('DATABASE_URL', 'postgresql://atencionpsi_user:1NqMJ7fbwN7ujSmN7aqGaEdX5HbBCYBL@dpg-d7tak8jrjlhs73e1jqb0-a/atencionpsi'),
             conn_max_age=600
         )
     }
 else:
-    # Configuración para tu COMPUTADORA (SQLite local)
+    # Si estás en tu PC, usás SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
