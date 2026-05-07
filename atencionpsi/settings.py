@@ -87,27 +87,25 @@ STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 
 # 2. MEDIA (FOTOS) - Manejados por Supabase/S3
 if 'RENDER' in os.environ:
-    # Intentamos obtener las credenciales de las variables de entorno de Render
-    AWS_ACCESS_KEY_ID = os.environ.get('ad2c6e68d639588055917cb82c5af3f8')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('299fbe7144d2a7178a548694a837d9bd41f4e2b8de947cd87fe26c179ab5eb89')
-    AWS_STORAGE_BUCKET_NAME = os.environ.get('atencionpsi')
-    AWS_S3_ENDPOINT_URL = os.environ.get('https://xaityyqwedfcnizedgkj.supabase.co/storage/v1/s3')
+    # IMPORTANTE: Dejá los nombres de las variables así, tal cual.
+    # Django los va a buscar automáticamente en el panel de Render.
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
 
-    # Validación de Seguridad: Si falta alguna, el sitio sigue andando pero te avisa
     if all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_ENDPOINT_URL]):
         DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
         AWS_S3_FILE_OVERWRITE = False
         AWS_DEFAULT_ACL = None
         AWS_S3_VERIFY = True
-        # Esto asegura que las URLs de las fotos sean firmadas y seguras
         AWS_QUERYSTRING_AUTH = False 
+        AWS_S3_ADDRESSING_STYLE = 'path'
+        AWS_S3_REGION_NAME = 'us-east-1'
     else:
-        # Fallback: Si no configuraste Supabase aún, usa el almacenamiento local 
-        # para que la web NO se caiga y los estilos sigan funcionando.
-        print("⚠️ Advertencia: Credenciales de Supabase incompletas. Usando almacenamiento local temporal.")
+        print("⚠️ Advertencia: Credenciales de Supabase incompletas.")
         DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 else:
-    # Configuración para tu PC (Localhost)
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
