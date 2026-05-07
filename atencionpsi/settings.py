@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary',
     'django.contrib.staticfiles',
     'profesionales', # <--- AQUÍ SOLO DEBE ESTAR TU APP, NO 'templates'
 ]
@@ -69,6 +70,15 @@ DATABASES = {
         conn_max_age=600
     )
 }
+
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('Leandro'),
+    'API_KEY': os.environ.get('Fratto121030.'),
+    'API_SECRET': os.environ.get('Fratto121030.')
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Idioma y zona horaria
 LANGUAGE_CODE = 'es-ar'
