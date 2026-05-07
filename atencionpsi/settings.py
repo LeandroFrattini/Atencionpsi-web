@@ -88,8 +88,8 @@ STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 # 2. MEDIA (FOTOS) - Manejados por Supabase/S3
 if 'RENDER' in os.environ:
     # Intentamos obtener las credenciales de las variables de entorno de Render
-    AWS_ACCESS_KEY_ID = os.environ.get('xaityyqwedfcnizedgkj')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('99c72391e51e8b194560e5fffc49451e4b005f78cbd43cf5a6d7b71c1b33ebf8')
+    AWS_ACCESS_KEY_ID = os.environ.get('ad2c6e68d639588055917cb82c5af3f8')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('299fbe7144d2a7178a548694a837d9bd41f4e2b8de947cd87fe26c179ab5eb89')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('atencionpsi')
     AWS_S3_ENDPOINT_URL = os.environ.get('https://xaityyqwedfcnizedgkj.supabase.co/storage/v1/s3')
 
