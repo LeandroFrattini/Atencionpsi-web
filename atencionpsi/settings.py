@@ -33,7 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Mantenemos esto para los CSS
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,22 +78,18 @@ else:
         }
     }
 
-# ALMACENAMIENTO (STORAGES)
+# ALMACENAMIENTO - Versión simplificada para evitar fallos de compatibilidad
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # Cambiamos a la versión básica de WhiteNoise para evitar que falle por archivos faltantes
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-# --- PARCHE PARA CLOUDINARY EN DJANGO 5 ---
-# Agregamos esta línea para que la librería no explote en el collectstatic
-WHITENOISE_MANIFEST_STRICT = False
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# ------------------------------------------
+# Variables de compatibilidad para librerías antiguas
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # CLOUDINARY
 CLOUDINARY_STORAGE = {
@@ -108,12 +104,11 @@ TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_TZ = True
 
-# ESTÁTICOS
+# ESTÁTICOS Y MEDIA
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# MEDIA
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
