@@ -87,7 +87,6 @@ STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 
 # Configuración de Media (Fotos de profesionales en Supabase)
 if 'RENDER' in os.environ:
-    # Django buscará estos nombres en la pestaña 'Environment' de tu panel de Render
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
@@ -99,17 +98,15 @@ if 'RENDER' in os.environ:
         AWS_DEFAULT_ACL = None
         AWS_S3_VERIFY = True
         
-        # Estas líneas eliminan el error "Missing Signature" y la imagen rota
+        # --- ESTO ES LO QUE ESTÁ FALLANDO ---
+        # Al estar en False, Django genera URLs limpias que funcionan con tu bucket público
         AWS_QUERYSTRING_AUTH = False  
+        
         AWS_S3_ADDRESSING_STYLE = 'path'
-        AWS_S3_REGION_NAME = 'us-east-1' # Región por defecto de Supabase S3
+        AWS_S3_REGION_NAME = 'us-east-1' 
     else:
-        # Modo de emergencia: si faltan llaves, usa almacenamiento local para no romper el CSS
-        print("⚠️ Advertencia: Credenciales de Supabase incompletas. Usando FileSystemStorage.")
         DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 else:
-    # Configuración para tu computadora (Local)
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
