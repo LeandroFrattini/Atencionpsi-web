@@ -88,10 +88,10 @@ STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 # 2. MEDIA (FOTOS) - Manejados por Supabase/S3
 if 'RENDER' in os.environ:
     # Intentamos obtener las credenciales de las variables de entorno de Render
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
+    AWS_ACCESS_KEY_ID = os.environ.get('xaityyqwedfcnizedgkj')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('99c72391e51e8b194560e5fffc49451e4b005f78cbd43cf5a6d7b71c1b33ebf8')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('atencionpsi')
+    AWS_S3_ENDPOINT_URL = os.environ.get('https://xaityyqwedfcnizedgkj.supabase.co/storage/v1/s3')
 
     # Validación de Seguridad: Si falta alguna, el sitio sigue andando pero te avisa
     if all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_ENDPOINT_URL]):
@@ -110,7 +110,7 @@ else:
     # Configuración para tu PC (Localhost)
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    
+
 # EXTRAS
 WHITENOISE_MANIFEST_STRICT = False
 LANGUAGE_CODE = 'es-ar'
