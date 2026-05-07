@@ -176,13 +176,16 @@ nav {
 /* Contenedor de resultados CENTRADO */
 .results-container {
     display: grid;
-    /* Tarjetas de 350px de ancho mínimo */
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+    /* Tarjetas de 360px: más anchas y robustas */
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); 
     gap: 35px;
     padding: 40px 20px; 
-    justify-content: center; /* Centra las tarjetas si hay pocas */
+    
+    /* ESTO ES LO QUE LAS CENTRA */
+    justify-content: center; 
     max-width: 1300px; 
-    margin: 0 auto;    /* Centra el bloque entero en la pantalla */
+    margin: 0 auto; 
+    width: 100%;
 }
 
 .card {
@@ -288,6 +291,7 @@ nav {
     background: #128c7e;
     transform: scale(1.02);
 }
+
 /* --- 5. PERFIL DETALLE --- */
 .perfil-wrapper { 
     max-width: 1000px; 
