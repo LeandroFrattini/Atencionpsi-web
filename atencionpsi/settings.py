@@ -78,19 +78,20 @@ else:
         }
     }
 
-# ALMACENAMIENTO (STORAGES) - CONFIGURACIÓN ULTRA ESTABLE
+# ALMACENAMIENTO (STORAGES) - CONFIGURACIÓN FINAL
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # Usamos el almacenamiento estándar para que no busque archivos que no existen durante el build
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# Compatibilidad para librerías
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+# Parches de compatibilidad
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_USE_FINDERS = True
 
 # CLOUDINARY
 CLOUDINARY_STORAGE = {
