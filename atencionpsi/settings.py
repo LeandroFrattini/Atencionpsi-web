@@ -33,7 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # ESTO ES LO QUE CARGA EL CSS
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,20 +78,19 @@ else:
         }
     }
 
-# ALMACENAMIENTO (STORAGES) - CONFIGURACIÓN DE EQUILIBRIO
+# ALMACENAMIENTO (STORAGES) - CONFIGURACIÓN ULTRA ESTABLE
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        # Usamos la versión estándar de WhiteNoise para que NO falle si falta un archivo
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        # Usamos el almacenamiento estándar para que no busque archivos que no existen durante el build
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-# Parche de compatibilidad
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
-WHITENOISE_MANIFEST_STRICT = False # Crucial para que no explote si falta un icono
+# Compatibilidad para librerías
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # CLOUDINARY
 CLOUDINARY_STORAGE = {
