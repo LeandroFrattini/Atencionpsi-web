@@ -33,7 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # DEBE ESTAR AQUÍ
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,23 +78,21 @@ else:
         }
     }
 
-# --- ALMACENAMIENTO (CONFIGURACIÓN ANTI-ERRORES) ---
-
-# Usamos el almacenamiento base de Django para evitar que WhiteNoise busque archivos inexistentes
+# ALMACENAMIENTO (STORAGES)
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.StaticFilesStorage", # Versión simple sin compresión
     },
 }
 
-# Parches para evitar que las librerías viejas busquen variables borradas
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+# Parches para Render/WhiteNoise
+STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
 WHITENOISE_MANIFEST_STRICT = False
 
-# CONFIGURACIÓN DE CLOUDINARY
+# CLOUDINARY
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dkzniwqq2',
     'API_KEY': '338272543389882',
