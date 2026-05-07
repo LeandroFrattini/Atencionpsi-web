@@ -78,22 +78,23 @@ else:
         }
     }
 
-# --- CONFIGURACIÓN DE ALMACENAMIENTO ---
+# --- CONFIGURACIÓN DE ALMACENAMIENTO (SOLUCIÓN DEFINITIVA) ---
 
-# 1. Configuración moderna para Django 5.x
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        # Usamos el almacenamiento simple de WhiteNoise para evitar errores de archivos faltantes
+        "BACKEND": "whitenoise.storage.StaticFilesStorage",
     },
 }
 
-# 2. PARCHE DE COMPATIBILIDAD (Esto soluciona tu AttributeError)
-STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+# Parche para la librería de Cloudinary y WhiteNoise
+STATICFILES_STORAGE = "whitenoise.storage.StaticFilesStorage"
+WHITENOISE_MANIFEST_STRICT = False
 
-# 3. Configuración de Cloudinary
+# CLOUDINARY
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dkzniwqq2',
     'API_KEY': '338272543389882',
