@@ -602,3 +602,12 @@ main.buscador-main {
         margin-top: 30px;
     }
 }
+
+.info-line-orientacion {
+    font-family: 'Caveat', cursive !important;
+    font-size: 1.6rem !important; /* Subimos el tamaño porque esta letra es fina */
+    color: #4a7c59 !important;    /* Tu verde */
+    margin-top: 5px;
+    margin-bottom: 5px;
+    display: block;               /* Asegura que tome su propio renglón */
+}
