@@ -459,3 +459,99 @@ main.buscador-main {
     width: 100%;
     margin-top: auto; /* Refuerzo de alineación al fondo */
 }
+
+/* --- ANIMACIÓN ÚNICA PARA ESTAS PÁGINAS --- */
+@keyframes aparecerDesdeDerecha {
+    from {
+        opacity: 0;
+        transform: translateX(60px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* --- ESTILOS SOBRE NOSOTROS --- */
+.nueva-sec-sobre-nosotros {
+    max-width: 850px;
+    margin: 50px auto;
+    padding: 40px;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+    /* Animación aplicada aquí */
+    animation: aparecerDesdeDerecha 0.9s ease-out forwards;
+}
+
+.nueva-sec-titulo {
+    color: #4a7c59; /* Tu Verde */
+    font-size: 2.4rem;
+    margin-bottom: 25px;
+    position: relative;
+    display: inline-block;
+}
+
+.nueva-sec-titulo::after {
+    content: '';
+    position: absolute;
+    width: 60%;
+    height: 4px;
+    background-color: #e9a8a6; /* Tu Rosa */
+    bottom: -5px;
+    left: 0;
+    border-radius: 2px;
+}
+
+.nueva-sec-texto {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 20px;
+    text-align: justify;
+}
+
+.nueva-sec-firma {
+    margin-top: 40px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #e9a8a6;
+    text-align: right;
+}
+
+/* --- ESTILOS PREGUNTAS FRECUENTES --- */
+.nueva-sec-faq-container {
+    max-width: 850px;
+    margin: 50px auto;
+    padding: 20px;
+    animation: aparecerDesdeDerecha 1s ease-out forwards;
+}
+
+.nueva-sec-faq-item {
+    background: #fff;
+    margin-bottom: 15px;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    border-left: 6px solid #4a7c59;
+    transition: all 0.3s ease;
+}
+
+.nueva-sec-faq-item:hover {
+    transform: scale(1.01);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.nueva-sec-pregunta {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #D79A9F;
+    margin-bottom: 12px;
+}
+
+.nueva-sec-respuesta {
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.6;
+}

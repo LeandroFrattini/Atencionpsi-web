@@ -44,3 +44,9 @@ def detalle_psicologo(request, slug):
 # --- VISTA ÚNETE ---
 def unete(request):
     return render(request, 'unete.html')
+
+def sobre_nosotros(request):
+    return render(request, 'sobre_nosotros.html')
+
+def faq(request):
+    return render(request, 'faq.html')

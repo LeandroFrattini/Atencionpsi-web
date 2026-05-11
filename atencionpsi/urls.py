@@ -10,6 +10,8 @@ urlpatterns = [
     path('buscador/', views.buscador, name='buscador'),
     path('psicologo/<slug:slug>/', views.detalle_psicologo, name='perfil_psicologo'),
     path('unete-al-equipo/', views.unete, name='unete'),
+    path('sobre_nosotros/', views.sobre_nosotros, name='sobre_nosotros'),
+    path('preguntas-frecuentes/', views.faq, name='faq'),
 ]
 
 # ESTA ES LA CLAVE: Forzamos a Django a servir estáticos y media 
