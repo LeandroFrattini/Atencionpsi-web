@@ -555,3 +555,50 @@ main.buscador-main {
     color: #333;
     line-height: 1.6;
 }
+
+/* --- AJUSTES PARA CELULARES (Pantallas menores a 768px) --- */
+@media (max-width: 768px) {
+    
+    /* Ajustamos el contenedor de Sobre Nosotros */
+    .nueva-sec-sobre-nosotros {
+        margin: 20px 15px; /* Menos margen arriba y a los costados */
+        padding: 25px 20px; /* Menos espacio interno */
+        animation: none; /* Opcional: quitamos animación en móvil para que cargue más fluido */
+    }
+
+    .nueva-sec-titulo {
+        font-size: 1.8rem; /* Título más chico para que no se corte */
+        margin-bottom: 20px;
+    }
+
+    .nueva-sec-texto {
+        font-size: 1rem; /* Texto un poquito más chico */
+        line-height: 1.6;
+        text-align: left; /* En el celu el justificado a veces queda feo con espacios grandes */
+    }
+
+    /* Ajustamos el contenedor de FAQ */
+    .nueva-sec-faq-container {
+        margin: 20px 10px;
+        padding: 10px;
+    }
+
+    .nueva-sec-faq-item {
+        padding: 15px; /* Menos aire dentro de cada pregunta */
+        margin-bottom: 10px;
+    }
+
+    .nueva-sec-pregunta {
+        font-size: 1.1rem; /* Que la pregunta no ocupe 5 renglones */
+    }
+
+    .nueva-sec-respuesta {
+        font-size: 0.95rem;
+    }
+
+    /* Firma del equipo */
+    .nueva-sec-firma {
+        text-align: center; /* En el celu queda mejor centrado */
+        margin-top: 30px;
+    }
+}
