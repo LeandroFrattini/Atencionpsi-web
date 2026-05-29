@@ -4,20 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscador | Atención Psi</title>
-    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.5">
+    <title>Buscador de Psicólogos | Atención Psi</title>
+    <meta name="description" content="Encontrá tu psicólogo ideal en Argentina. Filtrá por modalidad online o presencial, especialidad y ciudad. Contacto directo por WhatsApp.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.2">
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
-    <style>
-    .info-line-orientacion {
-        font-family: 'Caveat', cursive !important;
-        font-size: 1.6rem !important; /* Ajustá este tamaño a tu gusto */
-        color: #444 !important;      /* Un gris oscuro o el verde que uses */
-        margin: 5px 0 !important;
-        display: block !important;
-        text-align: center;
-    }
-</style>
 </head>
 <body>
     <nav>
@@ -33,87 +26,124 @@
         </div>
     </nav>
 
+    <!-- HERO BUSCADOR -->
+    <section class="buscador-hero">
+        <div class="buscador-hero-inner">
+            <h1>Encontrá tu psicólogo/a ideal</h1>
+            <p>Filtrá por modalidad, especialidad o a quién va dirigido y contactate directo por WhatsApp.</p>
+        </div>
+    </section>
 
-    <section class="filter-section">
-        <form method="GET" class="filter-form">
-            <select name="modalidad">
-                <option value="">Modalidad (Todas)</option>
-                {% for mod in modalidades_list %}
-                    <option value="{{ mod.id }}" {% if request.GET.modalidad == mod.id|stringformat:"i" %}selected{% endif %}>
-                        {{ mod.nombre }}
-                    </option>
-                {% endfor %}
-            </select>
-            
-            <select name="dirigido_a">
-                <option value="">¿A quién va dirigido?</option>
-                {% for dest in destinatarios_list %}
-                    <option value="{{ dest.id }}" {% if request.GET.dirigido_a == dest.id|stringformat:"i" %}selected{% endif %}>
-                        {{ dest.nombre }}
-                    </option>
-                {% endfor %}
-            </select>
+    <!-- FILTROS -->
+    <section class="buscador-filtros-section">
+        <form method="GET" class="buscador-filtros-form">
+            <div class="buscador-filtro-grupo">
+                <label class="buscador-filtro-label">Modalidad</label>
+                <select name="modalidad" class="buscador-select">
+                    <option value="">Todas</option>
+                    {% for mod in modalidades_list %}
+                        <option value="{{ mod.id }}" {% if request.GET.modalidad == mod.id|stringformat:"i" %}selected{% endif %}>
+                            {{ mod.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-            <input type="text" name="ciudad" placeholder="Ciudad..." value="{{ request.GET.ciudad }}">
-            <button type="submit" class="btn-unete-nav" style="border:none; cursor:pointer; padding: 12px 30px;">Filtrar</button>
+            <div class="buscador-filtro-grupo">
+                <label class="buscador-filtro-label">¿Para quién?</label>
+                <select name="dirigido_a" class="buscador-select">
+                    <option value="">Todos</option>
+                    {% for dest in destinatarios_list %}
+                        <option value="{{ dest.id }}" {% if request.GET.dirigido_a == dest.id|stringformat:"i" %}selected{% endif %}>
+                            {{ dest.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="buscador-filtro-grupo">
+                <label class="buscador-filtro-label">Ciudad</label>
+                <input type="text" name="ciudad" placeholder="Ej: Bahía Blanca..." value="{{ request.GET.ciudad }}" class="buscador-select">
+            </div>
+
+            <button type="submit" class="buscador-btn-filtrar">Buscar</button>
         </form>
     </section>
 
-    <!-- Cambiá la etiqueta <main> por esta en buscador.html -->
+    <!-- RESULTADOS -->
     <main class="buscador-main">
-    <div class="results-container">
-        {% for p in psicologos %}
-            <div class="card">
-                <div class="card-img-container" style="display: flex; justify-content: center; margin-bottom: 15px;">
-                    {% if p.foto %}
-                        <img src="{{ p.foto.url }}" alt="{{ p.nombre }}" 
-                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;">
-                    {% else %}
-                        <img src="{% static 'img/default.png' %}" alt="Perfil" 
-                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
-                    {% endif %}
-                </div>
-                
-                <div class="card-info">
-                    <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
-                    <p class="info-line"> {{ p.ciudad }}</p>
-                    
-                    <p class="info-line">
-                        {% for mod in p.modalidades.all %}
-                            {% if "Online" in mod.nombre %}💻{% endif %}
-                            {% if "Presencial" in mod.nombre %}🛋️{% endif %}
-                            {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
-                        {% endfor %}
-                    </p>
-                    {% if p.orientacion %}
-                        <p class="info-line-orientacion">{{ p.orientacion }}</p>
-                    {% endif %}
-                    <div class="tags-wrapper">
-                        {% for d in p.destinatarios.all %}
-                            <span class="dirigido-label">{{ d.nombre }}</span>
-                        {% endfor %}
+
+        <!-- CONTADOR -->
+        <div class="buscador-contador">
+            {% if psicologos %}
+                <p>Mostrando <strong>{{ psicologos|length }}</strong> profesional{% if psicologos|length != 1 %}es{% endif %}
+                {% if request.GET.ciudad %} en <strong>{{ request.GET.ciudad }}</strong>{% endif %}
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="results-container">
+            {% for p in psicologos %}
+                <div class="card">
+                    <div class="card-img-container" style="display: flex; justify-content: center; margin-bottom: 15px;">
+                        {% if p.foto %}
+                            <img src="{{ p.foto.url }}" alt="{{ p.nombre }}"
+                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;">
+                        {% else %}
+                            <img src="{% static 'img/default.png' %}" alt="Perfil"
+                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
+                        {% endif %}
+                    </div>
+
+                    <div class="card-info">
+                        <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
+                        {% if p.ciudad %}
+                            <p class="info-line">📍 {{ p.ciudad }}</p>
+                        {% endif %}
+
+                        <p class="info-line">
+                            {% for mod in p.modalidades.all %}
+                                {% if "Online" in mod.nombre %}💻{% endif %}
+                                {% if "Presencial" in mod.nombre %}🛋️{% endif %}
+                                {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
+                            {% endfor %}
+                        </p>
+
+                        {% if p.orientacion %}
+                            <p class="info-line-orientacion">{{ p.orientacion }}</p>
+                        {% endif %}
+
+                        <div class="tags-wrapper">
+                            {% for d in p.destinatarios.all %}
+                                <span class="dirigido-label">{{ d.nombre }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="card-buttons">
+                        <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view">Ver Perfil</a>
+                        <a href="https://wa.me/{{ p.whatsapp }}?text=Hola,%20te%20escribo%20desde%20Atención%20Psi,%20me%20gustaría%20coordinar%20un%20turno%20con%20vos!"
+                           class="btn-ws"
+                           target="_blank">
+                            WhatsApp
+                        </a>
                     </div>
                 </div>
 
-                <div class="card-buttons">
-                    <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view">Ver Perfil</a>
-                    <a href="https://wa.me/{{ p.whatsapp }}?text=Hola,%20te%20escribo%20desde%20Atención%20Psi,%20me%20gustaría%20coordinar%20un%20turno%20con%20vos!" 
-                    class="btn-ws" 
-                    target="_blank">
-                    WhatsApp
-                    </a>
+            {% empty %}
+                <div class="buscador-empty">
+                    <span>🔍</span>
+                    <h3>No encontramos profesionales con esos filtros</h3>
+                    <p>Probá cambiando la modalidad, el público o dejando la ciudad en blanco para ver todos.</p>
+                    <a href="{% url 'buscador' %}" class="btn-hero" style="margin-top: 20px;">Ver todos los profesionales</a>
                 </div>
-            </div>
-        {% empty %}
-            <div style="text-align: center; width: 100%; padding: 50px;">
-                <p>No se encontraron profesionales.</p>
-            </div>
-        {% endfor %}
-    </div>
+            {% endfor %}
+        </div>
+
     </main>
-</main>
+
     <footer>
-        <p>&copy;  2026 Atención Psi - Todos los derechos reservados</p>
+        <p>&copy; 2026 Atención Psi - Todos los derechos reservados</p>
     </footer>
 </body>
 </html>

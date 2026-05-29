@@ -4,11 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atención Psi | Bienestar Mental</title>
+    <title>Atención Psi | Psicólogos Online y Presenciales en Argentina</title>
+
+    <!-- SEO -->
+    <meta name="description" content="Encontrá tu psicólogo ideal en Argentina. Atención online y presencial. Psicoanálisis, cognitivo conductual y más. Contacto directo por WhatsApp.">
+    <meta name="keywords" content="psicólogo online Argentina, psicólogo Buenos Aires, terapia online, salud mental, psicoanálisis, cognitivo conductual">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.1">
+    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.2">
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
 </head>
 <body>
@@ -25,36 +30,91 @@
         </div>
     </nav>
 
-   <main>
-    {% block content %}
-    <section class="hero">
-        <h1>Tu bienestar mental,<br>nuestra prioridad.</h1>
-        <p>Conecta con profesionales de la salud mental de forma sencilla, humana y segura.</p>
-        <a href="{% url 'buscador' %}" class="btn-hero">Encontrar mi profesional</a>
-    </section>
+    <main>
+        {% block content %}
 
-    <section class="features">
-        <div class="feature-card">
-            <span>🛋️💻</span>
-            <h3>Atención Presencial y Online</h3>
-            <p>Adaptamos la terapia a tu ritmo de vida con modalidades presenciales y virtuales.</p>
-        </div>
-        <div class="feature-card">
-            <span>🧠</span>
-            <h3>Especialistas</h3>
-            <p>Encontrá el enfoque terapéutico que mejor se adapte a tu búsqueda.</p>
-        </div>
-        <div class="feature-card">
-            <span>📅</span>
-            <h3>Tu Turno</h3>
-            <p>Coordiná directamente con el profesional sin vueltas.</p>
-        </div>
-    </section>
-    {% endblock %}
-</main>
+        <!-- HERO -->
+        <section class="hero">
+            <h1>Tu bienestar mental,<br>nuestra prioridad.</h1>
+            <p>Conectá con psicólogos de forma sencilla, humana y segura.<br>Atención online y presencial en toda Argentina.</p>
+            <a href="{% url 'buscador' %}" class="btn-hero">Encontrar mi profesional</a>
+        </section>
+
+        <!-- NÚMEROS / PRUEBA SOCIAL -->
+        <section class="home-stats">
+            <div class="stat-item">
+                <span class="stat-numero">+35</span>
+                <span class="stat-label">Profesionales activos</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-numero">+5</span>
+                <span class="stat-label">Ciudades y online</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-numero">100%</span>
+                <span class="stat-label">Contacto directo</span>
+            </div>
+        </section>
+
+        <!-- FEATURES -->
+        <section class="features">
+            <div class="feature-card">
+                <span>🛋️💻</span>
+                <h3>Presencial y Online</h3>
+                <p>Adaptamos la terapia a tu ritmo de vida con modalidades presenciales y virtuales.</p>
+            </div>
+            <div class="feature-card">
+                <span>🧠</span>
+                <h3>Especialistas</h3>
+                <p>Encontrá el enfoque terapéutico que mejor se adapte a tu búsqueda.</p>
+            </div>
+            <div class="feature-card">
+                <span>📅</span>
+                <h3>Tu Turno</h3>
+                <p>Coordiná directamente con el profesional sin intermediarios ni vueltas.</p>
+            </div>
+        </section>
+
+        <!-- CÓMO FUNCIONA -->
+        <section class="home-como-funciona">
+            <h2 class="home-section-title">¿Cómo funciona?</h2>
+            <div class="home-pasos">
+                <div class="home-paso">
+                    <div class="home-paso-numero">1</div>
+                    <h4>Buscá tu profesional</h4>
+                    <p>Filtrá por modalidad, especialidad o a quién va dirigido.</p>
+                </div>
+                <div class="home-paso-flecha">→</div>
+                <div class="home-paso">
+                    <div class="home-paso-numero">2</div>
+                    <h4>Conocé su perfil</h4>
+                    <p>Leé su orientación, experiencia y enfoque terapéutico.</p>
+                </div>
+                <div class="home-paso-flecha">→</div>
+                <div class="home-paso">
+                    <div class="home-paso-numero">3</div>
+                    <h4>Escribile por WhatsApp</h4>
+                    <p>Contacto directo, sin formularios ni listas de espera.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA PARA PSICÓLOGOS -->
+        <section class="home-cta-psi">
+            <div class="home-cta-psi-inner">
+                <h2>¿Sos psicólogo/a?</h2>
+                <p>Sumarte a Atención Psi es la forma más simple de hacer crecer tu agenda con pacientes que ya te están buscando.</p>
+                <a href="{% url 'unete' %}" class="btn-cta-psi">Quiero sumarme →</a>
+            </div>
+        </section>
+
+        {% endblock %}
+    </main>
 
     <footer>
-        <p>&copy;  2026 Atención Psi - Todos los derechos reservados</p>
+        <p>&copy; 2026 Atención Psi - Todos los derechos reservados</p>
     </footer>
 </body>
 </html>

@@ -1,25 +1,63 @@
 {% extends 'index.html' %}
 
 {% block content %}
-<div class="nueva-sec-sobre-nosotros">
-    <h1 class="nueva-sec-titulo">Sobre Nosotros</h1>
-    
-    <p class="nueva-sec-texto">
-        En <strong>Atención Psi</strong>, impulsamos el crecimiento profesional de Licenciados en Psicología, transformando la manera en que conectan con nuevos consultantes.
-    </p>
-    
-    <p class="nueva-sec-texto">
-        Funcionamos como el nexo estratégico que optimiza tu presencia digital, diseñando un puente directo y eficiente para que logres completar tu agenda de manera sostenida.
-    </p>
 
-    <p class="nueva-sec-texto">
-        Entendemos la dinámica de la clínica actual y la importancia de estar en redes, por lo que nuestras derivaciones se gestionan con un criterio de adaptabilidad total, ajustándose minuciosamente a las fluctuaciones de la demanda, tu zona geográfica de atención y la metodología específica de tu práctica profesional.
-    </p>
+<!-- HERO -->
+<section class="sn-hero">
+    <div class="sn-hero-inner">
+        <span class="unete-hero-badge">Quiénes somos</span>
+        <h1>Conectamos personas con el profesional indicado</h1>
+        <p>Atención Psi nació para simplificar el acceso a la salud mental en Argentina, uniendo a quienes buscan ayuda con psicólogos comprometidos con su práctica.</p>
+    </div>
+</section>
 
-    <p class="nueva-sec-texto">
-        Sumate a un espacio donde la visibilidad se convierte en resultados tangibles, permitiéndote enfocarte en lo que mejor sabés hacer mientras nosotros potenciamos tu alcance.
-    </p>
+<!-- PARA QUIÉN -->
+<section class="sn-para-quien">
+    <div class="sn-pq-card sn-pq-paciente">
+        <span>🙋</span>
+        <h3>Si buscás atención</h3>
+        <p>Entendemos que dar el primer paso es difícil. Por eso creamos un buscador simple donde podés encontrar el profesional que mejor se adapte a vos — por modalidad, especialidad o a quién va dirigido — y contactarlo directo por WhatsApp, sin listas de espera ni formularios complicados.</p>
+        <a href="{% url 'buscador' %}" class="btn-sn">Ver profesionales →</a>
+    </div>
+    <div class="sn-pq-card sn-pq-psi">
+        <span>🧑‍⚕️</span>
+        <h3>Si sos psicólogo/a</h3>
+        <p>Somos el canal que hace crecer tu agenda con pacientes reales. Tu perfil aparece frente a personas que ya están buscando atención. Vos manejás tus horarios, honorarios y modalidad. Sin exclusividad, sin comisiones por consulta.</p>
+        <a href="{% url 'unete' %}" class="btn-sn btn-sn-verde">Sumarme al equipo →</a>
+    </div>
+</section>
 
-    <div class="nueva-sec-firma">Equipo de Atención Psi</div>
-</div>
+<!-- VALORES -->
+<section class="sn-valores">
+    <h2 class="home-section-title">Lo que nos mueve</h2>
+    <div class="sn-valores-grid">
+        <div class="sn-valor-item">
+            <span>🤝</span>
+            <h4>Accesibilidad</h4>
+            <p>Creemos que encontrar un psicólogo no debería ser complicado ni intimidante.</p>
+        </div>
+        <div class="sn-valor-item">
+            <span>🔒</span>
+            <h4>Confianza</h4>
+            <p>Todos los profesionales de nuestra red son licenciados en psicología verificados.</p>
+        </div>
+        <div class="sn-valor-item">
+            <span>💚</span>
+            <h4>Compromiso</h4>
+            <p>Trabajamos activamente para que cada conexión entre paciente y profesional sea la correcta.</p>
+        </div>
+        <div class="sn-valor-item">
+            <span>🌐</span>
+            <h4>Alcance</h4>
+            <p>Presencia en múltiples ciudades y atención online para llegar a cualquier rincón del país.</p>
+        </div>
+    </div>
+</section>
+
+<!-- FIRMA -->
+<section class="sn-firma">
+    <p>Con cariño,</p>
+    <span>El equipo de Atención Psi 💚</span>
+</section>
+
 {% endblock %}

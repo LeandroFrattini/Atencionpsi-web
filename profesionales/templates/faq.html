@@ -1,27 +1,80 @@
 {% extends 'index.html' %}
+
 {% block content %}
-<div class="nueva-sec-faq-container">
-    <h1 class="nueva-sec-titulo" style="margin-bottom: 40px;">Preguntas Frecuentes</h1>
 
-    <div class="nueva-sec-faq-item">
-        <span class="nueva-sec-pregunta">¿Atención Psi es un canal de derivación de pacientes?</span>
-        <p class="nueva-sec-respuesta">
-            Sí, pero hay que tener en cuenta que las derivaciones pueden variar bastante: dependen de la zona, tus horarios, tu enfoque y la demanda del momento. Nuestro rol es acercar personas y generar oportunidades, pero no podemos asegurar una cantidad fija de consultas.
-        </p>
+<section class="faq-hero">
+    <div class="faq-hero-inner">
+        <span class="unete-hero-badge">Respondemos tus dudas</span>
+        <h1>Preguntas frecuentes</h1>
+        <p>Todo lo que necesitás saber, tanto si buscás atención como si sos profesional.</p>
     </div>
+</section>
 
-    <div class="nueva-sec-faq-item">
-        <span class="nueva-sec-pregunta">¿Puedo manejar mis honorarios?</span>
-        <p class="nueva-sec-respuesta">
-            <strong>Un rotundo, SÍ.</strong> Los honorarios los fija cada profesional y se lo comunica al paciente cuando hace el contacto con él. Atención Psi no pide tomar conocimiento de tus honorarios ni fija un monto para los mismos.
-        </p>
+<!-- PACIENTES -->
+<section class="faq-seccion">
+    <div class="faq-seccion-inner">
+        <h2 class="faq-subtitulo">🙋 Para pacientes</h2>
+        <div class="faq-lista">
+            <div class="nueva-sec-faq-item">
+                <span class="nueva-sec-pregunta">¿Cómo encuentro al profesional indicado para mí?</span>
+                <p class="nueva-sec-respuesta">Usá el buscador y filtrá por modalidad (online o presencial), a quién va dirigido (adultos, adolescentes, niños, parejas) y zona. Cada perfil tiene la orientación terapéutica y una descripción del profesional para que puedas elegir con más información.</p>
+            </div>
+            <div class="nueva-sec-faq-item">
+                <span class="nueva-sec-pregunta">¿Cómo me contacto con el profesional?</span>
+                <p class="nueva-sec-respuesta">Cada perfil tiene un botón de WhatsApp que te lleva directo a una conversación con el profesional. No hay intermediarios: hablás directamente con él o ella para coordinar el primer turno.</p>
+            </div>
+            <div class="nueva-sec-faq-item">
+                <span class="nueva-sec-pregunta">¿Atención Psi cobra algo al paciente?</span>
+                <p class="nueva-sec-respuesta">No. El servicio es completamente gratuito para quienes buscan atención. El costo de la consulta lo fija cada profesional y lo acordás directamente con él o ella.</p>
+            </div>
+            <div class="nueva-sec-faq-item">
+                <span class="nueva-sec-pregunta">¿Los profesionales están verificados?</span>
+                <p class="nueva-sec-respuesta">Sí. Todos los profesionales de la red son Licenciados en Psicología. Nos aseguramos de que cada perfil corresponda a un profesional habilitado antes de publicarlo.</p>
+            </div>
+            <div class="nueva-sec-faq-item">
+                <span class="nueva-sec-pregunta">¿Puedo atenderme si estoy fuera de Argentina?</span>
+                <p class="nueva-sec-respuesta">Sí. Varios profesionales de la red atienden de forma online, por lo que podés acceder desde cualquier lugar del mundo donde hables español.</p>
+            </div>
+        </div>
     </div>
+</section>
 
-    <div class="nueva-sec-faq-item">
-        <span class="nueva-sec-pregunta">¿Qué pasa si quiero dar de baja mi suscripción?</span>
-        <p class="nueva-sec-respuesta">
-            Las suscripciones son totalmente decisión de quien contrata el servicio. En cualquier momento del mes se puede cancelar la suscripción. Si hubiera algún inconveniente, un miembro del staff estará disponible vía WhatsApp para ayudarte.
-        </p>
+<!-- PSICÓLOGOS -->
+<section class="faq-seccion faq-seccion-verde">
+    <div class="faq-seccion-inner">
+        <h2 class="faq-subtitulo faq-subtitulo-blanco">🧑‍⚕️ Para profesionales</h2>
+        <div class="faq-lista">
+            <div class="nueva-sec-faq-item faq-item-verde">
+                <span class="nueva-sec-pregunta">¿Atención Psi es un canal de derivación?</span>
+                <p class="nueva-sec-respuesta">Sí. Funcionamos como un canal de visibilidad y derivación. Las consultas que lleguen dependen de factores como tu zona, horarios y especialidad, pero trabajamos activamente para que el flujo sea constante.</p>
+            </div>
+            <div class="nueva-sec-faq-item faq-item-verde">
+                <span class="nueva-sec-pregunta">¿Puedo manejar mis honorarios?</span>
+                <p class="nueva-sec-respuesta">Sí, totalmente. Los honorarios los fijás vos y los comunicás directamente al paciente. Atención Psi no interviene en ese acuerdo ni cobra comisión por consulta.</p>
+            </div>
+            <div class="nueva-sec-faq-item faq-item-verde">
+                <span class="nueva-sec-pregunta">¿Tiene algún costo sumarse?</span>
+                <p class="nueva-sec-respuesta">Sí, es un servicio por suscripción mensual. El valor te lo informamos al momento del contacto. Podés cancelar en cualquier momento sin cargos adicionales.</p>
+            </div>
+            <div class="nueva-sec-faq-item faq-item-verde">
+                <span class="nueva-sec-pregunta">¿Qué pasa si quiero darme de baja?</span>
+                <p class="nueva-sec-respuesta">Podés cancelar tu suscripción en cualquier momento del mes. Con un mensaje por WhatsApp a nuestro staff lo resolvemos ese mismo día, sin burocracia.</p>
+            </div>
+            <div class="nueva-sec-faq-item faq-item-verde">
+                <span class="nueva-sec-pregunta">¿Puedo estar en otras plataformas a la vez?</span>
+                <p class="nueva-sec-respuesta">Sí, no pedimos exclusividad. Atención Psi es un canal más para potenciar tu presencia digital, compatible con cualquier otra plataforma o medio que uses.</p>
+            </div>
+        </div>
     </div>
-</div>
+</section>
+
+<!-- CTA -->
+<section class="faq-cta">
+    <div class="faq-cta-inner">
+        <h2>¿Todavía tenés dudas?</h2>
+        <p>Escribinos directamente y te respondemos a la brevedad.</p>
+        <a href="https://wa.me/+5492915379798?text=Hola, tengo una consulta sobre Atención Psi" target="_blank" class="btn-hero">Escribinos por WhatsApp →</a>
+    </div>
+</section>
+
 {% endblock %}
