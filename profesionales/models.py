@@ -17,11 +17,24 @@ class Publico(models.Model):
     def __str__(self):
         return self.nombre
 
+
+class Ciudad(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = "Ciudad"
+        verbose_name_plural = "Ciudades"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
 class Psicologo(models.Model):
     nombre = models.CharField(max_length=100)
     slug = models.SlugField(max_length=150, unique=True, blank=True, null=True)
     foto = models.ImageField(upload_to='psicologos/', null=True, blank=True)
-    ciudad = models.CharField(max_length=100, blank=True, default='')
+    ciudad = models.CharField(max_length=100, blank=True, default='')  # campo legado
+    ciudad_obj = models.ForeignKey('Ciudad', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Ciudad')
     modalidades = models.ManyToManyField(Modalidad, blank=True)
     destinatarios = models.ManyToManyField(Publico, blank=True)
     whatsapp = models.CharField(max_length=20)

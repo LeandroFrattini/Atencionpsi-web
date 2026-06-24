@@ -7,7 +7,7 @@ from django.urls import path
 from django.shortcuts import render
 from django.utils import timezone
 from datetime import timedelta
-from .models import Psicologo, Modalidad, Publico, Visita, ClickWhatsApp
+from .models import Psicologo, Modalidad, Publico, Visita, ClickWhatsApp, Ciudad
 
 
 @admin.register(Modalidad)
@@ -33,9 +33,9 @@ class PsicologoAdminForm(forms.ModelForm):
 @admin.register(Psicologo)
 class PsicologoAdmin(admin.ModelAdmin):
     form = PsicologoAdminForm
-    list_display = ('nombre', 'ciudad', 'destacado', 'clicks_totales')
-    list_filter = ('destacado', 'modalidades', 'destinatarios')
-    search_fields = ('nombre', 'orientacion', 'ciudad')
+    list_display = ('nombre', 'ciudad_obj', 'destacado', 'clicks_totales')
+    list_filter = ('destacado', 'ciudad_obj', 'modalidades', 'destinatarios')
+    search_fields = ('nombre', 'orientacion', 'ciudad_obj__nombre')
     prepopulated_fields = {'slug': ('nombre',)}
     filter_horizontal = ('modalidades', 'destinatarios')
 
@@ -44,6 +44,12 @@ class PsicologoAdmin(admin.ModelAdmin):
         return total
     clicks_totales.short_description = 'Clicks WA'
 
+
+
+@admin.register(Ciudad)
+class CiudadAdmin(admin.ModelAdmin):
+    list_display = ('nombre',)
+    search_fields = ('nombre',)
 
 # ── ANALYTICS ──────────────────────────────────────────────
 
