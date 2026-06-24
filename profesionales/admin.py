@@ -32,17 +32,17 @@ class PsicologoAdminForm(forms.ModelForm):
 @admin.register(Psicologo)
 class PsicologoAdmin(admin.ModelAdmin):
     form = PsicologoAdminForm
-    list_display = ('nombre', 'ciudad_obj', 'destacado', 'clicks_totales')
-    list_filter = ('destacado', 'ciudad_obj', 'modalidades', 'destinatarios')
-    search_fields = ('nombre', 'orientacion', 'ciudad_obj__nombre')
+    list_display = ('nombre', 'ciudades_display', 'destacado', 'clicks_totales')
+    list_filter = ('destacado', 'ciudades_display', 'modalidades', 'destinatarios')
+    search_fields = ('nombre', 'orientacion', 'ciudades__nombre')
     prepopulated_fields = {'slug': ('nombre',)}
-    filter_horizontal = ('modalidades', 'destinatarios', 'obras_sociales')
+    filter_horizontal = ('modalidades', 'destinatarios', 'obras_sociales', 'ciudades')
     fieldsets = (
         ('Datos personales', {
             'fields': ('nombre', 'slug', 'foto', 'descripcion')
         }),
         ('Atención', {
-            'fields': ('orientacion', 'ciudad_obj', 'modalidades', 'destinatarios')
+            'fields': ('orientacion', 'ciudades_display', 'modalidades', 'destinatarios')
         }),
         ('Cobertura', {
             'fields': ('obras_sociales', 'nota_facturacion'),
@@ -53,7 +53,12 @@ class PsicologoAdmin(admin.ModelAdmin):
         }),
     )
 
+    def ciudades_display(self, obj):
+        return ', '.join(c.nombre for c in obj.ciudades.all()) or '—'
+    ciudades_display.short_description = 'Ciudades'
+
     def clicks_totales(self, obj):
+
         total = obj.clicks_wa.aggregate(t=Sum('cantidad'))['t'] or 0
         return total
     clicks_totales.short_description = 'Clicks WA'
@@ -62,8 +67,19 @@ class PsicologoAdmin(admin.ModelAdmin):
 
 @admin.register(Ciudad)
 class CiudadAdmin(admin.ModelAdmin):
-    list_display = ('nombre',)
+    list_display = ('nombre_display', 'ciudad_padre', 'cantidad_barrios')
+    list_filter = ('ciudad_padre',)
     search_fields = ('nombre',)
+    ordering = ('ciudad_padre__nombre', 'nombre')
+
+    def nombre_display(self, obj):
+        return str(obj)
+    nombre_display.short_description = 'Nombre'
+
+    def cantidad_barrios(self, obj):
+        count = obj.barrios.count()
+        return count if count else '-'
+    cantidad_barrios.short_description = 'Barrios/Zonas'
 
 
 @admin.register(ObraSocial)

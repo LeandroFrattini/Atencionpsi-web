@@ -36,8 +36,8 @@
                 <p class="perfil-orientacion">{{ p.orientacion }}</p>
             {% endif %}
 
-            {% if p.ciudad %}
-                <p class="perfil-ciudad">📍 {{ p.ciudad }}</p>
+            {% if p.ciudades.all %}
+                <p class="perfil-ciudad">📍 {% for c in p.ciudades.all %}{{ c.nombre }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
             {% endif %}
 
             <div class="perfil-modalidades">

@@ -49,10 +49,23 @@
             <label class="buscador-filtro-label">Ciudad</label>
             <select name="ciudad" class="buscador-select">
                 <option value="">Todas</option>
-                {% for ciudad in ciudades_list %}
-                    <option value="{{ ciudad.id }}" {% if request.GET.ciudad == ciudad.id|stringformat:"i" %}selected{% endif %}>
-                        {{ ciudad.nombre }}
-                    </option>
+                {% for ciudad in ciudades_padres %}
+                    {% if ciudad.barrios_list %}
+                        <optgroup label="{{ ciudad.nombre }}">
+                            <option value="{{ ciudad.id }}" {% if request.GET.ciudad == ciudad.id|stringformat:"i" %}selected{% endif %}>
+                                Todos en {{ ciudad.nombre }}
+                            </option>
+                            {% for barrio in ciudad.barrios_list %}
+                                <option value="{{ barrio.id }}" {% if request.GET.ciudad == barrio.id|stringformat:"i" %}selected{% endif %}>
+                                    &nbsp;&nbsp;&nbsp;{{ barrio.nombre }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    {% else %}
+                        <option value="{{ ciudad.id }}" {% if request.GET.ciudad == ciudad.id|stringformat:"i" %}selected{% endif %}>
+                            {{ ciudad.nombre }}
+                        </option>
+                    {% endif %}
                 {% endfor %}
             </select>
         </div>
@@ -89,8 +102,8 @@
 
                 <div class="card-info">
                     <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
-                    {% if p.ciudad %}
-                        <p class="info-line">📍 {{ p.ciudad }}</p>
+                    {% if p.ciudades.all %}
+                        <p class="info-line">📍 {% for c in p.ciudades.all %}{{ c.nombre }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
                     {% endif %}
 
                     <p class="info-line">
@@ -116,7 +129,7 @@
                 <div class="modal-data" style="display:none">
                     <span class="md-foto">{% if p.foto %}{{ p.foto.url }}{% else %}{% static 'img/default.png' %}{% endif %}</span>
                     <span class="md-nombre">{{ p.nombre }}</span>
-                    <span class="md-ciudad">{{ p.ciudad }}</span>
+                    <span class="md-ciudad">{% for c in p.ciudades.all %}{{ c.nombre }}{% if not forloop.last %} · {% endif %}{% endfor %}</span>
                     <span class="md-orientacion">{{ p.orientacion }}</span>
                     <span class="md-modalidades">{% for mod in p.modalidades.all %}{{ mod.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
                     <span class="md-destinatarios">{% for d in p.destinatarios.all %}{{ d.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>

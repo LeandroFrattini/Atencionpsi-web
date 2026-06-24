@@ -19,15 +19,27 @@ class Publico(models.Model):
 
 
 class Ciudad(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
+    nombre = models.CharField(max_length=100)
+    ciudad_padre = models.ForeignKey(
+        'self', null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='barrios',
+        verbose_name='Ciudad padre'
+    )
 
     class Meta:
         verbose_name = "Ciudad"
         verbose_name_plural = "Ciudades"
-        ordering = ['nombre']
+        ordering = ['ciudad_padre__nombre', 'nombre']
+        unique_together = [('nombre', 'ciudad_padre')]
 
     def __str__(self):
+        if self.ciudad_padre:
+            return f"{self.ciudad_padre.nombre} - {self.nombre}"
         return self.nombre
+
+    def nombre_completo(self):
+        return self.__str__()
 
 
 class ObraSocial(models.Model):
@@ -46,7 +58,7 @@ class Psicologo(models.Model):
     slug = models.SlugField(max_length=150, unique=True, blank=True, null=True)
     foto = models.ImageField(upload_to='psicologos/', null=True, blank=True)
     ciudad = models.CharField(max_length=100, blank=True, default='')  # campo legado
-    ciudad_obj = models.ForeignKey('Ciudad', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Ciudad')
+    ciudades = models.ManyToManyField('Ciudad', blank=True, verbose_name='Ciudades')
     modalidades = models.ManyToManyField(Modalidad, blank=True)
     destinatarios = models.ManyToManyField(Publico, blank=True)
     whatsapp = models.CharField(max_length=20)
