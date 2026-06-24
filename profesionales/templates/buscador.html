@@ -47,7 +47,14 @@
 
         <div class="buscador-filtro-grupo">
             <label class="buscador-filtro-label">Ciudad</label>
-            <input type="text" name="ciudad" placeholder="Ej: Bahía Blanca..." value="{{ request.GET.ciudad }}" class="buscador-select">
+            <select name="ciudad" class="buscador-select">
+                <option value="">Todas</option>
+                {% for ciudad in ciudades_list %}
+                    <option value="{{ ciudad.id }}" {% if request.GET.ciudad == ciudad.id|stringformat:"i" %}selected{% endif %}>
+                        {{ ciudad.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
         </div>
 
         <button type="submit" class="buscador-btn-filtrar">Buscar</button>

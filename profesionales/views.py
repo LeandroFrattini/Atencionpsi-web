@@ -2,7 +2,7 @@ import random
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db import transaction
-from .models import Psicologo, Modalidad, Publico, ClickWhatsApp
+from .models import Psicologo, Modalidad, Publico, ClickWhatsApp, Ciudad
 
 
 # --- VISTA DE INICIO ---
@@ -43,7 +43,7 @@ def buscador(request):
         queryset = queryset.filter(destinatarios__id=dirigido_a_id)
 
     if ciudad:
-        queryset = queryset.filter(ciudad__icontains=ciudad)
+        queryset = queryset.filter(ciudad_obj__id=ciudad)
 
     # Destacados primero, el resto en orden aleatorio
     destacados = list(queryset.filter(destacado=True).distinct())
@@ -55,6 +55,7 @@ def buscador(request):
         'psicologos': lista_final,
         'modalidades_list': Modalidad.objects.all(),
         'destinatarios_list': Publico.objects.all(),
+        'ciudades_list': Ciudad.objects.all(),
     })
 
 
