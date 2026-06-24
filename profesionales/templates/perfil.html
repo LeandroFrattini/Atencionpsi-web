@@ -109,7 +109,19 @@
 
             <div class="perfil-seccion">
                 <h2 class="perfil-seccion-titulo">Obras sociales / Prepagas</h2>
-                <p class="perfil-obras">{{ p.obras_sociales|default:"Particular / Consultar reintegros" }}</p>
+                {% if p.obras_sociales.all %}
+                    <div class="perfil-os-tags">
+                        {% for os in p.obras_sociales.all %}
+                            <span class="os-tag">{{ os.nombre }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% if p.nota_facturacion %}
+                    <p class="perfil-nota-facturacion">📄 {{ p.nota_facturacion }}</p>
+                {% endif %}
+                {% if not p.obras_sociales.all and not p.nota_facturacion %}
+                    <p class="perfil-obras">Consultar directamente con el profesional</p>
+                {% endif %}
             </div>
 
             <!-- CTA FINAL -->

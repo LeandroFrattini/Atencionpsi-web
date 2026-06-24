@@ -1830,3 +1830,28 @@ main.buscador-main {
         grid-template-columns: 1fr;
     }
 }
+
+/* ── OBRAS SOCIALES TAGS ── */
+.perfil-os-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.os-tag {
+    background: #f0f7f0;
+    color: #5a8a5a;
+    border: 1px solid #c8e0c8;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.perfil-nota-facturacion {
+    color: #888;
+    font-size: 0.88rem;
+    margin-top: 8px;
+    font-style: italic;
+}

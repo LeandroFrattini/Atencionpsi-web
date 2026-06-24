@@ -7,7 +7,7 @@ from django.urls import path
 from django.shortcuts import render
 from django.utils import timezone
 from datetime import timedelta
-from .models import Psicologo, Modalidad, Publico, Visita, ClickWhatsApp, Ciudad
+from .models import Psicologo, Modalidad, Publico, Visita, ClickWhatsApp, Ciudad, ObraSocial
 
 
 @admin.register(Modalidad)
@@ -26,7 +26,6 @@ class PsicologoAdminForm(forms.ModelForm):
         fields = '__all__'
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 4, 'cols': 40}),
-            'obras_sociales': forms.Textarea(attrs={'rows': 3, 'cols': 40}),
         }
 
 
@@ -37,7 +36,22 @@ class PsicologoAdmin(admin.ModelAdmin):
     list_filter = ('destacado', 'ciudad_obj', 'modalidades', 'destinatarios')
     search_fields = ('nombre', 'orientacion', 'ciudad_obj__nombre')
     prepopulated_fields = {'slug': ('nombre',)}
-    filter_horizontal = ('modalidades', 'destinatarios')
+    filter_horizontal = ('modalidades', 'destinatarios', 'obras_sociales')
+    fieldsets = (
+        ('Datos personales', {
+            'fields': ('nombre', 'slug', 'foto', 'descripcion')
+        }),
+        ('Atención', {
+            'fields': ('orientacion', 'ciudad_obj', 'modalidades', 'destinatarios')
+        }),
+        ('Cobertura', {
+            'fields': ('obras_sociales', 'nota_facturacion'),
+            'description': 'Seleccioná las obras sociales que acepta y agregá una nota si trabaja con factura.'
+        }),
+        ('Contacto y configuración', {
+            'fields': ('whatsapp', 'destacado')
+        }),
+    )
 
     def clicks_totales(self, obj):
         total = obj.clicks_wa.aggregate(t=Sum('cantidad'))['t'] or 0
@@ -48,6 +62,12 @@ class PsicologoAdmin(admin.ModelAdmin):
 
 @admin.register(Ciudad)
 class CiudadAdmin(admin.ModelAdmin):
+    list_display = ('nombre',)
+    search_fields = ('nombre',)
+
+
+@admin.register(ObraSocial)
+class ObraSocialAdmin(admin.ModelAdmin):
     list_display = ('nombre',)
     search_fields = ('nombre',)
 

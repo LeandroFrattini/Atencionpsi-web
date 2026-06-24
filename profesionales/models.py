@@ -29,6 +29,18 @@ class Ciudad(models.Model):
     def __str__(self):
         return self.nombre
 
+
+class ObraSocial(models.Model):
+    nombre = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = "Obra Social / Prepaga"
+        verbose_name_plural = "Obras Sociales / Prepagas"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
 class Psicologo(models.Model):
     nombre = models.CharField(max_length=100)
     slug = models.SlugField(max_length=150, unique=True, blank=True, null=True)
@@ -41,7 +53,8 @@ class Psicologo(models.Model):
     destacado = models.BooleanField(default=False)
     orientacion = models.CharField(max_length=100, blank=True)
     descripcion = models.TextField(blank=True)
-    obras_sociales = models.TextField(blank=True)
+    obras_sociales = models.ManyToManyField('ObraSocial', blank=True, verbose_name='Obras Sociales / Prepagas')
+    nota_facturacion = models.CharField(max_length=200, blank=True, verbose_name='Nota de facturación', help_text='Ej: Hace facturas para reintegro')
 
     def whatsapp_limpio(self):
         """Retorna el número de WhatsApp en formato internacional sin símbolos."""

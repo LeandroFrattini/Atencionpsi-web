@@ -113,7 +113,8 @@
                     <span class="md-orientacion">{{ p.orientacion }}</span>
                     <span class="md-modalidades">{% for mod in p.modalidades.all %}{{ mod.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
                     <span class="md-destinatarios">{% for d in p.destinatarios.all %}{{ d.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
-                    <span class="md-obras">{{ p.obras_sociales|default:"Particular / Consultar reintegros" }}</span>
+                    <span class="md-obras">{% for os in p.obras_sociales.all %}{{ os.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                    <span class="md-nota">{{ p.nota_facturacion }}</span>
                     <span class="md-wa">{{ p.whatsapp }}</span>
                     <div class="md-descripcion">{{ p.descripcion|linebreaks }}</div>
                 </div>
@@ -165,6 +166,10 @@
                         <span class="modal-info-label">Obras sociales / Prepagas</span>
                         <span class="modal-info-valor" id="modalObras"></span>
                     </div>
+                    <div class="modal-info-item" id="modalNotaWrap" style="display:none">
+                        <span class="modal-info-label">Facturación</span>
+                        <span class="modal-info-valor" id="modalNota"></span>
+                    </div>
                 </div>
                 <div class="modal-cta">
                     <a href="" class="btn-ws modal-btn-ws" id="modalWA" target="_blank">💬 Contactar por WhatsApp</a>
@@ -198,6 +203,14 @@
             document.getElementById('modalModalidades').textContent = '💻🛋️ ' + d.querySelector('.md-modalidades').textContent.trim();
             document.getElementById('modalDestinatarios').textContent = d.querySelector('.md-destinatarios').textContent.trim();
             document.getElementById('modalObras').textContent = d.querySelector('.md-obras').textContent.trim();
+            const nota = d.querySelector('.md-nota').textContent.trim();
+            const notaWrap = document.getElementById('modalNotaWrap');
+            if (nota) {
+                document.getElementById('modalNota').textContent = '📄 ' + nota;
+                notaWrap.style.display = '';
+            } else {
+                notaWrap.style.display = 'none';
+            }
             document.getElementById('modalDescripcion').innerHTML = d.querySelector('.md-descripcion').innerHTML;
 
             const wa = d.querySelector('.md-wa').textContent.trim();
