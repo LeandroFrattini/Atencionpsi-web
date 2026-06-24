@@ -1,0 +1,52 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Atención Psi | Psicólogos Online y Presenciales en Argentina{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Encontrá tu psicólogo ideal en Argentina. Atención online y presencial. Psicoanálisis, cognitivo conductual y más. Contacto directo por WhatsApp.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}psicólogo online Argentina, psicólogo Buenos Aires, terapia online, salud mental, psicoanálisis, cognitivo conductual{% endblock %}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{% block og_title %}Atención Psi | Psicólogos Online y Presenciales en Argentina{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Encontrá tu psicólogo ideal en Argentina. Atención online y presencial. Contacto directo por WhatsApp.{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="https://atencionpsi.com.ar{% block og_url %}/{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}https://atencionpsi.com.ar{% static 'img/og-default.png' %}{% endblock %}">
+    <meta property="og:site_name" content="Atención Psi">
+    <meta property="og:locale" content="es_AR">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://atencionpsi.com.ar{% block canonical %}/{% endblock %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.3">
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="{% url 'inicio' %}" class="logo"><span class="logo-verde">Atención</span><span class="logo-rosa">Psi</span></a>
+            <ul class="nav-links">
+                <li><a href="{% url 'inicio' %}">Inicio</a></li>
+                <li><a href="{% url 'buscador' %}">Buscador</a></li>
+                <li><a href="{% url 'sobre_nosotros' %}">Sobre Nosotros</a></li>
+                <li><a href="{% url 'faq' %}">Preguntas Frecuentes</a></li>
+                <li><a href="{% url 'unete' %}" class="btn-unete-nav">Únete al Equipo</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <footer>
+        <p>&copy; 2026 Atención Psi - Todos los derechos reservados</p>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

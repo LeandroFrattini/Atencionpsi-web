@@ -1,149 +1,244 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buscador de Psicólogos | Atención Psi</title>
-    <meta name="description" content="Encontrá tu psicólogo ideal en Argentina. Filtrá por modalidad online o presencial, especialidad y ciudad. Contacto directo por WhatsApp.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.2">
-    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
-</head>
-<body>
-    <nav>
-        <div class="nav-container">
-            <a href="{% url 'inicio' %}" class="logo"><span class="logo-verde">Atención</span><span class="logo-rosa">Psi</span></a>
-            <ul class="nav-links">
-                <li><a href="{% url 'inicio' %}">Inicio</a></li>
-                <li><a href="{% url 'buscador' %}">Buscador</a></li>
-                <li><a href="{% url 'sobre_nosotros' %}">Sobre Nosotros</a></li>
-                <li><a href="{% url 'faq' %}">Preguntas Frecuentes</a></li>
-                <li><a href="{% url 'unete' %}" class="btn-unete-nav">Únete al Equipo</a></li>
-            </ul>
-        </div>
-    </nav>
 
-    <!-- HERO BUSCADOR -->
-    <section class="buscador-hero">
-        <div class="buscador-hero-inner">
-            <h1>Encontrá tu psicólogo/a ideal</h1>
-            <p>Filtrá por modalidad, especialidad o a quién va dirigido y contactate directo por WhatsApp.</p>
-        </div>
-    </section>
+{% block title %}Buscador de Psicólogos | Atención Psi{% endblock %}
+{% block meta_description %}Encontrá tu psicólogo ideal en Argentina. Filtrá por modalidad online o presencial, especialidad y ciudad. Contacto directo por WhatsApp.{% endblock %}
+{% block og_title %}Buscador de Psicólogos | Atención Psi{% endblock %}
+{% block og_description %}Filtrá por modalidad, especialidad y ciudad. Contacto directo por WhatsApp con tu profesional.{% endblock %}
+{% block canonical %}/buscador/{% endblock %}
+{% block og_url %}/buscador/{% endblock %}
 
-    <!-- FILTROS -->
-    <section class="buscador-filtros-section">
-        <form method="GET" class="buscador-filtros-form">
-            <div class="buscador-filtro-grupo">
-                <label class="buscador-filtro-label">Modalidad</label>
-                <select name="modalidad" class="buscador-select">
-                    <option value="">Todas</option>
-                    {% for mod in modalidades_list %}
-                        <option value="{{ mod.id }}" {% if request.GET.modalidad == mod.id|stringformat:"i" %}selected{% endif %}>
-                            {{ mod.nombre }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
+{% block content %}
 
-            <div class="buscador-filtro-grupo">
-                <label class="buscador-filtro-label">¿Para quién?</label>
-                <select name="dirigido_a" class="buscador-select">
-                    <option value="">Todos</option>
-                    {% for dest in destinatarios_list %}
-                        <option value="{{ dest.id }}" {% if request.GET.dirigido_a == dest.id|stringformat:"i" %}selected{% endif %}>
-                            {{ dest.nombre }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
+<!-- HERO BUSCADOR -->
+<section class="buscador-hero">
+    <div class="buscador-hero-inner">
+        <h1>Encontrá tu psicólogo/a ideal</h1>
+        <p>Filtrá por modalidad, especialidad o a quién va dirigido y contactate directo por WhatsApp.</p>
+    </div>
+</section>
 
-            <div class="buscador-filtro-grupo">
-                <label class="buscador-filtro-label">Ciudad</label>
-                <input type="text" name="ciudad" placeholder="Ej: Bahía Blanca..." value="{{ request.GET.ciudad }}" class="buscador-select">
-            </div>
-
-            <button type="submit" class="buscador-btn-filtrar">Buscar</button>
-        </form>
-    </section>
-
-    <!-- RESULTADOS -->
-    <main class="buscador-main">
-
-        <!-- CONTADOR -->
-        <div class="buscador-contador">
-            {% if psicologos %}
-                <p>Mostrando <strong>{{ psicologos|length }}</strong> profesional{% if psicologos|length != 1 %}es{% endif %}
-                {% if request.GET.ciudad %} en <strong>{{ request.GET.ciudad }}</strong>{% endif %}
-                </p>
-            {% endif %}
+<!-- FILTROS -->
+<section class="buscador-filtros-section">
+    <form method="GET" class="buscador-filtros-form">
+        <div class="buscador-filtro-grupo">
+            <label class="buscador-filtro-label">Modalidad</label>
+            <select name="modalidad" class="buscador-select">
+                <option value="">Todas</option>
+                {% for mod in modalidades_list %}
+                    <option value="{{ mod.id }}" {% if request.GET.modalidad == mod.id|stringformat:"i" %}selected{% endif %}>
+                        {{ mod.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
         </div>
 
-        <div class="results-container">
-            {% for p in psicologos %}
-                <div class="card">
-                    <div class="card-img-container" style="display: flex; justify-content: center; margin-bottom: 15px;">
-                        {% if p.foto %}
-                            <img src="{{ p.foto.url }}" alt="{{ p.nombre }}"
-                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;">
-                        {% else %}
-                            <img src="{% static 'img/default.png' %}" alt="Perfil"
-                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
-                        {% endif %}
-                    </div>
+        <div class="buscador-filtro-grupo">
+            <label class="buscador-filtro-label">¿Para quién?</label>
+            <select name="dirigido_a" class="buscador-select">
+                <option value="">Todos</option>
+                {% for dest in destinatarios_list %}
+                    <option value="{{ dest.id }}" {% if request.GET.dirigido_a == dest.id|stringformat:"i" %}selected{% endif %}>
+                        {{ dest.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-                    <div class="card-info">
-                        <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
-                        {% if p.ciudad %}
-                            <p class="info-line">📍 {{ p.ciudad }}</p>
-                        {% endif %}
+        <div class="buscador-filtro-grupo">
+            <label class="buscador-filtro-label">Ciudad</label>
+            <select name="ciudad" class="buscador-select">
+                <option value="">Todas</option>
+                {% for ciudad in ciudades_list %}
+                    <option value="{{ ciudad.id }}" {% if request.GET.ciudad == ciudad.id|stringformat:"i" %}selected{% endif %}>
+                        {{ ciudad.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-                        <p class="info-line">
-                            {% for mod in p.modalidades.all %}
-                                {% if "Online" in mod.nombre %}💻{% endif %}
-                                {% if "Presencial" in mod.nombre %}🛋️{% endif %}
-                                {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
-                            {% endfor %}
-                        </p>
+        <button type="submit" class="buscador-btn-filtrar">Buscar</button>
+    </form>
+</section>
 
-                        {% if p.orientacion %}
-                            <p class="info-line-orientacion">{{ p.orientacion }}</p>
-                        {% endif %}
+<!-- RESULTADOS -->
+<main class="buscador-main">
 
-                        <div class="tags-wrapper">
-                            {% for d in p.destinatarios.all %}
-                                <span class="dirigido-label">{{ d.nombre }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
+    <!-- CONTADOR -->
+    <div class="buscador-contador">
+        {% if psicologos %}
+            <p>Mostrando <strong>{{ psicologos|length }}</strong> profesional{% if psicologos|length != 1 %}es{% endif %}
+            {% if request.GET.ciudad %} en <strong>{{ request.GET.ciudad }}</strong>{% endif %}
+            </p>
+        {% endif %}
+    </div>
 
-                    <div class="card-buttons">
-                        <a href="{% url 'perfil_psicologo' p.slug %}" class="btn-view">Ver Perfil</a>
-                        <a href="https://wa.me/{{ p.whatsapp }}?text=Hola,%20te%20escribo%20desde%20Atención%20Psi,%20me%20gustaría%20coordinar%20un%20turno%20con%20vos!"
-                           class="btn-ws"
-                           target="_blank">
-                            WhatsApp
-                        </a>
+    <div class="results-container">
+        {% for p in psicologos %}
+            <div class="card">
+
+                <div class="card-img-container" style="display: flex; justify-content: center; margin-bottom: 15px;">
+                    {% if p.foto %}
+                        <img src="{{ p.foto.url }}" alt="{{ p.nombre }}"
+                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0;">
+                    {% else %}
+                        <img src="{% static 'img/default.png' %}" alt="{{ p.nombre }}"
+                             style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover;">
+                    {% endif %}
+                </div>
+
+                <div class="card-info">
+                    <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
+                    {% if p.ciudad %}
+                        <p class="info-line">📍 {{ p.ciudad }}</p>
+                    {% endif %}
+
+                    <p class="info-line">
+                        {% for mod in p.modalidades.all %}
+                            {% if "Online" in mod.nombre %}💻{% endif %}
+                            {% if "Presencial" in mod.nombre %}🛋️{% endif %}
+                            {{ mod.nombre }}{% if not forloop.last %} y {% endif %}
+                        {% endfor %}
+                    </p>
+
+                    {% if p.orientacion %}
+                        <p class="info-line-orientacion">{{ p.orientacion }}</p>
+                    {% endif %}
+
+                    <div class="tags-wrapper">
+                        {% for d in p.destinatarios.all %}
+                            <span class="dirigido-label">{{ d.nombre }}</span>
+                        {% endfor %}
                     </div>
                 </div>
 
-            {% empty %}
-                <div class="buscador-empty">
-                    <span>🔍</span>
-                    <h3>No encontramos profesionales con esos filtros</h3>
-                    <p>Probá cambiando la modalidad, el público o dejando la ciudad en blanco para ver todos.</p>
-                    <a href="{% url 'buscador' %}" class="btn-hero" style="margin-top: 20px;">Ver todos los profesionales</a>
+                <!-- Datos para el modal (ocultos) -->
+                <div class="modal-data" style="display:none">
+                    <span class="md-foto">{% if p.foto %}{{ p.foto.url }}{% else %}{% static 'img/default.png' %}{% endif %}</span>
+                    <span class="md-nombre">{{ p.nombre }}</span>
+                    <span class="md-ciudad">{{ p.ciudad }}</span>
+                    <span class="md-orientacion">{{ p.orientacion }}</span>
+                    <span class="md-modalidades">{% for mod in p.modalidades.all %}{{ mod.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                    <span class="md-destinatarios">{% for d in p.destinatarios.all %}{{ d.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                    <span class="md-obras">{% for os in p.obras_sociales.all %}{{ os.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                    <span class="md-nota">{{ p.nota_facturacion }}</span>
+                    <span class="md-wa">{{ p.whatsapp }}</span>
+                    <div class="md-descripcion">{{ p.descripcion|linebreaks }}</div>
                 </div>
-            {% endfor %}
+
+                <div class="card-buttons">
+                    <button class="btn-view btn-ver-perfil">Ver Perfil</button>
+                    <a href="{% url 'wa_redirect' p.slug %}"
+                       class="btn-ws"
+                       target="_blank">
+                        WhatsApp
+                    </a>
+                </div>
+            </div>
+
+        {% empty %}
+            <div class="buscador-empty">
+                <span>🔍</span>
+                <h3>No encontramos profesionales con esos filtros</h3>
+                <p>Probá cambiando la modalidad, el público o dejando la ciudad en blanco para ver todos.</p>
+                <a href="{% url 'buscador' %}" class="btn-hero" style="margin-top: 20px;">Ver todos los profesionales</a>
+            </div>
+        {% endfor %}
+    </div>
+
+</main>
+
+<!-- MODAL DE PERFIL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box" id="modalBox">
+        <button class="modal-close" id="modalClose">✕</button>
+        <div class="modal-perfil-contenido">
+            <div class="modal-header">
+                <img src="" alt="" class="modal-foto" id="modalFoto">
+                <div class="modal-header-info">
+                    <h2 class="modal-nombre" id="modalNombre"></h2>
+                    <p class="modal-orientacion" id="modalOrientacion"></p>
+                    <p class="modal-ciudad" id="modalCiudad"></p>
+                    <p class="modal-modalidades" id="modalModalidades"></p>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="modal-descripcion" id="modalDescripcion"></div>
+                <div class="modal-info-grid">
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Atiende a</span>
+                        <span class="modal-info-valor" id="modalDestinatarios"></span>
+                    </div>
+                    <div class="modal-info-item">
+                        <span class="modal-info-label">Obras sociales / Prepagas</span>
+                        <span class="modal-info-valor" id="modalObras"></span>
+                    </div>
+                    <div class="modal-info-item" id="modalNotaWrap" style="display:none">
+                        <span class="modal-info-label">Facturación</span>
+                        <span class="modal-info-valor" id="modalNota"></span>
+                    </div>
+                </div>
+                <div class="modal-cta">
+                    <a href="" class="btn-ws modal-btn-ws" id="modalWA" target="_blank">💬 Contactar por WhatsApp</a>
+                </div>
+            </div>
         </div>
+    </div>
+</div>
 
-    </main>
+{% endblock %}
 
-    <footer>
-        <p>&copy; 2026 Atención Psi - Todos los derechos reservados</p>
-    </footer>
-</body>
-</html>
+{% block extra_scripts %}
+<script>
+    const overlay = document.getElementById('modalOverlay');
+    const modalClose = document.getElementById('modalClose');
+
+    document.querySelectorAll('.btn-ver-perfil').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const card = this.closest('.card');
+            const d = card.querySelector('.modal-data');
+
+            document.getElementById('modalFoto').src = d.querySelector('.md-foto').textContent.trim();
+            document.getElementById('modalFoto').alt = d.querySelector('.md-nombre').textContent.trim();
+            document.getElementById('modalNombre').textContent = d.querySelector('.md-nombre').textContent.trim();
+            document.getElementById('modalOrientacion').textContent = d.querySelector('.md-orientacion').textContent.trim();
+
+            const ciudad = d.querySelector('.md-ciudad').textContent.trim();
+            const ciudadEl = document.getElementById('modalCiudad');
+            ciudadEl.textContent = ciudad ? '📍 ' + ciudad : '';
+
+            document.getElementById('modalModalidades').textContent = '💻🛋️ ' + d.querySelector('.md-modalidades').textContent.trim();
+            document.getElementById('modalDestinatarios').textContent = d.querySelector('.md-destinatarios').textContent.trim();
+            document.getElementById('modalObras').textContent = d.querySelector('.md-obras').textContent.trim();
+            const nota = d.querySelector('.md-nota').textContent.trim();
+            const notaWrap = document.getElementById('modalNotaWrap');
+            if (nota) {
+                document.getElementById('modalNota').textContent = '📄 ' + nota;
+                notaWrap.style.display = '';
+            } else {
+                notaWrap.style.display = 'none';
+            }
+            document.getElementById('modalDescripcion').innerHTML = d.querySelector('.md-descripcion').innerHTML;
+
+            const wa = d.querySelector('.md-wa').textContent.trim();
+            document.getElementById('modalWA').href = 'https://wa.me/' + wa + '?text=Hola,%20te%20escribo%20desde%20Atenci%C3%B3n%20Psi,%20me%20gustar%C3%ADa%20coordinar%20un%20turno%20con%20vos!';
+
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+    });
+
+    function cerrarModal() {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    modalClose.addEventListener('click', cerrarModal);
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) cerrarModal();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') cerrarModal();
+    });
+</script>
+{% endblock %}

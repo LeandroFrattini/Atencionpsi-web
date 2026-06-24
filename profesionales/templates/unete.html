@@ -1,142 +1,118 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Únete al Equipo | Atención Psi</title>
-    <meta name="description" content="Sumá tu perfil profesional a Atención Psi y conectá con pacientes que ya te están buscando. Sin exclusividad, manejás tus honorarios.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.2">
-    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
-</head>
-<body>
-    <nav>
-        <div class="nav-container">
-            <a href="{% url 'inicio' %}" class="logo"><span class="logo-verde">Atención</span><span class="logo-rosa">Psi</span></a>
-            <ul class="nav-links">
-                <li><a href="{% url 'inicio' %}">Inicio</a></li>
-                <li><a href="{% url 'buscador' %}">Buscador</a></li>
-                <li><a href="{% url 'sobre_nosotros' %}">Sobre Nosotros</a></li>
-                <li><a href="{% url 'faq' %}">Preguntas Frecuentes</a></li>
-                <li><a href="{% url 'unete' %}" class="btn-unete-nav">Únete al Equipo</a></li>
-            </ul>
+
+{% block title %}Únete al Equipo | Atención Psi{% endblock %}
+{% block meta_description %}Sumá tu perfil profesional a Atención Psi y conectá con pacientes que ya te están buscando. Sin exclusividad, manejás tus honorarios.{% endblock %}
+{% block og_title %}Únete al Equipo | Atención Psi{% endblock %}
+{% block og_description %}Sumá tu perfil y conectá con pacientes reales. Sin exclusividad ni comisiones por consulta.{% endblock %}
+{% block canonical %}/unete-al-equipo/{% endblock %}
+{% block og_url %}/unete-al-equipo/{% endblock %}
+
+{% block content %}
+
+<!-- HERO ÚNETE -->
+<section class="unete-hero">
+    <div class="unete-hero-inner">
+        <span class="unete-hero-badge">Para profesionales</span>
+        <h1>Hacé crecer tu agenda<br>con pacientes reales</h1>
+        <p>Sumarte a Atención Psi es simple, sin exclusividad y vos manejás tus tiempos y honorarios.</p>
+        <a href="https://forms.gle/GfdLSUh344F66wY36" target="_blank" class="btn-hero">Quiero sumarme →</a>
+    </div>
+</section>
+
+<!-- BENEFICIOS -->
+<section class="unete-beneficios">
+    <h2 class="home-section-title">¿Qué ganás sumándote?</h2>
+    <div class="unete-beneficios-grid">
+        <div class="unete-beneficio-card">
+            <span>📣</span>
+            <h4>Visibilidad digital</h4>
+            <p>Tu perfil aparece en nuestro buscador frente a personas que ya están buscando atención psicológica.</p>
         </div>
-    </nav>
+        <div class="unete-beneficio-card">
+            <span>💬</span>
+            <h4>Contacto directo</h4>
+            <p>Los pacientes te escriben directo por WhatsApp. Sin intermediarios, sin comisiones por consulta.</p>
+        </div>
+        <div class="unete-beneficio-card">
+            <span>💰</span>
+            <h4>Vos fijás tus honorarios</h4>
+            <p>Atención Psi no interviene en tus tarifas. Los honorarios los definís vos y los comunicás directamente.</p>
+        </div>
+        <div class="unete-beneficio-card">
+            <span>🗓️</span>
+            <h4>Sin exclusividad</h4>
+            <p>Podés estar en otras plataformas o tener tus propios canales. Nosotros somos un canal más para vos.</p>
+        </div>
+        <div class="unete-beneficio-card">
+            <span>📍</span>
+            <h4>Presencial u online</h4>
+            <p>Cargamos tu modalidad, zona y especialidad para que lleguen los pacientes que se adaptan a tu práctica.</p>
+        </div>
+        <div class="unete-beneficio-card">
+            <span>🔓</span>
+            <h4>Cancelás cuando querés</h4>
+            <p>Sin contratos largos. Si en algún momento querés pausar o darte de baja, lo resolvemos por WhatsApp ese mismo día.</p>
+        </div>
+    </div>
+</section>
 
-    <main>
-
-        <!-- HERO ÚNETE -->
-        <section class="unete-hero">
-            <div class="unete-hero-inner">
-                <span class="unete-hero-badge">Para profesionales</span>
-                <h1>Hacé crecer tu agenda<br>con pacientes reales</h1>
-                <p>Sumarte a Atención Psi es simple, sin exclusividad y vos manejás tus tiempos y honorarios.</p>
-                <a href="https://forms.gle/GfdLSUh344F66wY36" target="_blank" class="btn-hero">Quiero sumarme →</a>
+<!-- CÓMO FUNCIONA -->
+<section class="unete-como-funciona">
+    <div class="unete-como-inner">
+        <h2 class="home-section-title" style="color: white;">¿Cómo es el proceso?</h2>
+        <div class="home-pasos">
+            <div class="home-paso unete-paso">
+                <div class="home-paso-numero">1</div>
+                <h4>Completás el formulario</h4>
+                <p>Nos dejás tus datos y nos contactamos a la brevedad.</p>
             </div>
-        </section>
-
-        <!-- BENEFICIOS -->
-        <section class="unete-beneficios">
-            <h2 class="home-section-title">¿Qué ganás sumándote?</h2>
-            <div class="unete-beneficios-grid">
-                <div class="unete-beneficio-card">
-                    <span>📣</span>
-                    <h4>Visibilidad digital</h4>
-                    <p>Tu perfil aparece en nuestro buscador frente a personas que ya están buscando atención psicológica.</p>
-                </div>
-                <div class="unete-beneficio-card">
-                    <span>💬</span>
-                    <h4>Contacto directo</h4>
-                    <p>Los pacientes te escriben directo por WhatsApp. Sin intermediarios, sin comisiones por consulta.</p>
-                </div>
-                <div class="unete-beneficio-card">
-                    <span>💰</span>
-                    <h4>Vos fijás tus honorarios</h4>
-                    <p>Atención Psi no interviene en tus tarifas. Los honorarios los definís vos y los comunicás directamente.</p>
-                </div>
-                <div class="unete-beneficio-card">
-                    <span>🗓️</span>
-                    <h4>Sin exclusividad</h4>
-                    <p>Podés estar en otras plataformas o tener tus propios canales. Nosotros somos un canal más para vos.</p>
-                </div>
-                <div class="unete-beneficio-card">
-                    <span>📍</span>
-                    <h4>Presencial u online</h4>
-                    <p>Cargamos tu modalidad, zona y especialidad para que lleguen los pacientes que se adaptan a tu práctica.</p>
-                </div>
-                <div class="unete-beneficio-card">
-                    <span>🔓</span>
-                    <h4>Cancelás cuando querés</h4>
-                    <p>Sin contratos largos. Si en algún momento querés pausar o darte de baja, lo resolvemos por WhatsApp ese mismo día.</p>
-                </div>
+            <div class="home-paso-flecha unete-flecha">→</div>
+            <div class="home-paso unete-paso">
+                <div class="home-paso-numero">2</div>
+                <h4>Armamos tu perfil</h4>
+                <p>Cargamos tu foto, orientación, modalidad y especialidades.</p>
             </div>
-        </section>
-
-        <!-- CÓMO FUNCIONA -->
-        <section class="unete-como-funciona">
-            <div class="unete-como-inner">
-                <h2 class="home-section-title" style="color: white;">¿Cómo es el proceso?</h2>
-                <div class="home-pasos">
-                    <div class="home-paso unete-paso">
-                        <div class="home-paso-numero">1</div>
-                        <h4>Completás el formulario</h4>
-                        <p>Nos dejás tus datos y nos contactamos a la brevedad.</p>
-                    </div>
-                    <div class="home-paso-flecha unete-flecha">→</div>
-                    <div class="home-paso unete-paso">
-                        <div class="home-paso-numero">2</div>
-                        <h4>Armamos tu perfil</h4>
-                        <p>Cargamos tu foto, orientación, modalidad y especialidades.</p>
-                    </div>
-                    <div class="home-paso-flecha unete-flecha">→</div>
-                    <div class="home-paso unete-paso">
-                        <div class="home-paso-numero">3</div>
-                        <h4>¡Ya estás online!</h4>
-                        <p>Tu perfil aparece en el buscador y los pacientes empiezan a escribirte.</p>
-                    </div>
-                </div>
+            <div class="home-paso-flecha unete-flecha">→</div>
+            <div class="home-paso unete-paso">
+                <div class="home-paso-numero">3</div>
+                <h4>¡Ya estás online!</h4>
+                <p>Tu perfil aparece en el buscador y los pacientes empiezan a escribirte.</p>
             </div>
-        </section>
+        </div>
+    </div>
+</section>
 
-        <!-- FAQ RÁPIDO -->
-        <section class="unete-faq">
-            <h2 class="home-section-title">Preguntas frecuentes</h2>
-            <div class="unete-faq-grid">
-                <div class="unete-faq-item">
-                    <span class="unete-faq-pregunta">¿Tiene algún costo?</span>
-                    <p class="unete-faq-respuesta">Sí, es un servicio por suscripción mensual. El valor lo informamos al momento del contacto según la modalidad que elijas.</p>
-                </div>
-                <div class="unete-faq-item">
-                    <span class="unete-faq-pregunta">¿Cuántos pacientes voy a recibir?</span>
-                    <p class="unete-faq-respuesta">Depende de tu zona, horarios y especialidad. No garantizamos un número fijo, pero trabajamos activamente para que lleguen consultas reales.</p>
-                </div>
-                <div class="unete-faq-item">
-                    <span class="unete-faq-pregunta">¿Puedo manejar mis honorarios?</span>
-                    <p class="unete-faq-respuesta">Sí, totalmente. Vos fijás el valor de tu consulta y lo comunicás directamente al paciente. Nosotros no intervenimos.</p>
-                </div>
-                <div class="unete-faq-item">
-                    <span class="unete-faq-pregunta">¿Puedo darme de baja cuando quiero?</span>
-                    <p class="unete-faq-respuesta">Sí, en cualquier momento del mes. Sin cargos extra ni burocracia. Un mensaje por WhatsApp al staff alcanza.</p>
-                </div>
-            </div>
-        </section>
+<!-- FAQ RÁPIDO -->
+<section class="unete-faq">
+    <h2 class="home-section-title">Preguntas frecuentes</h2>
+    <div class="unete-faq-grid">
+        <div class="unete-faq-item">
+            <span class="unete-faq-pregunta">¿Tiene algún costo?</span>
+            <p class="unete-faq-respuesta">Sí, es un servicio por suscripción mensual. El valor lo informamos al momento del contacto según la modalidad que elijas.</p>
+        </div>
+        <div class="unete-faq-item">
+            <span class="unete-faq-pregunta">¿Cuántos pacientes voy a recibir?</span>
+            <p class="unete-faq-respuesta">Depende de tu zona, horarios y especialidad. No garantizamos un número fijo, pero trabajamos activamente para que lleguen consultas reales.</p>
+        </div>
+        <div class="unete-faq-item">
+            <span class="unete-faq-pregunta">¿Puedo manejar mis honorarios?</span>
+            <p class="unete-faq-respuesta">Sí, totalmente. Vos fijás el valor de tu consulta y lo comunicás directamente al paciente. Nosotros no intervenimos.</p>
+        </div>
+        <div class="unete-faq-item">
+            <span class="unete-faq-pregunta">¿Puedo darme de baja cuando quiero?</span>
+            <p class="unete-faq-respuesta">Sí, en cualquier momento del mes. Sin cargos extra ni burocracia. Un mensaje por WhatsApp al staff alcanza.</p>
+        </div>
+    </div>
+</section>
 
-        <!-- CTA FINAL -->
-        <section class="unete-cta-final">
-            <div class="unete-cta-final-inner">
-                <h2>¿Listo/a para sumar pacientes?</h2>
-                <p>Completá el formulario y nos contactamos en menos de 24hs.</p>
-                <a href="https://forms.gle/GfdLSUh344F66wY36" target="_blank" class="btn-hero">Completar formulario →</a>
-            </div>
-        </section>
+<!-- CTA FINAL -->
+<section class="unete-cta-final">
+    <div class="unete-cta-final-inner">
+        <h2>¿Listo/a para sumar pacientes?</h2>
+        <p>Completá el formulario y nos contactamos en menos de 24hs.</p>
+        <a href="https://forms.gle/GfdLSUh344F66wY36" target="_blank" class="btn-hero">Completar formulario →</a>
+    </div>
+</section>
 
-    </main>
-
-    <footer>
-        <p>&copy; 2026 Atención Psi - Todos los derechos reservados</p>
-    </footer>
-</body>
-</html>
+{% endblock %}
