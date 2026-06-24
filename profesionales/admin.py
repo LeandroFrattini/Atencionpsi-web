@@ -67,8 +67,19 @@ class PsicologoAdmin(admin.ModelAdmin):
 
 @admin.register(Ciudad)
 class CiudadAdmin(admin.ModelAdmin):
-    list_display = ('nombre',)
+    list_display = ('nombre_display', 'ciudad_padre', 'cantidad_barrios')
+    list_filter = ('ciudad_padre',)
     search_fields = ('nombre',)
+    ordering = ('ciudad_padre__nombre', 'nombre')
+
+    def nombre_display(self, obj):
+        return str(obj)
+    nombre_display.short_description = 'Nombre'
+
+    def cantidad_barrios(self, obj):
+        count = obj.barrios.count()
+        return count if count else '-'
+    cantidad_barrios.short_description = 'Barrios/Zonas'
 
 
 @admin.register(ObraSocial)

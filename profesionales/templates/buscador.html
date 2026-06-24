@@ -49,10 +49,23 @@
             <label class="buscador-filtro-label">Ciudad</label>
             <select name="ciudad" class="buscador-select">
                 <option value="">Todas</option>
-                {% for ciudad in ciudades_list %}
-                    <option value="{{ ciudad.id }}" {% if request.GET.ciudad == ciudad.id|stringformat:"i" %}selected{% endif %}>
-                        {{ ciudad.nombre }}
-                    </option>
+                {% for ciudad in ciudades_padres %}
+                    {% if ciudad.barrios_list %}
+                        <optgroup label="{{ ciudad.nombre }}">
+                            <option value="{{ ciudad.id }}" {% if request.GET.ciudad == ciudad.id|stringformat:"i" %}selected{% endif %}>
+                                Todos en {{ ciudad.nombre }}
+                            </option>
+                            {% for barrio in ciudad.barrios_list %}
+                                <option value="{{ barrio.id }}" {% if request.GET.ciudad == barrio.id|stringformat:"i" %}selected{% endif %}>
+                                    &nbsp;&nbsp;&nbsp;{{ barrio.nombre }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    {% else %}
+                        <option value="{{ ciudad.id }}" {% if request.GET.ciudad == ciudad.id|stringformat:"i" %}selected{% endif %}>
+                            {{ ciudad.nombre }}
+                        </option>
+                    {% endif %}
                 {% endfor %}
             </select>
         </div>

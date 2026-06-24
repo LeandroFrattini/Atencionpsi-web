@@ -19,15 +19,27 @@ class Publico(models.Model):
 
 
 class Ciudad(models.Model):
-    nombre = models.CharField(max_length=100, unique=True)
+    nombre = models.CharField(max_length=100)
+    ciudad_padre = models.ForeignKey(
+        'self', null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='barrios',
+        verbose_name='Ciudad padre'
+    )
 
     class Meta:
         verbose_name = "Ciudad"
         verbose_name_plural = "Ciudades"
-        ordering = ['nombre']
+        ordering = ['ciudad_padre__nombre', 'nombre']
+        unique_together = [('nombre', 'ciudad_padre')]
 
     def __str__(self):
+        if self.ciudad_padre:
+            return f"{self.ciudad_padre.nombre} - {self.nombre}"
         return self.nombre
+
+    def nombre_completo(self):
+        return self.__str__()
 
 
 class ObraSocial(models.Model):
