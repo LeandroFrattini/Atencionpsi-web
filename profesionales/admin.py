@@ -42,7 +42,7 @@ class PsicologoAdmin(admin.ModelAdmin):
             'fields': ('nombre', 'slug', 'foto', 'descripcion')
         }),
         ('Atención', {
-            'fields': ('orientacion', 'ciudades_display', 'modalidades', 'destinatarios')
+            'fields': ('orientacion', 'ciudades', 'modalidades', 'destinatarios')
         }),
         ('Cobertura', {
             'fields': ('obras_sociales', 'nota_facturacion'),
