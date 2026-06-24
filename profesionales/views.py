@@ -9,18 +9,7 @@ from .models import Psicologo, Modalidad, Publico, ClickWhatsApp, Ciudad
 def inicio(request):
     total_profesionales = Psicologo.objects.count()
     # Ciudades únicas no vacías (excluyendo "Online")
-    ciudades = (
-        Psicologo.objects
-        .exclude(ciudad='')
-        .values_list('ciudad', flat=True)
-        .distinct()
-    )
-    # Extraer ciudad base (antes del " - ") para no contar "CABA - Palermo" y "CABA - Recoleta" como 2
-    ciudades_base = set()
-    for c in ciudades:
-        base = c.split(' - ')[0].split(' /')[0].strip()
-        ciudades_base.add(base)
-    total_ciudades = len(ciudades_base)
+    total_ciudades = Ciudad.objects.filter(psicologo__isnull=False).distinct().count()
 
     return render(request, 'index.html', {
         'total_profesionales': total_profesionales,
@@ -43,7 +32,7 @@ def buscador(request):
         queryset = queryset.filter(destinatarios__id=dirigido_a_id)
 
     if ciudad:
-        queryset = queryset.filter(ciudad_obj__id=ciudad)
+        queryset = queryset.filter(ciudades__id=ciudad)
 
     # Destacados primero, el resto en orden aleatorio
     destacados = list(queryset.filter(destacado=True).distinct())

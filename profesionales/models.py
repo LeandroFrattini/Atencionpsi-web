@@ -46,7 +46,7 @@ class Psicologo(models.Model):
     slug = models.SlugField(max_length=150, unique=True, blank=True, null=True)
     foto = models.ImageField(upload_to='psicologos/', null=True, blank=True)
     ciudad = models.CharField(max_length=100, blank=True, default='')  # campo legado
-    ciudad_obj = models.ForeignKey('Ciudad', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='Ciudad')
+    ciudades = models.ManyToManyField('Ciudad', blank=True, verbose_name='Ciudades')
     modalidades = models.ManyToManyField(Modalidad, blank=True)
     destinatarios = models.ManyToManyField(Publico, blank=True)
     whatsapp = models.CharField(max_length=20)
