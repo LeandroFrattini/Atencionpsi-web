@@ -1672,31 +1672,6 @@ main.buscador-main {
    MEJORAS v1.3
    ============================================= */
 
-/* ── BADGE DESTACADO ── */
-.card-destacada {
-    border: 2px solid #f0c94d;
-    position: relative;
-}
-
-.badge-destacado {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: linear-gradient(135deg, #f0c94d, #e8a838);
-    color: white;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
-    letter-spacing: 0.03em;
-    z-index: 1;
-}
-
-.badge-destacado-perfil {
-    position: static;
-    display: inline-block;
-    margin: 8px 0 12px;
-}
 
 /* ── MODAL DE PERFIL ── */
 .modal-overlay {
