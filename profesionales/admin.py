@@ -33,7 +33,7 @@ class PsicologoAdminForm(forms.ModelForm):
 class PsicologoAdmin(admin.ModelAdmin):
     form = PsicologoAdminForm
     list_display = ('nombre', 'ciudades_display', 'destacado', 'clicks_totales')
-    list_filter = ('destacado', 'ciudades_display', 'modalidades', 'destinatarios')
+    list_filter = ('destacado', 'ciudades', 'modalidades', 'destinatarios')
     search_fields = ('nombre', 'orientacion', 'ciudades__nombre')
     prepopulated_fields = {'slug': ('nombre',)}
     filter_horizontal = ('modalidades', 'destinatarios', 'obras_sociales', 'ciudades')
