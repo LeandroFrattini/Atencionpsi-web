@@ -1,149 +1,133 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ p.nombre }} | Atención Psi</title>
-    <meta name="description" content="Conocé el perfil de {{ p.nombre }}, profesional de la salud mental en Atención Psi. {{ p.orientacion }}.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'style.css' %}?v=1.2">
-    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
-</head>
-<body>
-    <nav>
-        <div class="nav-container">
-            <a href="{% url 'inicio' %}" class="logo"><span class="logo-verde">Atención</span><span class="logo-rosa">Psi</span></a>
-            <ul class="nav-links">
-                <li><a href="{% url 'inicio' %}">Inicio</a></li>
-                <li><a href="{% url 'buscador' %}">Buscador</a></li>
-                <li><a href="{% url 'sobre_nosotros' %}">Sobre Nosotros</a></li>
-                <li><a href="{% url 'faq' %}">Preguntas Frecuentes</a></li>
-                <li><a href="{% url 'unete' %}" class="btn-unete-nav">Únete al Equipo</a></li>
-            </ul>
+
+{% block title %}{{ p.nombre }} | Atención Psi{% endblock %}
+{% block meta_description %}Conocé el perfil de {{ p.nombre }}, psicólogo/a en Atención Psi. {{ p.orientacion }}. {% if p.ciudad %}Atención en {{ p.ciudad }}.{% endif %}{% endblock %}
+{% block og_title %}{{ p.nombre }} | Atención Psi{% endblock %}
+{% block og_description %}{{ p.orientacion }}{% if p.ciudad %} · {{ p.ciudad }}{% endif %}. Contacto directo por WhatsApp.{% endblock %}
+{% block og_type %}profile{% endblock %}
+{% block og_url %}/psicologo/{{ p.slug }}/{% endblock %}
+{% block canonical %}/psicologo/{{ p.slug }}/{% endblock %}
+{% if p.foto %}{% block og_image %}{{ p.foto.url }}{% endblock %}{% endif %}
+
+{% block content %}
+<main class="perfil-main">
+
+    <!-- VOLVER -->
+    <div class="perfil-volver">
+        <a href="{% url 'buscador' %}" class="perfil-volver-link">← Volver al buscador</a>
+    </div>
+
+    <div class="perfil-wrapper-nueva">
+
+        <!-- COLUMNA IZQUIERDA -->
+        <div class="perfil-col-izq">
+            <div class="perfil-foto-wrapper">
+                {% if p.foto %}
+                    <img src="{{ p.foto.url }}" alt="{{ p.nombre }}" class="perfil-foto">
+                {% else %}
+                    <img src="{% static 'img/default.png' %}" alt="{{ p.nombre }}" class="perfil-foto">
+                {% endif %}
+            </div>
+
+            {% if p.destacado %}
+                <div class="badge-destacado badge-destacado-perfil">⭐ Destacado</div>
+            {% endif %}
+
+            <h1 class="perfil-nombre">{{ p.nombre }}</h1>
+
+            {% if p.orientacion %}
+                <p class="perfil-orientacion">{{ p.orientacion }}</p>
+            {% endif %}
+
+            {% if p.ciudad %}
+                <p class="perfil-ciudad">📍 {{ p.ciudad }}</p>
+            {% endif %}
+
+            <div class="perfil-modalidades">
+                {% for mod in p.modalidades.all %}
+                    <span class="perfil-modalidad-tag">
+                        {% if "Online" in mod.nombre %}💻{% endif %}
+                        {% if "Presencial" in mod.nombre %}🛋️{% endif %}
+                        {{ mod.nombre }}
+                    </span>
+                {% endfor %}
+            </div>
+
+            <!-- CTA PRINCIPAL -->
+            <a href="{% url 'wa_redirect' p.slug %}"
+               class="btn-ws perfil-btn-ws"
+               target="_blank">
+                💬 Contactar por WhatsApp
+            </a>
         </div>
-    </nav>
 
-    <main class="perfil-main">
+        <!-- COLUMNA DERECHA -->
+        <div class="perfil-col-der">
 
-        <!-- VOLVER -->
-        <div class="perfil-volver">
-            <a href="{% url 'buscador' %}" class="perfil-volver-link">← Volver al buscador</a>
-        </div>
+            {% if p.descripcion %}
+            <div class="perfil-seccion">
+                <h2 class="perfil-seccion-titulo">Sobre el/la profesional</h2>
+                <div class="perfil-descripcion">{{ p.descripcion|linebreaks }}</div>
+            </div>
+            {% endif %}
 
-        <div class="perfil-wrapper-nueva">
-
-            <!-- COLUMNA IZQUIERDA -->
-            <div class="perfil-col-izq">
-                <div class="perfil-foto-wrapper">
-                    {% if p.foto %}
-                        <img src="{{ p.foto.url }}" alt="{{ p.nombre }}" class="perfil-foto">
-                    {% else %}
-                        <img src="{% static 'img/default.png' %}" alt="Perfil" class="perfil-foto">
+            <div class="perfil-seccion">
+                <h2 class="perfil-seccion-titulo">Información de atención</h2>
+                <div class="perfil-info-grid">
+                    {% if p.ciudad %}
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">Ubicación</span>
+                        <span class="perfil-info-valor">{{ p.ciudad }}</span>
+                    </div>
                     {% endif %}
-                </div>
 
-                <h1 class="perfil-nombre">{{ p.nombre }}</h1>
-
-                {% if p.orientacion %}
-                    <p class="perfil-orientacion">{{ p.orientacion }}</p>
-                {% endif %}
-
-                {% if p.ciudad %}
-                    <p class="perfil-ciudad">📍 {{ p.ciudad }}</p>
-                {% endif %}
-
-                <div class="perfil-modalidades">
-                    {% for mod in p.modalidades.all %}
-                        <span class="perfil-modalidad-tag">
-                            {% if "Online" in mod.nombre %}💻{% endif %}
-                            {% if "Presencial" in mod.nombre %}🛋️{% endif %}
-                            {{ mod.nombre }}
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">Modalidad</span>
+                        <span class="perfil-info-valor">
+                            {% for mod in p.modalidades.all %}
+                                {{ mod.nombre }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                No especificada
+                            {% endfor %}
                         </span>
-                    {% endfor %}
-                </div>
+                    </div>
 
-                <!-- CTA PRINCIPAL -->
-                <a href="https://wa.me/{{ p.whatsapp }}?text=Hola,%20te%20escribo%20desde%20Atención%20Psi,%20me%20gustaría%20coordinar%20un%20turno%20con%20vos!"
-                   class="btn-ws perfil-btn-ws"
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">Orientación</span>
+                        <span class="perfil-info-valor">{{ p.orientacion|default:"No especificada" }}</span>
+                    </div>
+
+                    <div class="perfil-info-item">
+                        <span class="perfil-info-label">Atiende a</span>
+                        <span class="perfil-info-valor">
+                            {% for d in p.destinatarios.all %}
+                                {{ d.nombre }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                                No especificado
+                            {% endfor %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="perfil-seccion">
+                <h2 class="perfil-seccion-titulo">Obras sociales / Prepagas</h2>
+                <p class="perfil-obras">{{ p.obras_sociales|default:"Particular / Consultar reintegros" }}</p>
+            </div>
+
+            <!-- CTA FINAL -->
+            <div class="perfil-cta-final">
+                <p>¿Te interesa trabajar con {{ p.nombre }}?</p>
+                <a href="{% url 'wa_redirect' p.slug %}"
+                   class="btn-ws perfil-btn-ws-final"
                    target="_blank">
-                    💬 Contactar por WhatsApp
+                    💬 Escribir por WhatsApp
                 </a>
             </div>
 
-            <!-- COLUMNA DERECHA -->
-            <div class="perfil-col-der">
-
-                {% if p.descripcion %}
-                <div class="perfil-seccion">
-                    <h2 class="perfil-seccion-titulo">Sobre el/la profesional</h2>
-                    <div class="perfil-descripcion">{{ p.descripcion|linebreaks }}</div>
-                </div>
-                {% endif %}
-
-                <div class="perfil-seccion">
-                    <h2 class="perfil-seccion-titulo">Información de atención</h2>
-                    <div class="perfil-info-grid">
-                        {% if p.ciudad %}
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">Ubicación</span>
-                            <span class="perfil-info-valor">{{ p.ciudad }}</span>
-                        </div>
-                        {% endif %}
-
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">Modalidad</span>
-                            <span class="perfil-info-valor">
-                                {% for mod in p.modalidades.all %}
-                                    {{ mod.nombre }}{% if not forloop.last %}, {% endif %}
-                                {% empty %}
-                                    No especificada
-                                {% endfor %}
-                            </span>
-                        </div>
-
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">Orientación</span>
-                            <span class="perfil-info-valor">{{ p.orientacion|default:"No especificada" }}</span>
-                        </div>
-
-                        <div class="perfil-info-item">
-                            <span class="perfil-info-label">Atiende a</span>
-                            <span class="perfil-info-valor">
-                                {% for d in p.destinatarios.all %}
-                                    {{ d.nombre }}{% if not forloop.last %}, {% endif %}
-                                {% empty %}
-                                    No especificado
-                                {% endfor %}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="perfil-seccion">
-                    <h2 class="perfil-seccion-titulo">Obras sociales / Prepagas</h2>
-                    <p class="perfil-obras">{{ p.obras_sociales|default:"Particular / Consultar reintegros" }}</p>
-                </div>
-
-                <!-- CTA FINAL -->
-                <div class="perfil-cta-final">
-                    <p>¿Te interesa trabajar con {{ p.nombre }}?</p>
-                    <a href="https://wa.me/{{ p.whatsapp }}?text=Hola,%20te%20escribo%20desde%20Atención%20Psi,%20me%20gustaría%20coordinar%20un%20turno%20con%20vos!"
-                       class="btn-ws perfil-btn-ws-final"
-                       target="_blank">
-                        💬 Escribir por WhatsApp
-                    </a>
-                </div>
-
-            </div>
         </div>
+    </div>
 
-    </main>
-
-    <footer>
-        <p>&copy; 2026 Atención Psi - Todos los derechos reservados</p>
-    </footer>
-</body>
-</html>
+</main>
+{% endblock %}

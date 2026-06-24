@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /wa/
+
+Sitemap: https://atencionpsi.com.ar/sitemap.xml
