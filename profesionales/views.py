@@ -2,7 +2,10 @@ import random
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from .models import Psicologo, Modalidad, Publico, ClickWhatsApp, Ciudad
+from .bot_detector import es_bot
 
 
 # --- VISTA DE INICIO ---
@@ -64,8 +67,36 @@ def detalle_psicologo(request, slug):
     return render(request, 'perfil.html', {'p': psicologo})
 
 
-# --- REDIRECT WHATSAPP (registra el click) ---
+# --- REDIRECT WHATSAPP (fallback por compatibilidad, YA NO cuenta clicks) ---
 def wa_redirect(request, slug):
+    """
+    Se mantiene solo por si hay links viejos indexados o compartidos apuntando acá.
+    El conteo de clicks real se hace en registrar_click_whatsapp (ver abajo),
+    que se dispara únicamente por JS ante un click humano real. Los templates
+    actuales ya no usan esta vista para el botón de WhatsApp.
+    """
+    psicologo = get_object_or_404(Psicologo, slug=slug)
+    wa_url = (
+        f"https://wa.me/{psicologo.whatsapp}"
+        "?text=Hola,%20te%20escribo%20desde%20Atenci%C3%B3n%20Psi,"
+        "%20me%20gustar%C3%ADa%20coordinar%20un%20turno%20con%20vos!"
+    )
+    return redirect(wa_url)
+
+
+# --- REGISTRO DE CLICK REAL (llamado por JS ante un click humano) ---
+@require_POST
+def registrar_click_whatsapp(request, slug):
+    """
+    Registra un click REAL en el botón de WhatsApp.
+    Se llama solo desde JavaScript, disparado por el evento 'click' del navegador.
+    Un bot que solo lee el HTML (Google, previews de WhatsApp/Facebook, scrapers,
+    etc.) nunca ejecuta JS ni dispara clicks, así que nunca llega acá.
+    Además se filtra por User-Agent como capa extra de seguridad.
+    """
+    if es_bot(request):
+        return JsonResponse({'ok': False})
+
     psicologo = get_object_or_404(Psicologo, slug=slug)
     try:
         hoy = timezone.localdate()
@@ -80,12 +111,7 @@ def wa_redirect(request, slug):
     except Exception:
         pass
 
-    wa_url = (
-        f"https://wa.me/{psicologo.whatsapp}"
-        "?text=Hola,%20te%20escribo%20desde%20Atenci%C3%B3n%20Psi,"
-        "%20me%20gustar%C3%ADa%20coordinar%20un%20turno%20con%20vos!"
-    )
-    return redirect(wa_url)
+    return JsonResponse({'ok': True})
 
 
 # --- VISTA ÚNETE ---

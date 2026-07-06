@@ -141,9 +141,11 @@
 
                 <div class="card-buttons">
                     <button class="btn-view btn-ver-perfil">Ver Perfil</button>
-                    <a href="{% url 'wa_redirect' p.slug %}"
-                       class="btn-ws"
-                       target="_blank">
+                    <a href="https://wa.me/{{ p.whatsapp_limpio }}?text=Hola,%20te%20escribo%20desde%20Atenci%C3%B3n%20Psi,%20me%20gustar%C3%ADa%20coordinar%20un%20turno%20con%20vos!"
+                       class="btn-ws js-wa-click"
+                       data-slug="{{ p.slug }}"
+                       target="_blank"
+                       rel="noopener">
                         WhatsApp
                     </a>
                 </div>

@@ -51,9 +51,11 @@
             </div>
 
             <!-- CTA PRINCIPAL -->
-            <a href="{% url 'wa_redirect' p.slug %}"
-               class="btn-ws perfil-btn-ws"
-               target="_blank">
+            <a href="https://wa.me/{{ p.whatsapp_limpio }}?text=Hola,%20te%20escribo%20desde%20Atenci%C3%B3n%20Psi,%20me%20gustar%C3%ADa%20coordinar%20un%20turno%20con%20vos!"
+               class="btn-ws perfil-btn-ws js-wa-click"
+               data-slug="{{ p.slug }}"
+               target="_blank"
+               rel="noopener">
                 💬 Contactar por WhatsApp
             </a>
         </div>
@@ -127,9 +129,11 @@
             <!-- CTA FINAL -->
             <div class="perfil-cta-final">
                 <p>¿Te interesa trabajar con {{ p.nombre }}?</p>
-                <a href="{% url 'wa_redirect' p.slug %}"
-                   class="btn-ws perfil-btn-ws-final"
-                   target="_blank">
+                <a href="https://wa.me/{{ p.whatsapp_limpio }}?text=Hola,%20te%20escribo%20desde%20Atenci%C3%B3n%20Psi,%20me%20gustar%C3%ADa%20coordinar%20un%20turno%20con%20vos!"
+                   class="btn-ws perfil-btn-ws-final js-wa-click"
+                   data-slug="{{ p.slug }}"
+                   target="_blank"
+                   rel="noopener">
                     💬 Escribir por WhatsApp
                 </a>
             </div>

@@ -23,8 +23,11 @@ urlpatterns = [
     path('sobre-nosotros/', views.sobre_nosotros, name='sobre_nosotros'),  # guion, no underscore
     path('preguntas-frecuentes/', views.faq, name='faq'),
 
-    # Redirect WhatsApp (registra el click)
+    # Redirect WhatsApp (fallback por compatibilidad, ya no cuenta clicks)
     path('wa/<slug:slug>/', views.wa_redirect, name='wa_redirect'),
+
+    # Registro de click real en WhatsApp (llamado por JS ante un click humano)
+    path('wa-click/<slug:slug>/', views.registrar_click_whatsapp, name='registrar_click_whatsapp'),
 
     # SEO
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
