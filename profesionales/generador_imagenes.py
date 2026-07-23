@@ -108,7 +108,7 @@ def _crop_top(img, tw, th):
     sw, sh = img.size
     ratio = max(tw / sw, th / sh)
     nw, nh = int(sw * ratio), int(sh * ratio)
-    img = img.resize((nw, nh), Image.LANCZOS)
+    img = img.resize((nw, nh), Image.Resampling.LANCZOS)
     left = (nw - tw) // 2
     return img.crop((left, 0, left + tw, th))
 
