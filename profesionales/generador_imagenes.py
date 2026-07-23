@@ -5,12 +5,13 @@ Genera dos formatos por psicólogo:
   • Post  1080×1080  (franjas de color configurables)
   • Story 1080×1920  (fondo crema con blobs)
 
-Fonts: se descargan de Google Fonts la primera vez y se cachean en /tmp/fonts_apsi/.
-Si la descarga falla (entorno sin internet), se usa Liberation/Lato como fallback.
+Acepta foto_file como objeto file-like (BytesIO, FieldFile, etc.)
+para ser compatible con almacenamiento local y S3.
 """
 
 import os
 import urllib.request
+from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 
 # ── Paleta ───────────────────────────────────────────────────────────────────
@@ -54,8 +55,7 @@ def _font_path(key):
     if not os.path.exists(local):
         try:
             req = urllib.request.Request(
-                spec['url'],
-                headers={'User-Agent': 'Mozilla/5.0'}
+                spec['url'], headers={'User-Agent': 'Mozilla/5.0'}
             )
             with urllib.request.urlopen(req, timeout=15) as r, open(local, 'wb') as f:
                 f.write(r.read())
@@ -105,6 +105,7 @@ def _draw_centered(draw, text, cx, y, fnt, fill):
 # ── Utilidades de imagen ──────────────────────────────────────────────────────
 
 def _crop_top(img, tw, th):
+    """Escala y recorta favoreciendo la parte superior (para retratos)."""
     sw, sh = img.size
     ratio = max(tw / sw, th / sh)
     nw, nh = int(sw * ratio), int(sh * ratio)
@@ -121,11 +122,29 @@ def _rounded_mask(size, radius):
     return m
 
 
-def _load_photo(foto_path, target_w, target_h, rounded=False, radius=40):
-    if not foto_path or not os.path.exists(str(foto_path)):
+def _open_foto(foto_field):
+    """
+    Abre la foto desde un FieldFile de Django (funciona con S3 y FileSystem).
+    Devuelve un BytesIO listo para Image.open(), o None si falla.
+    """
+    if not foto_field:
         return None
     try:
-        img = Image.open(str(foto_path)).convert('RGB')
+        foto_field.open('rb')
+        data = BytesIO(foto_field.read())
+        foto_field.close()
+        return data
+    except Exception:
+        return None
+
+
+def _load_photo(foto_field, target_w, target_h, rounded=False, radius=40):
+    """Carga, recorta y opcionalmente redondea la foto. Devuelve Image o None."""
+    data = _open_foto(foto_field)
+    if data is None:
+        return None
+    try:
+        img = Image.open(data).convert('RGB')
         img = _crop_top(img, target_w, target_h)
         if rounded:
             mask = _rounded_mask((target_w, target_h), radius)
@@ -139,7 +158,11 @@ def _load_photo(foto_path, target_w, target_h, rounded=False, radius=40):
 
 # ── POST 1080×1080 ────────────────────────────────────────────────────────────
 
-def generar_imagen_post(psicologo, color_top_key='verde', color_bottom_key='rosa', foto_path=None):
+def generar_imagen_post(psicologo, color_top_key='verde', color_bottom_key='rosa'):
+    """
+    Genera el post cuadrado 1080×1080.
+    La foto se lee directamente desde psicologo.foto (FieldFile).
+    """
     W, H = 1080, 1080
     img = Image.new('RGB', (W, H), BLANCO)
     draw = ImageDraw.Draw(img)
@@ -162,7 +185,7 @@ def generar_imagen_post(psicologo, color_top_key='verde', color_bottom_key='rosa
 
     # Foto panel izquierdo
     PX, PY, PW, PH, PR = 35, 160, 460, 760, 50
-    foto = _load_photo(foto_path, PW, PH, rounded=True, radius=PR)
+    foto = _load_photo(psicologo.foto, PW, PH, rounded=True, radius=PR)
     if foto:
         img.paste(foto, (PX, PY), mask=foto.split()[3])
     else:
@@ -203,7 +226,7 @@ def generar_imagen_post(psicologo, color_top_key='verde', color_bottom_key='rosa
             _draw_centered(draw, line, RCX, y, fn_mod, GRIS_MEDIO)
             y += 40
 
-    # Destinatarios – centrado, justo arriba de las franjas inferiores
+    # Destinatarios – centrado sobre las franjas inferiores
     dests = [d.nombre for d in psicologo.destinatarios.all()]
     if dests:
         dest_lines = _wrap(', '.join(dests), fn_dest, W - 60)
@@ -218,7 +241,11 @@ def generar_imagen_post(psicologo, color_top_key='verde', color_bottom_key='rosa
 
 # ── STORY 1080×1920 ───────────────────────────────────────────────────────────
 
-def generar_imagen_story(psicologo, foto_path=None):
+def generar_imagen_story(psicologo):
+    """
+    Genera la historia vertical 1080×1920.
+    La foto se lee directamente desde psicologo.foto (FieldFile).
+    """
     W, H = 1080, 1920
     img = Image.new('RGB', (W, H), CREMA)
     draw = ImageDraw.Draw(img)
@@ -232,8 +259,8 @@ def generar_imagen_story(psicologo, foto_path=None):
     fn_pill   = _font('bold',    32)
     fn_script = _font('script',  44)
 
-    MARGIN_L   = 70
-    MAX_W      = W - MARGIN_L - 40
+    MARGIN_L = 70
+    MAX_W    = W - MARGIN_L - 40
 
     # AGENDA ABIERTA
     TITLE = 'AGENDA ABIERTA'
@@ -257,7 +284,7 @@ def generar_imagen_story(psicologo, foto_path=None):
     PX = (W - PW) // 2
     PY = ny + 28
 
-    foto = _load_photo(foto_path, PW, PH, rounded=False)
+    foto = _load_photo(psicologo.foto, PW, PH, rounded=False)
     if foto:
         img.paste(foto, (PX, PY))
     else:

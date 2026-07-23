@@ -80,17 +80,16 @@ class PsicologoAdmin(admin.ModelAdmin):
             buf = BytesIO()
             with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for p in queryset:
-                    foto_path = p.foto.path if p.foto else None
+                    nombre_slug = p.slug or p.nombre.lower().replace(' ', '-')
 
                     # Post 1080×1080
-                    post_img = generar_imagen_post(p, color_top, color_bot, foto_path)
+                    post_img = generar_imagen_post(p, color_top, color_bot)
                     post_buf = BytesIO()
                     post_img.save(post_buf, 'JPEG', quality=92)
-                    nombre_slug = p.slug or p.nombre.lower().replace(' ', '-')
                     zf.writestr(f'{nombre_slug}_post.jpg', post_buf.getvalue())
 
                     # Story 1080×1920
-                    story_img = generar_imagen_story(p, foto_path)
+                    story_img = generar_imagen_story(p)
                     story_buf = BytesIO()
                     story_img.save(story_buf, 'JPEG', quality=92)
                     zf.writestr(f'{nombre_slug}_story.jpg', story_buf.getvalue())
