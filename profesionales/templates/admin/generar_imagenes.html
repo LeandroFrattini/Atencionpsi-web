@@ -1,0 +1,74 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Generar imágenes – Admin{% endblock %}
+
+{% block content %}
+<h1>Generar imágenes para redes sociales</h1>
+
+<p>
+  Se generarán imágenes para
+  <strong>{{ queryset.count }} profesional{% if queryset.count != 1 %}es{% endif %}</strong>:
+</p>
+<ul>
+  {% for p in queryset %}
+    <li>{{ p.nombre }}</li>
+  {% endfor %}
+</ul>
+
+<form method="post">
+  {% csrf_token %}
+
+  {# Preservar los psicólogos seleccionados #}
+  {% for p in queryset %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ p.pk }}">
+  {% endfor %}
+  <input type="hidden" name="action" value="generar_imagenes_action">
+
+  <fieldset class="module aligned">
+    <h2>Configuración del Post (1080 × 1080)</h2>
+
+    <div class="form-row">
+      <label for="color_top" style="width:200px; display:inline-block; font-weight:bold;">
+        Color de franjas arriba:
+      </label>
+      <select name="color_top" id="color_top" style="width:160px;">
+        <option value="verde">🟢 Verde</option>
+        <option value="rosa">🌸 Rosa</option>
+      </select>
+    </div>
+
+    <div class="form-row" style="margin-top:12px;">
+      <label for="color_bottom" style="width:200px; display:inline-block; font-weight:bold;">
+        Color de franjas abajo:
+      </label>
+      <select name="color_bottom" id="color_bottom" style="width:160px;">
+        <option value="rosa">🌸 Rosa</option>
+        <option value="verde">🟢 Verde</option>
+      </select>
+    </div>
+
+    <p class="help" style="margin-top:12px; color:#666;">
+      La historia (Story 1080 × 1920) tiene diseño fijo con fondo crema y no usa estas opciones.
+    </p>
+  </fieldset>
+
+  <div style="margin-top:20px;">
+    <input
+      type="submit"
+      name="apply"
+      value="⬇ Generar y descargar ZIP"
+      class="default"
+      style="padding:10px 20px; font-size:14px;"
+    >
+    &nbsp;
+    <a href="../" style="margin-left:12px;">Cancelar</a>
+  </div>
+</form>
+
+<style>
+  .form-row { margin-bottom: 8px; }
+  fieldset.module { padding: 16px; margin-bottom: 20px; }
+  fieldset.module h2 { font-size: 14px; margin-bottom: 14px; color: #417690; }
+</style>
+{% endblock %}

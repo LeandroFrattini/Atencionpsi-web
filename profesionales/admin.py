@@ -1,4 +1,9 @@
 from django.contrib import admin
+import zipfile
+from io import BytesIO
+from django.http import HttpResponse
+from django.template.response import TemplateResponse
+from django.contrib.admin import helpers
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 from django import forms
@@ -58,10 +63,54 @@ class PsicologoAdmin(admin.ModelAdmin):
     ciudades_display.short_description = 'Ciudades'
 
     def clicks_totales(self, obj):
-
         total = obj.clicks_wa.aggregate(t=Sum('cantidad'))['t'] or 0
         return total
     clicks_totales.short_description = 'Clicks WA'
+
+    actions = ['generar_imagenes_action']
+
+    def generar_imagenes_action(self, request, queryset):
+        """Acción de admin: genera post + story para los psicólogos seleccionados."""
+        from .generador_imagenes import generar_imagen_post, generar_imagen_story
+
+        if 'apply' in request.POST:
+            color_top = request.POST.get('color_top', 'verde')
+            color_bot = request.POST.get('color_bottom', 'rosa')
+
+            buf = BytesIO()
+            with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for p in queryset:
+                    foto_path = p.foto.path if p.foto else None
+
+                    # Post 1080×1080
+                    post_img = generar_imagen_post(p, color_top, color_bot, foto_path)
+                    post_buf = BytesIO()
+                    post_img.save(post_buf, 'JPEG', quality=92)
+                    nombre_slug = p.slug or p.nombre.lower().replace(' ', '-')
+                    zf.writestr(f'{nombre_slug}_post.jpg', post_buf.getvalue())
+
+                    # Story 1080×1920
+                    story_img = generar_imagen_story(p, foto_path)
+                    story_buf = BytesIO()
+                    story_img.save(story_buf, 'JPEG', quality=92)
+                    zf.writestr(f'{nombre_slug}_story.jpg', story_buf.getvalue())
+
+            buf.seek(0)
+            response = HttpResponse(buf.read(), content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="imagenes_psicologos.zip"'
+            return response
+
+        # Mostrar formulario de selección de color
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Generar imágenes para redes sociales',
+            'queryset': queryset,
+            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+            'media': self.media,
+        }
+        return TemplateResponse(request, 'admin/generar_imagenes.html', context)
+
+    generar_imagenes_action.short_description = 'Generar imágenes para redes sociales'
 
 
 
