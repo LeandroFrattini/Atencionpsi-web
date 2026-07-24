@@ -1,111 +1,103 @@
-"""
-Generador de imágenes para redes sociales (AtencionPsi).
-
-Genera dos formatos por psicólogo:
-  • Post  1080×1080  (franjas de color configurables)
-  • Story 1080×1920  (fondo crema con blobs)
-
-Acepta foto_file como objeto file-like (BytesIO, FieldFile, etc.)
-para ser compatible con almacenamiento local y S3.
-"""
-
-import os
-import urllib.request
+import os, urllib.request
 from io import BytesIO
 from PIL import Image, ImageDraw, ImageFont
 
-# ── Paleta ───────────────────────────────────────────────────────────────────
-VERDE       = (125, 168, 123)
-ROSA        = (233, 168, 166)
-BLANCO      = (255, 255, 255)
-NEGRO       = (30, 30, 30)
-GRIS_MEDIO  = (90, 90, 90)
-VERDE_OSC   = (50, 82, 50)
-CREMA       = (240, 235, 224)
-GRIS_BLOB   = (195, 200, 192)
-VERDE_PILL  = (195, 215, 195)
-
-COLOR_MAP = {'verde': VERDE, 'rosa': ROSA}
-
-# ── Fonts ─────────────────────────────────────────────────────────────────────
+_HERE = os.path.dirname(os.path.abspath(__file__))
+FONTS_DIR = os.path.join(_HERE, 'fonts')
 FONT_CACHE = '/tmp/fonts_apsi'
+
+# ── Brand colours ─────────────────────────────────────────────────────────────
+VERDE      = (125, 168, 123)
+ROSA       = (233, 168, 166)
+BLANCO     = (255, 255, 255)
+NEGRO      = (30,  30,  30)
+GRIS_MED   = (100, 100, 100)
+VERDE_OSC  = (50,  82,  50)
+CREMA      = (240, 235, 224)
+GRIS_BLOB  = (190, 198, 188)
+VERDE_PILL = (195, 215, 193)
+COLOR_MAP  = {'verde': VERDE, 'rosa': ROSA}
+
+# ── Font specs (variable-font files) ─────────────────────────────────────────
 FONT_SPECS = {
-    'bold': {
-        'url': 'https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/static/Montserrat-Bold.ttf',
-        'fallback': '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
-        'file': 'Montserrat-Bold.ttf',
-    },
-    'script': {
-        'url': 'https://raw.githubusercontent.com/google/fonts/main/ofl/dancingscript/static/DancingScript-Bold.ttf',
-        'fallback': '/usr/share/fonts/truetype/lato/Lato-BoldItalic.ttf',
-        'file': 'DancingScript-Bold.ttf',
-    },
-    'display': {
-        'url': 'https://raw.githubusercontent.com/google/fonts/main/ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf',
-        'fallback': '/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf',
-        'file': 'PlayfairDisplay-Bold.ttf',
-    },
+    'bold':    {'file': 'Montserrat.ttf',
+                'cdn':  'https://raw.githubusercontent.com/google/fonts/main/ofl/montserrat/Montserrat%5Bwght%5D.ttf'},
+    'script':  {'file': 'DancingScript.ttf',
+                'cdn':  'https://raw.githubusercontent.com/google/fonts/main/ofl/dancingscript/DancingScript%5Bwght%5D.ttf'},
+    'display': {'file': 'PlayfairDisplay.ttf',
+                'cdn':  'https://raw.githubusercontent.com/google/fonts/main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf'},
 }
 
-
-def _font_path(key):
+def _get_font_path(key):
     spec = FONT_SPECS[key]
+    for path in [os.path.join(FONTS_DIR, spec['file']),
+                 os.path.join(FONT_CACHE, spec['file'])]:
+        if os.path.exists(path):
+            return path
     os.makedirs(FONT_CACHE, exist_ok=True)
-    local = os.path.join(FONT_CACHE, spec['file'])
-    if not os.path.exists(local):
-        try:
-            req = urllib.request.Request(
-                spec['url'], headers={'User-Agent': 'Mozilla/5.0'}
-            )
-            with urllib.request.urlopen(req, timeout=15) as r, open(local, 'wb') as f:
-                f.write(r.read())
-        except Exception:
-            return spec['fallback']
-    return local
-
+    tmp = os.path.join(FONT_CACHE, spec['file'])
+    try:
+        req = urllib.request.Request(spec['cdn'], headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            data = r.read()
+        open(tmp, 'wb').write(data)
+        return tmp
+    except Exception:
+        return None
 
 def _font(key, size):
-    try:
-        return ImageFont.truetype(_font_path(key), size)
-    except Exception:
+    path = _get_font_path(key)
+    if path:
         try:
-            return ImageFont.truetype(FONT_SPECS[key]['fallback'], size)
+            fnt = ImageFont.truetype(path, size)
+            # Activate bold weight on variable font
+            for attempt in [lambda f: f.set_variation_by_name('Bold'),
+                            lambda f: f.set_variation_by_axes([700])]:
+                try:
+                    attempt(fnt)
+                    break
+                except Exception:
+                    pass
+            return fnt
         except Exception:
-            return ImageFont.load_default()
+            pass
+    return ImageFont.load_default(size=size)
 
-
-# ── Utilidades de texto ───────────────────────────────────────────────────────
-
-def _text_w(text, fnt):
+# ── Text helpers ──────────────────────────────────────────────────────────────
+def _bb(text, fnt):
     tmp = Image.new('RGB', (1, 1))
-    bb = ImageDraw.Draw(tmp).textbbox((0, 0), text, font=fnt)
-    return bb[2] - bb[0]
+    return ImageDraw.Draw(tmp).textbbox((0, 0), text, font=fnt)
 
+def _tw(text, fnt):
+    b = _bb(text, fnt); return b[2] - b[0]
+
+def _th(text, fnt):
+    b = _bb(text, fnt); return b[3] - b[1]
 
 def _wrap(text, fnt, max_w):
     words = text.split()
     lines, cur = [], ''
-    for word in words:
-        test = (cur + ' ' + word).strip()
-        if _text_w(test, fnt) <= max_w:
+    for w in words:
+        test = (cur + ' ' + w).strip()
+        if _tw(test, fnt) <= max_w:
             cur = test
         else:
-            if cur:
-                lines.append(cur)
-            cur = word
-    if cur:
-        lines.append(cur)
+            if cur: lines.append(cur)
+            cur = w
+    if cur: lines.append(cur)
     return lines or [text]
 
+def _center(draw, text, cx, y, fnt, fill):
+    draw.text((cx - _tw(text, fnt) // 2, y), text, font=fnt, fill=fill)
 
-def _draw_centered(draw, text, cx, y, fnt, fill):
-    draw.text((cx - _text_w(text, fnt) // 2, y), text, font=fnt, fill=fill)
+def _draw_lines(draw, lines, cx, y, fnt, fill, line_gap=10):
+    for line in lines:
+        _center(draw, line, cx, y, fnt, fill)
+        y += _th(line, fnt) + line_gap
+    return y
 
-
-# ── Utilidades de imagen ──────────────────────────────────────────────────────
-
+# ── Photo helpers ─────────────────────────────────────────────────────────────
 def _crop_top(img, tw, th):
-    """Escala y recorta favoreciendo la parte superior (para retratos)."""
     sw, sh = img.size
     ratio = max(tw / sw, th / sh)
     nw, nh = int(sw * ratio), int(sh * ratio)
@@ -113,20 +105,12 @@ def _crop_top(img, tw, th):
     left = (nw - tw) // 2
     return img.crop((left, 0, left + tw, th))
 
-
-def _rounded_mask(size, radius):
-    m = Image.new('L', size, 0)
-    ImageDraw.Draw(m).rounded_rectangle(
-        [0, 0, size[0] - 1, size[1] - 1], radius=radius, fill=255
-    )
+def _round_mask(w, h, r):
+    m = Image.new('L', (w, h), 0)
+    ImageDraw.Draw(m).rounded_rectangle([0, 0, w - 1, h - 1], radius=r, fill=255)
     return m
 
-
 def _open_foto(foto_field):
-    """
-    Abre la foto desde un FieldFile de Django (funciona con S3 y FileSystem).
-    Devuelve un BytesIO listo para Image.open(), o None si falla.
-    """
     if not foto_field:
         return None
     try:
@@ -137,205 +121,215 @@ def _open_foto(foto_field):
     except Exception:
         return None
 
-
-def _load_photo(foto_field, target_w, target_h, rounded=False, radius=40):
-    """Carga, recorta y opcionalmente redondea la foto. Devuelve Image o None."""
+def _paste_foto(canvas, foto_field, x, y, w, h, radius=0):
     data = _open_foto(foto_field)
-    if data is None:
-        return None
-    try:
-        img = Image.open(data).convert('RGB')
-        img = _crop_top(img, target_w, target_h)
-        if rounded:
-            mask = _rounded_mask((target_w, target_h), radius)
-            rgba = img.convert('RGBA')
-            rgba.putalpha(mask)
-            return rgba
-        return img
-    except Exception:
-        return None
+    draw = ImageDraw.Draw(canvas)
+    if data:
+        try:
+            foto = Image.open(data).convert('RGB')
+            foto = _crop_top(foto, w, h)
+            if radius:
+                mask = _round_mask(w, h, radius)
+                rgba = foto.convert('RGBA')
+                rgba.putalpha(mask)
+                canvas.paste(rgba, (x, y), mask=rgba.split()[3])
+            else:
+                canvas.paste(foto, (x, y))
+            return
+        except Exception:
+            pass
+    # Fallback: grey placeholder
+    if radius:
+        draw.rounded_rectangle([x, y, x + w, y + h], radius=radius, fill=(200, 200, 200))
+    else:
+        draw.rectangle([x, y, x + w, y + h], fill=(200, 200, 200))
 
 
-# ── POST 1080×1080 ────────────────────────────────────────────────────────────
-
+# ═══════════════════════════════════════════════════════════════════════════════
+# POST  1080 × 1080
+# ═══════════════════════════════════════════════════════════════════════════════
 def generar_imagen_post(psicologo, color_top_key='verde', color_bottom_key='rosa'):
-    """
-    Genera el post cuadrado 1080×1080.
-    La foto se lee directamente desde psicologo.foto (FieldFile).
-    """
     W, H = 1080, 1080
-    img = Image.new('RGB', (W, H), BLANCO)
-    draw = ImageDraw.Draw(img)
+    STRIPE_H = 130        # height of top/bottom stripe band
+    N_STRIPES = 20        # 1080 / 54 = 20 stripes of 54 px
+    SW = W // N_STRIPES   # stripe width = 54
 
     c_top = COLOR_MAP.get(color_top_key, VERDE)
     c_bot = COLOR_MAP.get(color_bottom_key, ROSA)
 
-    # Franjas verticales top (y=0..140)
-    STRIPE_W = 52
-    x, alt = 0, True
-    while x < W:
-        draw.rectangle([x, 0, min(x + STRIPE_W - 1, W - 1), 140], fill=c_top if alt else BLANCO)
-        x += STRIPE_W; alt = not alt
+    canvas = Image.new('RGB', (W, H), CREMA)
+    draw   = ImageDraw.Draw(canvas)
 
-    # Franjas verticales bottom (y=940..H)
-    x, alt = 0, True
-    while x < W:
-        draw.rectangle([x, 940, min(x + STRIPE_W - 1, W - 1), H - 1], fill=c_bot if alt else BLANCO)
-        x += STRIPE_W; alt = not alt
+    # ── Top stripe band ──
+    for i in range(N_STRIPES):
+        fill = c_top if i % 2 == 0 else BLANCO
+        draw.rectangle([i * SW, 0, (i + 1) * SW, STRIPE_H], fill=fill)
 
-    # Foto panel izquierdo
-    PX, PY, PW, PH, PR = 35, 160, 460, 760, 50
-    foto = _load_photo(psicologo.foto, PW, PH, rounded=True, radius=PR)
-    if foto:
-        img.paste(foto, (PX, PY), mask=foto.split()[3])
+    # ── Bottom stripe band ──
+    for i in range(N_STRIPES):
+        fill = c_bot if i % 2 == 0 else BLANCO
+        draw.rectangle([i * SW, H - STRIPE_H, (i + 1) * SW, H], fill=fill)
+
+    # ── Photo (left half, rounded) ──
+    PX, PY, PW, PH = 30, 155, 470, 780
+    _paste_foto(canvas, psicologo.foto, PX, PY, PW, PH, radius=40)
+
+    # ── Right panel ──
+    RX  = 530          # left edge
+    RW  = W - RX - 10  # right panel width  ≈ 540
+    RCX = RX + RW // 2 # center x           ≈ 805
+
+    TEXT_TOP = STRIPE_H + 30
+    TEXT_BOT = H - STRIPE_H - 70  # leave space for destinatarios line
+
+    # Fonts
+    f_name   = _font('bold',    42)
+    f_sep    = _font('bold',    16)
+    f_script = _font('script',  38)
+    f_mod    = _font('bold',    26)
+    f_dest   = _font('script',  52)
+    f_wp     = _font('bold',    22)
+
+    # --- Nombre ---
+    nombre = (psicologo.nombre or '').strip()
+    name_label = 'Lic. ' + nombre
+    name_lines = _wrap(name_label, f_name, RW - 20)
+
+    # --- Orientación ---
+    orient = (psicologo.orientacion or '').strip()
+    orient_lines = _wrap(orient, f_script, RW - 20)
+
+    # --- Modalidades ---
+    modalidades = (psicologo.modalidades or '').strip().upper()
+    mod_lines = _wrap(modalidades, f_mod, RW - 20)
+
+    # --- WhatsApp ---
+    wp_raw = ''.join(c for c in (psicologo.whatsapp or '') if c.isdigit())
+    # Format: last 8 digits as "XX XX XX XX", first part as area code
+    if len(wp_raw) >= 10:
+        area = wp_raw[-10:-8]
+        num  = wp_raw[-8:]
+        wp_text = area + ' - ' + num[:4] + ' - ' + num[4:]
     else:
-        draw.rounded_rectangle([PX, PY, PX + PW, PY + PH], radius=PR, fill=(210, 210, 210))
+        wp_text = psicologo.whatsapp or ''
 
-    # Panel derecho
-    RCX = 780
-    RW  = 510
+    # --- Measure total text block height ---
+    LG = 14  # line gap
+    name_block_h  = sum(_th(l, f_name)   + LG for l in name_lines)
+    sep_margin    = 24
+    sep_h         = 2
+    orient_block_h= sum(_th(l, f_script) + LG for l in orient_lines)
+    mod_block_h   = sum(_th(l, f_mod)    + LG for l in mod_lines)
+    wp_h          = _th(wp_text, f_wp)
+    BLOCK_H = name_block_h + sep_margin + sep_h + sep_margin + orient_block_h + 16 + mod_block_h + 16 + wp_h
 
-    fn_nombre = _font('bold',   42)
-    fn_ori    = _font('script', 38)
-    fn_mod    = _font('bold',   30)
-    fn_dest   = _font('script', 52)
+    panel_h = TEXT_BOT - TEXT_TOP
+    cy = TEXT_TOP + max(0, (panel_h - BLOCK_H) // 2)
 
-    y = 220
+    # Draw name
+    for line in name_lines:
+        _center(draw, line, RCX, cy, f_name, NEGRO)
+        cy += _th(line, f_name) + LG
 
-    # Nombre
-    for line in _wrap(psicologo.nombre, fn_nombre, RW - 10):
-        _draw_centered(draw, line, RCX, y, fn_nombre, NEGRO)
-        y += 55
-
-    # Separador
-    y += 12
-    draw.rectangle([RCX - 80, y, RCX + 80, y + 3], fill=c_top)
-    y += 22
+    # Separator line
+    cy += sep_margin // 2
+    sep_w = min(280, RW - 60)
+    draw.line([(RCX - sep_w // 2, cy), (RCX + sep_w // 2, cy)], fill=GRIS_MED, width=2)
+    cy += sep_h + sep_margin // 2
 
     # Orientación
-    if psicologo.orientacion:
-        for line in _wrap(psicologo.orientacion, fn_ori, RW - 10):
-            _draw_centered(draw, line, RCX, y, fn_ori, GRIS_MEDIO)
-            y += 50
-        y += 12
+    for line in orient_lines:
+        _center(draw, line, RCX, cy, f_script, GRIS_MED)
+        cy += _th(line, f_script) + LG
 
+    cy += 8
     # Modalidades
-    mods = [m.nombre for m in psicologo.modalidades.all()]
-    if mods:
-        for line in _wrap('  ·  '.join(mods), fn_mod, RW - 10):
-            _draw_centered(draw, line, RCX, y, fn_mod, GRIS_MEDIO)
-            y += 40
+    for line in mod_lines:
+        _center(draw, line, RCX, cy, f_mod, NEGRO)
+        cy += _th(line, f_mod) + LG
 
-    # Destinatarios – centrado sobre las franjas inferiores
-    dests = [d.nombre for d in psicologo.destinatarios.all()]
-    if dests:
-        dest_lines = _wrap(', '.join(dests), fn_dest, W - 60)
-        n_lines    = len(dest_lines)
-        dest_y     = max(900 - (n_lines - 1) * 62, 760)
-        for line in dest_lines:
-            _draw_centered(draw, line, W // 2, dest_y, fn_dest, c_bot)
-            dest_y += 62
+    cy += 8
+    # WhatsApp
+    _center(draw, wp_text, RCX, cy, f_wp, VERDE_OSC)
 
-    return img
+    # ── Destinatarios centered at bottom ──
+    dest = (psicologo.destinatarios or '').strip()
+    dest_y = H - STRIPE_H - _th(dest, f_dest) - 16
+    _center(draw, dest, W // 2, dest_y, f_dest, c_bot)
+
+    return canvas
 
 
-# ── STORY 1080×1920 ───────────────────────────────────────────────────────────
-
+# ═══════════════════════════════════════════════════════════════════════════════
+# STORY  1080 × 1920
+# ═══════════════════════════════════════════════════════════════════════════════
 def generar_imagen_story(psicologo):
-    """
-    Genera la historia vertical 1080×1920.
-    La foto se lee directamente desde psicologo.foto (FieldFile).
-    """
     W, H = 1080, 1920
-    img = Image.new('RGB', (W, H), CREMA)
-    draw = ImageDraw.Draw(img)
+    canvas = Image.new('RGB', (W, H), CREMA)
+    draw   = ImageDraw.Draw(canvas)
 
-    # Blobs decorativos
-    draw.ellipse([-150, -200,  400,  350], fill=GRIS_BLOB)
-    draw.ellipse([ 700, 1600, 1250, 2100], fill=GRIS_BLOB)
+    # ── Decorative blobs (soft ellipses) ──
+    # Top-RIGHT blob
+    draw.ellipse([600, -250, 1250, 480], fill=GRIS_BLOB)
+    # Bottom-LEFT blob
+    draw.ellipse([-180, 1450, 480, 2100], fill=GRIS_BLOB)
 
-    fn_title  = _font('display', 90)
-    fn_name   = _font('display', 46)
-    fn_pill   = _font('bold',    32)
-    fn_script = _font('script',  44)
+    # ── Fonts ──
+    f_agenda  = _font('display', 88)
+    f_nombre  = _font('display', 42)
+    f_script  = _font('script',  52)
+    f_pill    = _font('bold',    30)
 
-    MARGIN_L = 70
-    MAX_W    = W - MARGIN_L - 40
+    # ── AGENDA ABIERTA ──
+    agenda_text = 'AGENDA ABIERTA'
+    draw.text((55, 52), agenda_text, font=f_agenda, fill=NEGRO)
 
-    # AGENDA ABIERTA
-    TITLE = 'AGENDA ABIERTA'
-    if _text_w(TITLE, fn_title) <= MAX_W:
-        draw.text((MARGIN_L, 55), TITLE, font=fn_title, fill=VERDE_OSC)
-        title_bottom = 165
-    else:
-        draw.text((MARGIN_L,  40), 'AGENDA',  font=fn_title, fill=VERDE_OSC)
-        draw.text((MARGIN_L, 145), 'ABIERTA', font=fn_title, fill=VERDE_OSC)
-        title_bottom = 255
+    # ── LIC. NOMBRE ──
+    nombre = (psicologo.nombre or '').strip().upper()
+    lic_text = 'LIC. ' + nombre
+    lic_lines = _wrap(lic_text, f_nombre, W - 110)
+    cy = 52 + _th(agenda_text, f_agenda) + 14
+    for line in lic_lines:
+        draw.text((55, cy), line, font=f_nombre, fill=NEGRO)
+        cy += _th(line, f_nombre) + 8
 
-    # Nombre
-    name_lines = _wrap(f'Lic. {psicologo.nombre}', fn_name, MAX_W)
-    ny = title_bottom + 18
-    for line in name_lines:
-        draw.text((MARGIN_L, ny), line, font=fn_name, fill=VERDE_OSC)
-        ny += 58
-
-    # Foto rectangular centrada
-    PW, PH = 620, 520
+    # ── Photo centered ──
+    PW, PH = 630, 500
     PX = (W - PW) // 2
-    PY = ny + 28
+    PY = cy + 50
+    _paste_foto(canvas, psicologo.foto, PX, PY, PW, PH, radius=0)
 
-    foto = _load_photo(psicologo.foto, PW, PH, rounded=False)
-    if foto:
-        img.paste(foto, (PX, PY))
+    # ── Pills ──
+    PILL_H     = 64
+    PILL_R     = PILL_H // 2
+    PILL_PAD_X = 40
+    PILL_GAP   = 22
+    pill_top   = PY + PH + 55
+
+    dest       = (psicologo.destinatarios or '').strip()
+    modalidades= (psicologo.modalidades or '').strip()
+    wp_raw     = ''.join(c for c in (psicologo.whatsapp or '') if c.isdigit())
+    if len(wp_raw) >= 8:
+        wp_text = wp_raw[-10:-8] + ' - ' + wp_raw[-8:] if len(wp_raw) >= 10 else wp_raw[:2] + ' - ' + wp_raw[2:]
     else:
-        draw.rectangle([PX, PY, PX + PW, PY + PH], fill=(210, 210, 210))
+        wp_text = psicologo.whatsapp or ''
 
-    # Pills
-    PIL_Y0  = PY + PH + 50
-    PIL_W   = W - 140
-    PIL_X   = 70
-    PIL_H   = 100
-    PIL_GAP = 22
-    ICON_R  = 27
-    ICON_CX = PIL_X + 54
-    TEXT_X  = PIL_X + 110
+    pills = [dest, 'Atención ' + modalidades, wp_text]
 
-    pills = []
-    if psicologo.orientacion:
-        pills.append(psicologo.orientacion)
-    mods = [m.nombre for m in psicologo.modalidades.all()]
-    if mods:
-        pills.append('  ·  '.join(mods))
-    dests = [d.nombre for d in psicologo.destinatarios.all()]
-    if dests:
-        pills.append(', '.join(dests))
+    cy_pill = pill_top
+    for pill_label in pills:
+        pill_w = _tw(pill_label, f_pill) + PILL_PAD_X * 2
+        pill_w = max(pill_w, 300)
+        px = (W - pill_w) // 2
+        draw.rounded_rectangle([px, cy_pill, px + pill_w, cy_pill + PILL_H],
+                                radius=PILL_R, fill=VERDE_PILL)
+        label_y = cy_pill + (PILL_H - _th(pill_label, f_pill)) // 2
+        _center(draw, pill_label, W // 2, label_y, f_pill, VERDE_OSC)
+        cy_pill += PILL_H + PILL_GAP
 
-    for i, text in enumerate(pills):
-        py = PIL_Y0 + i * (PIL_H + PIL_GAP)
-        draw.rounded_rectangle(
-            [PIL_X, py, PIL_X + PIL_W, py + PIL_H],
-            radius=PIL_H // 2,
-            fill=VERDE_PILL,
-        )
-        cy = py + PIL_H // 2
-        draw.ellipse(
-            [ICON_CX - ICON_R, cy - ICON_R, ICON_CX + ICON_R, cy + ICON_R],
-            fill=VERDE,
-        )
-        p_lines = _wrap(text, fn_pill, PIL_W - 160)
-        line_h  = 40
-        ty = py + (PIL_H - len(p_lines) * line_h) // 2
-        for line in p_lines:
-            draw.text((TEXT_X, ty), line, font=fn_pill, fill=VERDE_OSC)
-            ty += line_h
+    # ── Orientación at bottom ──
+    orient = (psicologo.orientacion or '').strip()
+    orient_y = H - _th(orient, f_script) - 80
+    _center(draw, orient, W // 2, orient_y, f_script, NEGRO)
 
-    # Texto script decorativo al fondo
-    if psicologo.orientacion:
-        script_y = PIL_Y0 + len(pills) * (PIL_H + PIL_GAP) + 55
-        if script_y + 60 < H - 50:
-            for line in _wrap(psicologo.orientacion, fn_script, W - 140):
-                w_ = _text_w(line, fn_script)
-                draw.text(((W - w_) // 2, script_y), line, font=fn_script, fill=(110, 140, 110))
-                script_y += 56
-
-    return img
+    return canvas
