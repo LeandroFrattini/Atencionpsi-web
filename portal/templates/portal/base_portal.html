@@ -1,0 +1,48 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}Portal | Atención Psi{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'portal.css' %}?v=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body>
+    {% if request.user.is_authenticated %}
+    <nav class="portal-nav">
+        <div class="portal-nav-inner">
+            <a href="{% url 'portal_dashboard' %}" class="portal-logo"><span class="v">Atención</span><span class="r">Psi</span> <small>portal</small></a>
+            <ul class="portal-nav-links">
+                <li><a href="{% url 'portal_dashboard' %}">Agenda</a></li>
+                <li><a href="{% url 'portal_pacientes' %}">Pacientes</a></li>
+                <li><a href="{% url 'portal_cambiar_password' %}">Mi contraseña</a></li>
+                <li>
+                    <form method="post" action="{% url 'portal_logout' %}" class="portal-logout-form">
+                        {% csrf_token %}
+                        <button type="submit">Cerrar sesión</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="portal-main">
+        {% if messages %}
+            <ul class="portal-messages">
+                {% for message in messages %}
+                    <li class="portal-message portal-message-{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

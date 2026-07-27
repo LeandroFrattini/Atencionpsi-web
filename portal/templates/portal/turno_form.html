@@ -1,0 +1,25 @@
+{% extends 'portal/base_portal.html' %}
+{% block title %}{% if modo == 'nuevo' %}Nuevo turno{% else %}Editar turno{% endif %} | Portal Atención Psi{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>{% if modo == 'nuevo' %}Nuevo turno{% else %}Editar turno{% endif %}</h1>
+</div>
+
+<form method="post" class="portal-form">
+    {% csrf_token %}
+
+    <div class="portal-field"><label>Paciente</label>{{ form.paciente }}</div>
+    <div class="portal-field"><label>Fecha y hora</label>{{ form.fecha_hora }}</div>
+    <div class="portal-field"><label>Estado</label>{{ form.estado }}</div>
+    <div class="portal-field"><label>Comentarios de la sesión</label>{{ form.notas_sesion }}</div>
+
+    <div class="portal-form-actions">
+        <button type="submit" class="portal-btn portal-btn-primary">Guardar</button>
+        {% if turno %}
+            <a href="{% url 'portal_paciente_detalle' turno.paciente.pk %}" class="portal-btn portal-btn-outline">Cancelar</a>
+        {% else %}
+            <a href="{% url 'portal_dashboard' %}" class="portal-btn portal-btn-outline">Cancelar</a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

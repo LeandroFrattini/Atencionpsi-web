@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 import re
@@ -67,6 +68,19 @@ class Psicologo(models.Model):
     descripcion = models.TextField(blank=True)
     obras_sociales = models.ManyToManyField('ObraSocial', blank=True, verbose_name='Obras Sociales / Prepagas')
     nota_facturacion = models.CharField(max_length=200, blank=True, verbose_name='Nota de facturación', help_text='Ej: Hace facturas para reintegro')
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='psicologo',
+        verbose_name='Usuario de acceso al portal',
+        help_text='Cuenta de login para que este profesional entre a /portal/. Se crea desde Usuarios en el admin.'
+    )
+    debe_cambiar_password = models.BooleanField(
+        default=False,
+        verbose_name='Debe cambiar la contraseña',
+        help_text='Se marca sola al crear el acceso con contraseña provisoria. Se desmarca cuando el profesional la cambia.'
+    )
 
     def whatsapp_limpio(self):
         """Retorna el número de WhatsApp en formato internacional sin símbolos."""

@@ -1,6 +1,7 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 import zipfile
 from io import BytesIO
+from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.contrib.admin import helpers
@@ -9,10 +10,18 @@ from django.db.models.functions import TruncMonth
 from django import forms
 from django.utils.html import format_html
 from django.urls import path
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from datetime import timedelta
 from .models import Psicologo, Modalidad, Publico, Visita, ClickWhatsApp, Ciudad, ObraSocial
+
+
+class CrearAccesoPortalForm(forms.Form):
+    email = forms.EmailField(label='Email (va a ser el usuario para entrar a /portal/)')
+    password_inicial = forms.CharField(
+        label='Contraseña inicial',
+        help_text='Por defecto es el WhatsApp cargado. El profesional va a tener que cambiarla obligatoriamente en su primer ingreso.'
+    )
 
 
 @admin.register(Modalidad)
@@ -56,7 +65,12 @@ class PsicologoAdmin(admin.ModelAdmin):
         ('Contacto y configuración', {
             'fields': ('whatsapp', 'destacado')
         }),
+        ('Acceso al portal', {
+            'fields': ('usuario',),
+            'description': 'Para que este profesional pueda entrar a /portal/, primero creale un usuario en Usuarios y seleccionalo acá.'
+        }),
     )
+    autocomplete_fields = ('usuario',)
 
     def ciudades_display(self, obj):
         return ', '.join(c.nombre for c in obj.ciudades.all()) or '—'
@@ -67,7 +81,73 @@ class PsicologoAdmin(admin.ModelAdmin):
         return total
     clicks_totales.short_description = 'Clicks WA'
 
-    actions = ['generar_imagenes_action']
+    actions = ['generar_imagenes_action', 'crear_acceso_portal_action']
+
+    def crear_acceso_portal_action(self, request, queryset):
+        """
+        Crea (o actualiza) el usuario de portal de UN psicólogo por vez:
+        usuario = email, contraseña inicial = la que se indique (por defecto
+        su WhatsApp). La contraseña inicial NO pasa por los validadores fuertes
+        a propósito (es de un solo uso) — se marca debe_cambiar_password para
+        forzar el cambio en el primer login, momento en el que sí se validan
+        todas las reglas de contraseña.
+        """
+        if queryset.count() != 1:
+            self.message_user(request, 'Elegí un solo profesional a la vez para esta acción.', level=messages.ERROR)
+            return
+
+        psicologo = queryset.first()
+
+        if 'apply' in request.POST:
+            form = CrearAccesoPortalForm(request.POST)
+            if form.is_valid():
+                email = form.cleaned_data['email']
+                password_inicial = form.cleaned_data['password_inicial']
+
+                ya_existe = User.objects.filter(username__iexact=email)
+                if psicologo.usuario_id:
+                    ya_existe = ya_existe.exclude(pk=psicologo.usuario_id)
+
+                if ya_existe.exists():
+                    form.add_error('email', 'Ya hay un usuario con ese email.')
+                else:
+                    if psicologo.usuario:
+                        user = psicologo.usuario
+                        user.username = email
+                        user.email = email
+                    else:
+                        user = User(username=email, email=email)
+                    user.is_staff = False
+                    user.is_superuser = False
+                    user.set_password(password_inicial)
+                    user.save()
+
+                    psicologo.usuario = user
+                    psicologo.debe_cambiar_password = True
+                    psicologo.save(update_fields=['usuario', 'debe_cambiar_password'])
+
+                    self.message_user(
+                        request,
+                        f'Acceso creado para {psicologo.nombre}. Usuario: {email} — '
+                        f'contraseña inicial: {password_inicial}. Pasale estos datos; '
+                        f'en el primer ingreso va a tener que cambiarla.',
+                        level=messages.SUCCESS,
+                    )
+                    return redirect(request.path)
+        else:
+            form = CrearAccesoPortalForm(initial={'password_inicial': psicologo.whatsapp_limpio()})
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': f'Crear acceso al portal para {psicologo.nombre}',
+            'psicologo': psicologo,
+            'form': form,
+            'queryset': queryset,
+            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+        }
+        return TemplateResponse(request, 'admin/crear_acceso_portal.html', context)
+
+    crear_acceso_portal_action.short_description = 'Crear acceso al portal (email + contraseña inicial)'
 
     def generar_imagenes_action(self, request, queryset):
         """Acción de admin: genera post + story para los psicólogos seleccionados."""

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import include, path, re_path
 from django.contrib.sitemaps.views import sitemap
 from django.views.generic import TemplateView
 from django.conf import settings
@@ -14,6 +14,7 @@ sitemaps = {
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('portal/', include('portal.urls')),
 
     # Páginas principales
     path('', views.inicio, name='inicio'),

@@ -1,0 +1,35 @@
+{% extends 'portal/base_portal.html' %}
+{% block title %}Pacientes | Portal Atención Psi{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>Mis pacientes</h1>
+    <a href="{% url 'portal_paciente_nuevo' %}" class="portal-btn portal-btn-primary">+ Nuevo paciente</a>
+</div>
+
+{% if pacientes %}
+    <div class="portal-table-wrap">
+        <table class="portal-table">
+            <thead>
+                <tr>
+                    <th>Apellido y nombre</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for paciente in pacientes %}
+                <tr>
+                    <td><a href="{% url 'portal_paciente_detalle' paciente.pk %}">{{ paciente.apellido }}, {{ paciente.nombre }}</a></td>
+                    <td>{{ paciente.telefono|default:"—" }}</td>
+                    <td>{% if paciente.activo %}<span class="portal-estado portal-estado-agendado">Activo</span>{% else %}<span class="portal-estado portal-estado-cancelado">Inactivo</span>{% endif %}</td>
+                    <td><a href="{% url 'portal_paciente_detalle' paciente.pk %}" class="portal-link">Ver</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="portal-empty">Todavía no cargaste ningún paciente.</p>
+{% endif %}
+{% endblock %}

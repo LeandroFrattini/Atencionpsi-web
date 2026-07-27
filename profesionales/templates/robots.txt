@@ -3,5 +3,6 @@ Allow: /
 Disallow: /admin/
 Disallow: /wa/
 Disallow: /wa-click/
+Disallow: /portal/
 
 Sitemap: https://atencionpsi.com.ar/sitemap.xml

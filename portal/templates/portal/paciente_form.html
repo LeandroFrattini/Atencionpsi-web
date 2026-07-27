@@ -1,0 +1,40 @@
+{% extends 'portal/base_portal.html' %}
+{% block title %}{% if modo == 'nuevo' %}Nuevo paciente{% else %}Editar paciente{% endif %} | Portal Atención Psi{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>{% if modo == 'nuevo' %}Nuevo paciente{% else %}Editar paciente{% endif %}</h1>
+</div>
+
+<form method="post" class="portal-form">
+    {% csrf_token %}
+
+    <h2 class="portal-subtitle">Datos personales</h2>
+    <div class="portal-form-grid">
+        <div class="portal-field"><label>Nombre</label>{{ form.nombre }}</div>
+        <div class="portal-field"><label>Apellido</label>{{ form.apellido }}</div>
+        <div class="portal-field"><label>DNI</label>{{ form.dni }}</div>
+        <div class="portal-field"><label>Teléfono</label>{{ form.telefono }}</div>
+        <div class="portal-field"><label>Email</label>{{ form.email }}</div>
+        <div class="portal-field"><label>Fecha de nacimiento</label>{{ form.fecha_nacimiento }}</div>
+    </div>
+    <div class="portal-field portal-checkbox-field">
+        {{ form.activo }} <label for="{{ form.activo.id_for_label }}">Paciente activo</label>
+    </div>
+
+    <h2 class="portal-subtitle">Historia clínica</h2>
+    <div class="portal-field"><label>Motivo de consulta</label>{{ form.motivo_consulta }}</div>
+    <div class="portal-field"><label>Antecedentes</label>{{ form.antecedentes }}</div>
+    <div class="portal-field"><label>Diagnóstico</label>{{ form.diagnostico }}</div>
+    <div class="portal-field"><label>Tratamiento / Plan</label>{{ form.tratamiento }}</div>
+    <div class="portal-field"><label>Notas generales</label>{{ form.notas_generales }}</div>
+
+    <div class="portal-form-actions">
+        <button type="submit" class="portal-btn portal-btn-primary">Guardar</button>
+        {% if paciente %}
+            <a href="{% url 'portal_paciente_detalle' paciente.pk %}" class="portal-btn portal-btn-outline">Cancelar</a>
+        {% else %}
+            <a href="{% url 'portal_pacientes' %}" class="portal-btn portal-btn-outline">Cancelar</a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

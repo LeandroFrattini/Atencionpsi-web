@@ -10,13 +10,45 @@ SECRET_KEY = 'Carmela%70769177.'
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    'atencionpsi.com.ar', 
-    'www.atencionpsi.com.ar', 
-    'atencionpsi-web.onrender.com', 
-    '.onrender.com', 
-    'localhost', 
+    'atencionpsi.com.ar',
+    'www.atencionpsi.com.ar',
+    'atencionpsi-web.onrender.com',
+    '.onrender.com',
+    'localhost',
     '127.0.0.1'
 ]
+
+# Validación de contraseñas (aplica a /admin/ y a /portal/).
+# A propósito más simple que en otros proyectos: los profesionales que usan
+# esto no son todos usuarios técnicos. Se mantiene lo mínimo indispensable
+# (largo razonable, que no sea una clave típica, que no sea igual al usuario)
+# y se saca la restricción de "no solo números" para no generar fricción.
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+]
+
+# Login del portal de psicólogos
+LOGIN_URL = 'portal_login'
+LOGIN_REDIRECT_URL = 'portal_dashboard'
+LOGOUT_REDIRECT_URL = 'portal_login'
+SESSION_COOKIE_AGE = 8 * 60 * 60  # 8 horas
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Hardening de cookies/SSL solo en Render: en local DEBUG está hardcodeado en False
+# así que no sirve para distinguir prod/local (ver convención ya usada más abajo
+# para DATABASES y storage de media).
+if 'RENDER' in os.environ:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    # Render termina TLS en su proxy y reenvía HTTP plano a gunicorn: sin esto,
+    # SECURE_SSL_REDIRECT provoca un loop infinito de redirects en producción.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # APLICACIONES
 INSTALLED_APPS = [
@@ -28,8 +60,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'storages',  # Requerido para Supabase/S3
     'profesionales',
+    'portal',
+    'axes',  # Bloqueo por fuerza bruta en el login del portal
     'django.contrib.sitemaps',
 ]
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_COOLOFF_TIME = 1  # hora de bloqueo automático tras superar el límite de intentos
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -39,6 +80,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

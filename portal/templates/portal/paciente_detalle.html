@@ -1,0 +1,65 @@
+{% extends 'portal/base_portal.html' %}
+{% block title %}{{ paciente }} | Portal Atención Psi{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>{{ paciente.apellido }}, {{ paciente.nombre }}</h1>
+    <div class="portal-header-actions">
+        <a href="{% url 'portal_turno_nuevo' %}?paciente={{ paciente.pk }}" class="portal-btn portal-btn-primary">+ Nuevo turno</a>
+        <a href="{% url 'portal_paciente_editar' paciente.pk %}" class="portal-btn portal-btn-outline">Editar</a>
+    </div>
+</div>
+
+<div class="portal-detail-grid">
+    <div class="portal-card">
+        <h2 class="portal-subtitle">Datos personales</h2>
+        <dl class="portal-dl">
+            <dt>DNI</dt><dd>{{ paciente.dni|default:"—" }}</dd>
+            <dt>Teléfono</dt><dd>{{ paciente.telefono|default:"—" }}</dd>
+            <dt>Email</dt><dd>{{ paciente.email|default:"—" }}</dd>
+            <dt>Fecha de nacimiento</dt><dd>{{ paciente.fecha_nacimiento|date:"d/m/Y"|default:"—" }}</dd>
+            <dt>Estado</dt><dd>{% if paciente.activo %}Activo{% else %}Inactivo{% endif %}</dd>
+        </dl>
+    </div>
+
+    <div class="portal-card">
+        <h2 class="portal-subtitle">Historia clínica</h2>
+        <dl class="portal-dl">
+            <dt>Motivo de consulta</dt><dd>{{ paciente.motivo_consulta|linebreaksbr|default:"—" }}</dd>
+            <dt>Antecedentes</dt><dd>{{ paciente.antecedentes|linebreaksbr|default:"—" }}</dd>
+            <dt>Diagnóstico</dt><dd>{{ paciente.diagnostico|linebreaksbr|default:"—" }}</dd>
+            <dt>Tratamiento / Plan</dt><dd>{{ paciente.tratamiento|linebreaksbr|default:"—" }}</dd>
+            <dt>Notas generales</dt><dd>{{ paciente.notas_generales|linebreaksbr|default:"—" }}</dd>
+        </dl>
+    </div>
+</div>
+
+<h2 class="portal-subtitle">Turnos</h2>
+{% if turnos %}
+    <div class="portal-table-wrap">
+        <table class="portal-table">
+            <thead>
+                <tr>
+                    <th>Fecha y hora</th>
+                    <th>Estado</th>
+                    <th>Comentarios de la sesión</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for turno in turnos %}
+                <tr>
+                    <td>{{ turno.fecha_hora|date:"d/m/Y H:i" }} {% if turno.reagendado %}<span class="portal-tag-reagendado">reagendado</span>{% endif %}</td>
+                    <td><span class="portal-estado portal-estado-{{ turno.estado }}">{{ turno.get_estado_display }}</span></td>
+                    <td>{{ turno.notas_sesion|truncatewords:15|default:"—" }}</td>
+                    <td><a href="{% url 'portal_turno_editar' turno.pk %}" class="portal-link">Editar</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="portal-empty">Todavía no hay turnos cargados para este paciente.</p>
+{% endif %}
+
+<p class="portal-back"><a href="{% url 'portal_pacientes' %}">&larr; Volver a pacientes</a></p>
+{% endblock %}

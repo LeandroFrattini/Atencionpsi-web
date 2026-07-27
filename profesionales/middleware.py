@@ -6,7 +6,7 @@ from .bot_detector import es_bot
 class VisitaMiddleware:
     """Cuenta visitas REALES por página y por día, ignorando el admin y bots conocidos."""
 
-    IGNORAR = ('/admin/', '/wa/', '/wa-click/', '/static/', '/media/', '/favicon')
+    IGNORAR = ('/admin/', '/wa/', '/wa-click/', '/static/', '/media/', '/favicon', '/portal/')
 
     def __init__(self, get_response):
         self.get_response = get_response
