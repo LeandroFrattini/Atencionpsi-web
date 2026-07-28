@@ -246,8 +246,109 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-login-sub { color: #999; font-size: 0.85rem; margin-bottom: 24px; }
 .portal-login-box .portal-field { text-align: left; }
 
+/* ── AGENDA SEMANAL ── */
+.portal-week-nav {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+.portal-week-label { font-weight: 700; color: #333; font-size: 1rem; }
+.portal-week-today-link { margin-left: auto; }
+
+.portal-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 25px;
+}
+.portal-day-box {
+    background: #fff;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.portal-day-box:hover { border-color: #cfe0ce; }
+.portal-day-box-today { background: #fbf6f0; }
+.portal-day-box-active { border-color: #7da87b; box-shadow: 0 4px 18px rgba(125,168,123,0.25); }
+.portal-day-name { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #999; font-weight: 700; }
+.portal-day-num { font-size: 1.4rem; font-weight: 700; color: #333; font-family: 'Playfair Display', serif; }
+.portal-day-count { font-size: 0.72rem; color: #4a7c59; font-weight: 700; }
+
+.portal-day-panel { display: none; }
+.portal-day-panel-active { display: block; }
+
+.portal-table-agenda th:first-child, .portal-table-agenda td:first-child { width: 40px; }
+.portal-agenda-actions { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+.portal-check-form { margin: 0; }
+.portal-check-input {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: #7da87b;
+}
+.portal-check-input:disabled { cursor: default; }
+.portal-inline-form { margin: 0; display: inline; }
+.portal-reagendar-btn {
+    background: none;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* ── MODAL COMENTARIO ── */
+.portal-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.portal-modal-overlay-visible { display: flex; }
+.portal-modal {
+    background: #fff;
+    border-radius: 18px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+.portal-modal h3 { font-family: 'Playfair Display', serif; margin-bottom: 4px; }
+.portal-modal-sub { color: #999; font-size: 0.85rem; margin-bottom: 14px; }
+.portal-modal textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #eee;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: #fafafa;
+    resize: vertical;
+}
+.portal-modal textarea:focus { outline: none; border-color: #7da87b; background: #fff; }
+.portal-modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 700px) {
     .portal-form-grid, .portal-detail-grid { grid-template-columns: 1fr; }
     .portal-header { flex-direction: column; align-items: flex-start; }
+    .portal-week-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+    .portal-day-box { padding: 8px 4px; }
+    .portal-day-num { font-size: 1.1rem; }
+    .portal-day-count { font-size: 0.62rem; }
+    .portal-week-today-link { margin-left: 0; }
+    .portal-agenda-actions { flex-direction: column; align-items: flex-start; gap: 6px; }
 }

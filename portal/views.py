@@ -1,13 +1,18 @@
+import datetime
+
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from .decorators import psicologo_requerido
 from .forms import PacienteForm, TurnoForm
 from .models import Paciente, Turno
 from .scoping import get_paciente_or_404, get_turno_or_404
+
+NOMBRES_DIA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
 
 @psicologo_requerido(permitir_cambio_pendiente=True)
@@ -30,16 +35,82 @@ def cambiar_password(request, psico):
 
 @psicologo_requerido
 def dashboard(request, psico):
-    ahora = timezone.now()
-    proximos_turnos = (
-        Turno.objects.filter(psicologo=psico, fecha_hora__gte=ahora)
-        .exclude(estado='cancelado')
-        .order_by('fecha_hora')[:15]
+    hoy = timezone.localdate()
+    try:
+        offset = int(request.GET.get('semana', 0))
+    except ValueError:
+        offset = 0
+
+    lunes = hoy - datetime.timedelta(days=hoy.weekday()) + datetime.timedelta(weeks=offset)
+    domingo = lunes + datetime.timedelta(days=6)
+
+    turnos_semana = (
+        Turno.objects.filter(psicologo=psico, fecha_hora__date__range=(lunes, domingo))
+        .select_related('paciente')
+        .order_by('fecha_hora')
     )
+    turnos_por_dia = {}
+    for turno in turnos_semana:
+        # fecha_hora llega en UTC desde la base; hay que pasarla a hora local
+        # antes de sacar el día, si no un turno de noche puede caer en el
+        # cuadrado del día siguiente.
+        turnos_por_dia.setdefault(timezone.localtime(turno.fecha_hora).date(), []).append(turno)
+
+    dia_default = None
+    dias = []
+    for i in range(7):
+        fecha = lunes + datetime.timedelta(days=i)
+        turnos_dia = turnos_por_dia.get(fecha, [])
+        es_hoy = fecha == hoy
+        dias.append({
+            'fecha': fecha,
+            'nombre': NOMBRES_DIA[i][:3],
+            'nombre_largo': NOMBRES_DIA[i],
+            'es_hoy': es_hoy,
+            'turnos': turnos_dia,
+            'count': len([t for t in turnos_dia if t.estado != 'cancelado']),
+        })
+        if es_hoy:
+            dia_default = i
+
+    if dia_default is None:
+        # otra semana: abrimos el primer día con turnos, o el lunes si no hay ninguno
+        dia_default = next((i for i, d in enumerate(dias) if d['turnos']), 0)
+
     return render(request, 'portal/dashboard.html', {
         'psico': psico,
-        'proximos_turnos': proximos_turnos,
+        'dias': dias,
+        'lunes': lunes,
+        'domingo': domingo,
+        'semana_offset': offset,
+        'dia_default': dia_default,
     })
+
+
+@psicologo_requerido
+@require_POST
+def turno_marcar_realizado(request, psico, pk):
+    turno = get_turno_or_404(psico, pk)
+    turno.estado = 'realizado'
+    notas = request.POST.get('notas_sesion', '').strip()
+    if notas:
+        turno.notas_sesion = notas
+    turno.save(update_fields=['estado', 'notas_sesion', 'actualizado_en'])
+    messages.success(request, f'Turno de {turno.paciente} marcado como realizado.')
+    return redirect(request.POST.get('next') or 'portal_dashboard')
+
+
+@psicologo_requerido
+@require_POST
+def turno_reagendar_rapido(request, psico, pk):
+    turno = get_turno_or_404(psico, pk)
+    turno.fecha_hora = turno.fecha_hora + datetime.timedelta(weeks=1)
+    turno.estado = 'agendado'
+    turno.reagendado = True
+    turno.save(update_fields=['fecha_hora', 'estado', 'reagendado', 'actualizado_en'])
+    nueva_fecha_local = timezone.localtime(turno.fecha_hora)
+    messages.success(request, f'Turno de {turno.paciente} reagendado para el {nueva_fecha_local:%d/%m %H:%M}.')
+    return redirect(request.POST.get('next') or 'portal_dashboard')
 
 
 @psicologo_requerido

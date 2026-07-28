@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -84,6 +86,47 @@ class PortalScopingTests(TestCase):
         resp = client.get(url)
         self.assertEqual(resp.status_code, 302)
         self.assertIn(reverse('portal_login'), resp.url)
+
+    def test_no_puede_marcar_realizado_turno_de_otro_psicologo(self):
+        url = reverse('portal_turno_marcar_realizado', args=[self.turno_b.pk])
+        resp = self.client_a.post(url, {'notas_sesion': 'intento ajeno'})
+        self.assertEqual(resp.status_code, 404)
+        self.turno_b.refresh_from_db()
+        self.assertEqual(self.turno_b.estado, 'agendado')
+        self.assertEqual(self.turno_b.notas_sesion, '')
+
+    def test_no_puede_reagendar_turno_de_otro_psicologo(self):
+        fecha_original = self.turno_b.fecha_hora
+        url = reverse('portal_turno_reagendar_rapido', args=[self.turno_b.pk])
+        resp = self.client_a.post(url, {})
+        self.assertEqual(resp.status_code, 404)
+        self.turno_b.refresh_from_db()
+        self.assertEqual(self.turno_b.fecha_hora, fecha_original)
+        self.assertFalse(self.turno_b.reagendado)
+
+    def test_puede_marcar_su_propio_turno_como_realizado_con_comentario(self):
+        turno_a = Turno.objects.create(
+            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=timezone.now()
+        )
+        url = reverse('portal_turno_marcar_realizado', args=[turno_a.pk])
+        resp = self.client_a.post(url, {'notas_sesion': 'buena evolución'})
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+        turno_a.refresh_from_db()
+        self.assertEqual(turno_a.estado, 'realizado')
+        self.assertEqual(turno_a.notas_sesion, 'buena evolución')
+
+    def test_puede_reagendar_su_propio_turno_una_semana_despues(self):
+        fecha_original = timezone.now()
+        turno_a = Turno.objects.create(
+            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=fecha_original
+        )
+        url = reverse('portal_turno_reagendar_rapido', args=[turno_a.pk])
+        resp = self.client_a.post(url, {})
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+        turno_a.refresh_from_db()
+        self.assertEqual(turno_a.fecha_hora, fecha_original + datetime.timedelta(weeks=1))
+        self.assertTrue(turno_a.reagendado)
+        self.assertEqual(turno_a.estado, 'agendado')
 
 
 class CambioPasswordObligatorioTests(TestCase):
