@@ -18,5 +18,6 @@ urlpatterns = [
     path('turnos/nuevo/', views.turno_nuevo, name='portal_turno_nuevo'),
     path('turnos/<int:pk>/editar/', views.turno_editar, name='portal_turno_editar'),
     path('turnos/<int:pk>/marcar-realizado/', views.turno_marcar_realizado, name='portal_turno_marcar_realizado'),
+    path('turnos/<int:pk>/marcar-pagado/', views.turno_marcar_pagado, name='portal_turno_marcar_pagado'),
     path('turnos/<int:pk>/reagendar-rapido/', views.turno_reagendar_rapido, name='portal_turno_reagendar_rapido'),
 ]

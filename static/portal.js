@@ -20,59 +20,74 @@ document.addEventListener('DOMContentLoaded', function () {
         activarDia(defaultDia);
     }
 
-    /* ── Confirmación + comentario opcional al marcar un turno como realizado ── */
-    var modal = document.getElementById('portal-comentario-modal');
+    /* ── Modal: al marcar un turno como realizado, preguntar si pagó + comentario opcional ── */
+    var modal = document.getElementById('portal-realizado-modal');
     var textarea = document.getElementById('portal-comentario-texto');
+    var btnGuardar = document.getElementById('portal-comentario-guardar');
+    var choiceBtns = modal ? modal.querySelectorAll('.portal-choice-btn') : [];
     var formPendiente = null;
+    var pagoElegido = null;
 
-    function cerrarModal() {
+    function abrirModal(form) {
+        formPendiente = form;
+        pagoElegido = null;
+        if (textarea) textarea.value = '';
+        choiceBtns.forEach(function (b) { b.classList.remove('portal-choice-btn-selected'); });
+        if (btnGuardar) btnGuardar.disabled = true;
+        if (modal) modal.classList.add('portal-modal-overlay-visible');
+    }
+
+    function cerrarModal(restaurarCheckbox) {
+        if (restaurarCheckbox && formPendiente) {
+            var checkbox = formPendiente.querySelector('.portal-check-input');
+            if (checkbox) { checkbox.checked = false; checkbox.disabled = false; }
+        }
         if (modal) modal.classList.remove('portal-modal-overlay-visible');
         formPendiente = null;
-        if (textarea) textarea.value = '';
+        pagoElegido = null;
     }
 
     document.querySelectorAll('.portal-check-form .portal-check-input').forEach(function (checkbox) {
         checkbox.addEventListener('change', function () {
             if (!checkbox.checked) return;
-            var form = checkbox.closest('form');
-            var quiereComentario = window.confirm('Turno marcado como realizado.\n\n¿Querés ingresar algún comentario de la sesión?');
-            if (!quiereComentario) {
-                form.submit();
-                return;
-            }
-            formPendiente = form;
             checkbox.disabled = true;
-            if (modal) modal.classList.add('portal-modal-overlay-visible');
-            if (textarea) textarea.focus();
+            abrirModal(checkbox.closest('form'));
         });
     });
 
-    var btnGuardar = document.getElementById('portal-comentario-guardar');
+    choiceBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            pagoElegido = btn.dataset.valor;
+            choiceBtns.forEach(function (b) { b.classList.remove('portal-choice-btn-selected'); });
+            btn.classList.add('portal-choice-btn-selected');
+            if (btnGuardar) btnGuardar.disabled = false;
+        });
+    });
+
     if (btnGuardar) {
         btnGuardar.addEventListener('click', function () {
-            if (!formPendiente) return;
+            if (!formPendiente || pagoElegido === null) return;
+            formPendiente.querySelector('input[name="pagado"]').value = pagoElegido;
             formPendiente.querySelector('input[name="notas_sesion"]').value = textarea.value.trim();
-            formPendiente.submit();
+            var form = formPendiente;
+            formPendiente = null;
+            form.submit();
         });
     }
 
     var btnCancelar = document.getElementById('portal-comentario-cancelar');
     if (btnCancelar) {
-        btnCancelar.addEventListener('click', function () {
-            if (formPendiente) {
-                var checkbox = formPendiente.querySelector('.portal-check-input');
-                if (checkbox) { checkbox.checked = false; checkbox.disabled = false; }
-            }
-            cerrarModal();
-        });
+        btnCancelar.addEventListener('click', function () { cerrarModal(true); });
     }
 
     /* ── Confirmación antes de reagendar +1 semana ── */
     document.querySelectorAll('.portal-inline-form').forEach(function (form) {
-        form.addEventListener('submit', function (e) {
-            if (!window.confirm('¿Reagendar este turno una semana después, a la misma hora?')) {
-                e.preventDefault();
-            }
-        });
+        if (form.querySelector('.portal-reagendar-btn')) {
+            form.addEventListener('submit', function (e) {
+                if (!window.confirm('¿Reagendar este turno una semana después, a la misma hora?')) {
+                    e.preventDefault();
+                }
+            });
+        }
     });
 });

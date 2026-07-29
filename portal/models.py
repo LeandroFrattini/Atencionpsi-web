@@ -47,6 +47,7 @@ class Turno(models.Model):
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='turnos')
     fecha_hora = models.DateTimeField()
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='agendado')
+    pagado = models.BooleanField(default=False, verbose_name='Pagado')
     reagendado = models.BooleanField(
         default=False, help_text='Se marca solo cuando se cambia la fecha/hora original.'
     )

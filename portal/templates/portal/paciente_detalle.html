@@ -49,7 +49,16 @@
                 {% for turno in turnos %}
                 <tr>
                     <td>{{ turno.fecha_hora|date:"d/m/Y H:i" }} {% if turno.reagendado %}<span class="portal-tag-reagendado">reagendado</span>{% endif %}</td>
-                    <td><span class="portal-estado portal-estado-{{ turno.estado }}">{{ turno.get_estado_display }}</span></td>
+                    <td>
+                        <span class="portal-estado portal-estado-{{ turno.estado }}">{{ turno.get_estado_display }}</span>
+                        {% if turno.estado == 'realizado' and not turno.pagado %}
+                            <form method="post" action="{% url 'portal_turno_marcar_pagado' turno.pk %}" class="portal-inline-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="portal-tag-alerta">Sin cobrar</button>
+                            </form>
+                        {% endif %}
+                    </td>
                     <td>{{ turno.notas_sesion|truncatewords:15|default:"—" }}</td>
                     <td><a href="{% url 'portal_turno_editar' turno.pk %}" class="portal-link">Editar</a></td>
                 </tr>

@@ -23,7 +23,7 @@ class PacienteForm(forms.ModelForm):
 class TurnoForm(forms.ModelForm):
     class Meta:
         model = Turno
-        fields = ['paciente', 'fecha_hora', 'estado', 'notas_sesion']
+        fields = ['paciente', 'fecha_hora', 'estado', 'pagado', 'notas_sesion']
         widgets = {
             'fecha_hora': forms.DateTimeInput(
                 attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'

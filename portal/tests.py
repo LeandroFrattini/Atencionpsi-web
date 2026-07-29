@@ -128,6 +128,45 @@ class PortalScopingTests(TestCase):
         self.assertTrue(turno_a.reagendado)
         self.assertEqual(turno_a.estado, 'agendado')
 
+    def test_marcar_realizado_sin_pago_queda_pendiente_de_cobro(self):
+        turno_a = Turno.objects.create(
+            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=timezone.now()
+        )
+        url = reverse('portal_turno_marcar_realizado', args=[turno_a.pk])
+        resp = self.client_a.post(url, {'pagado': '0'})
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+        turno_a.refresh_from_db()
+        self.assertEqual(turno_a.estado, 'realizado')
+        self.assertFalse(turno_a.pagado)
+
+    def test_marcar_realizado_con_pago_1(self):
+        turno_a = Turno.objects.create(
+            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=timezone.now()
+        )
+        url = reverse('portal_turno_marcar_realizado', args=[turno_a.pk])
+        resp = self.client_a.post(url, {'pagado': '1'})
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+        turno_a.refresh_from_db()
+        self.assertTrue(turno_a.pagado)
+
+    def test_no_puede_marcar_pagado_turno_de_otro_psicologo(self):
+        url = reverse('portal_turno_marcar_pagado', args=[self.turno_b.pk])
+        resp = self.client_a.post(url, {})
+        self.assertEqual(resp.status_code, 404)
+        self.turno_b.refresh_from_db()
+        self.assertFalse(self.turno_b.pagado)
+
+    def test_puede_marcar_su_propio_turno_como_pagado(self):
+        turno_a = Turno.objects.create(
+            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=timezone.now(),
+            estado='realizado', pagado=False,
+        )
+        url = reverse('portal_turno_marcar_pagado', args=[turno_a.pk])
+        resp = self.client_a.post(url, {})
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+        turno_a.refresh_from_db()
+        self.assertTrue(turno_a.pagado)
+
 
 class CambioPasswordObligatorioTests(TestCase):
     """

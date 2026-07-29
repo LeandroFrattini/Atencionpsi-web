@@ -1,3 +1,4 @@
+import calendar
 import datetime
 
 from django.contrib import messages
@@ -13,6 +14,10 @@ from .models import Paciente, Turno
 from .scoping import get_paciente_or_404, get_turno_or_404
 
 NOMBRES_DIA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+NOMBRES_MES = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+]
 
 
 @psicologo_requerido(permitir_cambio_pendiente=True)
@@ -77,6 +82,17 @@ def dashboard(request, psico):
         # otra semana: abrimos el primer día con turnos, o el lunes si no hay ninguno
         dia_default = next((i for i, d in enumerate(dias) if d['turnos']), 0)
 
+    ultimo_dia_mes = calendar.monthrange(hoy.year, hoy.month)[1]
+    mes_inicio = hoy.replace(day=1)
+    mes_fin = hoy.replace(day=ultimo_dia_mes)
+    turnos_mes = Turno.objects.filter(psicologo=psico, fecha_hora__date__range=(mes_inicio, mes_fin))
+    stats = {
+        'atendidos': turnos_mes.filter(estado='realizado').count(),
+        'cancelados': turnos_mes.filter(estado='cancelado').count(),
+        'sin_cobrar': turnos_mes.filter(estado='realizado', pagado=False).count(),
+    }
+    mes_label = f'{NOMBRES_MES[hoy.month - 1]} {hoy.year}'
+
     return render(request, 'portal/dashboard.html', {
         'psico': psico,
         'dias': dias,
@@ -84,6 +100,8 @@ def dashboard(request, psico):
         'domingo': domingo,
         'semana_offset': offset,
         'dia_default': dia_default,
+        'stats': stats,
+        'mes_label': mes_label,
     })
 
 
@@ -92,11 +110,25 @@ def dashboard(request, psico):
 def turno_marcar_realizado(request, psico, pk):
     turno = get_turno_or_404(psico, pk)
     turno.estado = 'realizado'
+    turno.pagado = request.POST.get('pagado') == '1'
     notas = request.POST.get('notas_sesion', '').strip()
     if notas:
         turno.notas_sesion = notas
-    turno.save(update_fields=['estado', 'notas_sesion', 'actualizado_en'])
-    messages.success(request, f'Turno de {turno.paciente} marcado como realizado.')
+    turno.save(update_fields=['estado', 'notas_sesion', 'pagado', 'actualizado_en'])
+    if turno.pagado:
+        messages.success(request, f'Turno de {turno.paciente} marcado como realizado y pagado.')
+    else:
+        messages.warning(request, f'Turno de {turno.paciente} realizado. Todavía no pagó — quedó marcado para cobrar.')
+    return redirect(request.POST.get('next') or 'portal_dashboard')
+
+
+@psicologo_requerido
+@require_POST
+def turno_marcar_pagado(request, psico, pk):
+    turno = get_turno_or_404(psico, pk)
+    turno.pagado = True
+    turno.save(update_fields=['pagado', 'actualizado_en'])
+    messages.success(request, f'Turno de {turno.paciente} marcado como pagado.')
     return redirect(request.POST.get('next') or 'portal_dashboard')
 
 

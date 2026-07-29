@@ -101,6 +101,7 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 }
 .portal-message-success { background: #eaf5ea; color: #3f6647; }
 .portal-message-error { background: #fbeaea; color: #a13d3d; }
+.portal-message-warning { background: #fdf0e0; color: #8a6320; }
 
 /* ── BOTONES ── */
 .portal-btn {
@@ -257,6 +258,43 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-week-label { font-weight: 700; color: #333; font-size: 1rem; }
 .portal-week-today-link { margin-left: auto; }
 
+/* ── ESTADÍSTICAS DEL MES ── */
+.portal-stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+.portal-stat-tile {
+    flex: 1 1 0;
+    min-width: 0;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 8px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+.portal-stat-num {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.portal-stat-label {
+    display: block;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #999;
+    font-weight: 700;
+    margin-top: 4px;
+}
+.portal-stat-ok .portal-stat-num { color: #4a7c59; }
+.portal-stat-bad .portal-stat-num { color: #c47e7b; }
+.portal-stat-warn .portal-stat-num { color: #b8863b; }
+.portal-stat-warn-empty .portal-stat-num { color: #4a7c59; }
+.portal-stats-sub { font-size: 0.78rem; color: #999; margin: 0 0 22px; text-transform: capitalize; }
+
 .portal-week-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -287,16 +325,63 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-day-panel { display: none; }
 .portal-day-panel-active { display: block; }
 
-.portal-table-agenda th:first-child, .portal-table-agenda td:first-child { width: 40px; }
-.portal-agenda-actions { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
-.portal-check-form { margin: 0; }
+/* ── AGENDA: LISTA DE TARJETAS (mobile-first, sin tabla ni scroll horizontal) ── */
+.portal-turno-list { display: flex; flex-direction: column; gap: 10px; }
+.portal-turno-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    padding: 10px 14px 12px 6px;
+    display: flex;
+    gap: 4px;
+    align-items: flex-start;
+}
+.portal-check-form { margin: 0; flex-shrink: 0; }
+.portal-check-tap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+}
 .portal-check-input {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     cursor: pointer;
     accent-color: #7da87b;
 }
 .portal-check-input:disabled { cursor: default; }
+.portal-turno-card-body { flex: 1; min-width: 0; padding-top: 4px; }
+.portal-turno-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+.portal-turno-hora { font-weight: 700; font-size: 1.05rem; color: #333; }
+.portal-turno-paciente {
+    display: block;
+    font-weight: 600;
+    color: #4a7c59;
+    text-decoration: none;
+    margin: 2px 0 6px;
+    font-size: 0.98rem;
+}
+.portal-turno-paciente:hover { text-decoration: underline; }
+.portal-turno-card-actions {
+    display: flex;
+    gap: 18px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+.portal-turno-card-actions a, .portal-turno-card-actions button {
+    padding: 6px 0;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+}
 .portal-inline-form { margin: 0; display: inline; }
 .portal-reagendar-btn {
     background: none;
@@ -306,7 +391,22 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     padding: 0;
 }
 
-/* ── MODAL COMENTARIO ── */
+.portal-tag-alerta {
+    display: inline-block;
+    margin: 4px 0 2px;
+    background: #fdf0e0;
+    color: #96700f;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 7px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    min-height: 32px;
+}
+.portal-tag-alerta:hover { background: #fbe6c9; }
+
+/* ── MODAL: turno realizado (pago + comentario) ── */
 .portal-modal-overlay {
     display: none;
     position: fixed;
@@ -328,6 +428,7 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 }
 .portal-modal h3 { font-family: 'Playfair Display', serif; margin-bottom: 4px; }
 .portal-modal-sub { color: #999; font-size: 0.85rem; margin-bottom: 14px; }
+.portal-modal-label { display: block; font-size: 0.78rem; font-weight: 700; color: #666; margin: 16px 0 6px; }
 .portal-modal textarea {
     width: 100%;
     padding: 12px 14px;
@@ -339,7 +440,26 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     resize: vertical;
 }
 .portal-modal textarea:focus { outline: none; border-color: #7da87b; background: #fff; }
-.portal-modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+.portal-modal-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: flex-end; }
+
+.portal-pago-choices { display: flex; gap: 10px; }
+.portal-choice-btn {
+    flex: 1;
+    padding: 16px 8px;
+    min-height: 56px;
+    border-radius: 12px;
+    border: 2px solid #eee;
+    background: #fafafa;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    color: #555;
+    transition: all 0.15s ease;
+}
+.portal-choice-btn-selected { border-color: #7da87b; background: #eaf5ea; color: #3f6647; }
+.portal-choice-btn-warn.portal-choice-btn-selected { border-color: #d79a9f; background: #fbeaea; color: #a13d3d; }
+.portal-modal-actions #portal-comentario-guardar:disabled { opacity: 0.5; cursor: default; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 700px) {
@@ -350,5 +470,13 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     .portal-day-num { font-size: 1.1rem; }
     .portal-day-count { font-size: 0.62rem; }
     .portal-week-today-link { margin-left: 0; }
-    .portal-agenda-actions { flex-direction: column; align-items: flex-start; gap: 6px; }
+
+    .portal-stat-tile { padding: 12px 4px; }
+    .portal-stat-num { font-size: 1.4rem; }
+    .portal-stat-label { font-size: 0.6rem; }
+
+    /* El modal se comporta como una hoja que sube desde abajo: más fácil
+       de alcanzar con el pulgar en un celular que un cuadro centrado. */
+    .portal-modal-overlay { align-items: flex-end; padding: 0; }
+    .portal-modal { border-radius: 20px 20px 0 0; max-width: 100%; padding: 22px 18px calc(env(safe-area-inset-bottom, 0px) + 22px); }
 }

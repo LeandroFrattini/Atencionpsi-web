@@ -6,6 +6,22 @@
     <a href="{% url 'portal_turno_nuevo' %}" class="portal-btn portal-btn-primary">+ Nuevo turno</a>
 </div>
 
+<div class="portal-stats-row">
+    <div class="portal-stat-tile portal-stat-ok">
+        <span class="portal-stat-num">{{ stats.atendidos }}</span>
+        <span class="portal-stat-label">Atendidos</span>
+    </div>
+    <div class="portal-stat-tile portal-stat-bad">
+        <span class="portal-stat-num">{{ stats.cancelados }}</span>
+        <span class="portal-stat-label">Cancelados</span>
+    </div>
+    <div class="portal-stat-tile portal-stat-warn{% if stats.sin_cobrar == 0 %} portal-stat-warn-empty{% endif %}">
+        <span class="portal-stat-num">{{ stats.sin_cobrar }}</span>
+        <span class="portal-stat-label">Sin cobrar</span>
+    </div>
+</div>
+<p class="portal-stats-sub">Este mes ({{ mes_label }})</p>
+
 <div class="portal-week-nav">
     <a href="?semana={{ semana_offset|add:"-1" }}" class="portal-btn portal-btn-outline">&lsaquo; Semana anterior</a>
     <span class="portal-week-label">{{ lunes|date:"d/m" }} – {{ domingo|date:"d/m" }}</span>
@@ -30,46 +46,46 @@
     <div class="portal-day-panel" data-dia-panel="{{ forloop.counter0 }}">
         <h2 class="portal-subtitle">{{ dia.nombre_largo }} {{ dia.fecha|date:"d/m/Y" }}</h2>
         {% if dia.turnos %}
-            <div class="portal-table-wrap">
-                <table class="portal-table portal-table-agenda">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Hora</th>
-                            <th>Paciente</th>
-                            <th>Estado</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for turno in dia.turnos %}
-                        <tr>
-                            <td>
-                                <form method="post" action="{% url 'portal_turno_marcar_realizado' turno.pk %}" class="portal-check-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="notas_sesion" value="">
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <input type="checkbox" class="portal-check-input"
-                                           {% if turno.estado == 'realizado' %}checked disabled{% endif %}>
-                                </form>
-                            </td>
-                            <td>{{ turno.fecha_hora|date:"H:i" }} {% if turno.reagendado %}<span class="portal-tag-reagendado">reagendado</span>{% endif %}</td>
-                            <td><a href="{% url 'portal_paciente_detalle' turno.paciente.pk %}">{{ turno.paciente }}</a></td>
-                            <td><span class="portal-estado portal-estado-{{ turno.estado }}">{{ turno.get_estado_display }}</span></td>
-                            <td class="portal-agenda-actions">
-                                {% if turno.estado == 'agendado' or turno.estado == 'ausente' %}
-                                <form method="post" action="{% url 'portal_turno_reagendar_rapido' turno.pk %}" class="portal-inline-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button type="submit" class="portal-link portal-reagendar-btn">Reagendar (+1 semana)</button>
-                                </form>
-                                {% endif %}
-                                <a href="{% url 'portal_turno_editar' turno.pk %}" class="portal-link">Editar</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="portal-turno-list">
+                {% for turno in dia.turnos %}
+                <div class="portal-turno-card">
+                    <form method="post" action="{% url 'portal_turno_marcar_realizado' turno.pk %}" class="portal-check-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="notas_sesion" value="">
+                        <input type="hidden" name="pagado" value="1">
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <label class="portal-check-tap">
+                            <input type="checkbox" class="portal-check-input"
+                                   {% if turno.estado == 'realizado' %}checked disabled{% endif %}>
+                        </label>
+                    </form>
+                    <div class="portal-turno-card-body">
+                        <div class="portal-turno-card-top">
+                            <span class="portal-turno-hora">{{ turno.fecha_hora|date:"H:i" }}</span>
+                            <span class="portal-estado portal-estado-{{ turno.estado }}">{{ turno.get_estado_display }}</span>
+                        </div>
+                        <a href="{% url 'portal_paciente_detalle' turno.paciente.pk %}" class="portal-turno-paciente">{{ turno.paciente }}</a>
+                        {% if turno.reagendado %}<span class="portal-tag-reagendado">reagendado</span>{% endif %}
+                        {% if turno.estado == 'realizado' and not turno.pagado %}
+                            <form method="post" action="{% url 'portal_turno_marcar_pagado' turno.pk %}" class="portal-inline-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="portal-tag-alerta">Sin cobrar — tocar cuando pague</button>
+                            </form>
+                        {% endif %}
+                        <div class="portal-turno-card-actions">
+                            {% if turno.estado == 'agendado' or turno.estado == 'ausente' %}
+                            <form method="post" action="{% url 'portal_turno_reagendar_rapido' turno.pk %}" class="portal-inline-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="portal-link portal-reagendar-btn">Reagendar +1 sem.</button>
+                            </form>
+                            {% endif %}
+                            <a href="{% url 'portal_turno_editar' turno.pk %}" class="portal-link">Editar</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         {% else %}
             <p class="portal-empty">No tenés turnos este día.</p>
@@ -78,14 +94,19 @@
     {% endfor %}
 </div>
 
-<div class="portal-modal-overlay" id="portal-comentario-modal">
-    <div class="portal-modal">
-        <h3>Comentario de la sesión</h3>
-        <p class="portal-modal-sub">Es opcional, lo podés dejar en blanco.</p>
-        <textarea id="portal-comentario-texto" rows="4" placeholder="Ej: buena evolución, se trabajó..."></textarea>
+<div class="portal-modal-overlay" id="portal-realizado-modal">
+    <div class="portal-modal portal-modal-sheet">
+        <h3>Turno realizado</h3>
+        <p class="portal-modal-sub">¿El paciente ya pagó esta sesión?</p>
+        <div class="portal-pago-choices">
+            <button type="button" class="portal-choice-btn" data-valor="1">Sí, pagó</button>
+            <button type="button" class="portal-choice-btn portal-choice-btn-warn" data-valor="0">Todavía no</button>
+        </div>
+        <label class="portal-modal-label" for="portal-comentario-texto">Comentario de la sesión (opcional)</label>
+        <textarea id="portal-comentario-texto" rows="3" placeholder="Ej: buena evolución, se trabajó..."></textarea>
         <div class="portal-modal-actions">
             <button type="button" class="portal-btn portal-btn-outline" id="portal-comentario-cancelar">Cancelar</button>
-            <button type="button" class="portal-btn portal-btn-primary" id="portal-comentario-guardar">Guardar</button>
+            <button type="button" class="portal-btn portal-btn-primary" id="portal-comentario-guardar" disabled>Guardar</button>
         </div>
     </div>
 </div>
