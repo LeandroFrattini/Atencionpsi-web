@@ -161,16 +161,35 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    /* ── Arrastrar un turno a otro horario dentro del mismo día ── */
+    /* ── Arrastrar un turno: dentro del día cambia la hora; arrastrado hasta
+       el selector de días de arriba, cambia el día (misma hora) ── */
     var etiquetaArrastre = document.getElementById('portal-arrastre-etiqueta');
     var moverForm = document.getElementById('portal-mover-turno-form');
+
+    function limpiarResaltadoDias() {
+        document.querySelectorAll('.portal-day-box-drop-target').forEach(function (b) {
+            b.classList.remove('portal-day-box-drop-target');
+        });
+    }
+
+    function mostrarEtiqueta(texto, x, y, centrada) {
+        if (!etiquetaArrastre) return;
+        etiquetaArrastre.textContent = texto;
+        etiquetaArrastre.style.left = centrada ? '50%' : x + 'px';
+        etiquetaArrastre.style.transform = centrada ? 'translate(-50%, -50%)' : 'translate(-50%, -130%)';
+        etiquetaArrastre.style.top = y + 'px';
+        etiquetaArrastre.classList.add('portal-arrastre-etiqueta-visible');
+    }
 
     document.querySelectorAll('.portal-evento').forEach(function (chip) {
         var arrastrando = false;
         var movio = false;
+        var modoCambiarDia = false;
+        var diaBoxActivo = null;
         var startY = 0;
         var startTopPx = 0;
         var gridRect = null;
+        var wrapRect = null;
         var chipAltoPx = 0;
         var gridAltoPx = 0;
         var horaInicio = 0;
@@ -179,7 +198,9 @@ document.addEventListener('DOMContentLoaded', function () {
         chip.addEventListener('pointerdown', function (e) {
             if (e.button !== undefined && e.button !== 0) return;
             var gridEl = chip.closest('.portal-grid');
+            var wrapEl = chip.closest('.portal-grid-wrap');
             gridRect = gridEl.getBoundingClientRect();
+            wrapRect = wrapEl.getBoundingClientRect();
             gridAltoPx = gridRect.height;
             horaInicio = parseFloat(gridEl.dataset.horaInicio);
             var horaFin = parseFloat(gridEl.dataset.horaFin);
@@ -187,6 +208,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             arrastrando = true;
             movio = false;
+            modoCambiarDia = false;
+            diaBoxActivo = null;
             startY = e.clientY;
             var chipRect = chip.getBoundingClientRect();
             startTopPx = chipRect.top - gridRect.top;
@@ -201,6 +224,26 @@ document.addEventListener('DOMContentLoaded', function () {
             movio = true;
             chip.classList.add('portal-evento-arrastrando');
 
+            if (e.clientY < wrapRect.top) {
+                // Se arrastró para arriba de la grilla: modo "cambiar de día"
+                modoCambiarDia = true;
+                limpiarResaltadoDias();
+                var elDebajo = document.elementFromPoint(e.clientX, e.clientY);
+                var dayBox = elDebajo ? elDebajo.closest('.portal-day-box') : null;
+                diaBoxActivo = dayBox;
+                if (dayBox) {
+                    dayBox.classList.add('portal-day-box-drop-target');
+                    mostrarEtiqueta('→ ' + dayBox.dataset.nombreLargo + ' ' + dayBox.dataset.fechaCorta, e.clientX, e.clientY, false);
+                } else {
+                    mostrarEtiqueta('Soltá sobre un día para cambiarlo', e.clientX, e.clientY, false);
+                }
+                return;
+            }
+
+            modoCambiarDia = false;
+            diaBoxActivo = null;
+            limpiarResaltadoDias();
+
             var nuevaTopPx = Math.max(0, Math.min(gridAltoPx - chipAltoPx, startTopPx + deltaY));
             var minutosPorPx = totalMin / gridAltoPx;
             var minutosSnap = Math.round((nuevaTopPx * minutosPorPx) / 15) * 15;
@@ -209,33 +252,55 @@ document.addEventListener('DOMContentLoaded', function () {
 
             var horaMostrar = horaInicio + Math.floor(minutosSnap / 60);
             var minMostrar = minutosSnap % 60;
-            if (etiquetaArrastre) {
-                etiquetaArrastre.textContent = String(horaMostrar % 24).padStart(2, '0') + ':' + String(minMostrar).padStart(2, '0');
-                etiquetaArrastre.style.top = (gridRect.top + (topSnapPct / 100) * gridAltoPx) + 'px';
-                etiquetaArrastre.classList.add('portal-arrastre-etiqueta-visible');
-            }
+            var horaTxt = String(horaMostrar % 24).padStart(2, '0') + ':' + String(minMostrar).padStart(2, '0');
+            mostrarEtiqueta(horaTxt, 0, gridRect.top + (topSnapPct / 100) * gridAltoPx, true);
         });
 
         chip.addEventListener('pointerup', function (e) {
             arrastrando = false;
             chip.classList.remove('portal-evento-arrastrando');
             if (etiquetaArrastre) etiquetaArrastre.classList.remove('portal-arrastre-etiqueta-visible');
+            limpiarResaltadoDias();
             if (!movio) return;
 
             chip.dataset.suprimirClick = '1';
+            var horaTexto = chip.querySelector('.portal-evento-hora').textContent.trim();
+            var nombre = chip.querySelector('.portal-evento-nombre').textContent.trim();
+
+            if (modoCambiarDia) {
+                if (!diaBoxActivo) {
+                    chip.style.top = (startTopPx / gridAltoPx * 100) + '%';
+                    return;
+                }
+                var partesHora = horaTexto.split(':');
+                var pregunta = '¿Estás seguro que querés reprogramar el turno de ' + nombre +
+                    ' para el ' + diaBoxActivo.dataset.nombreLargo + ' ' + diaBoxActivo.dataset.fechaCorta +
+                    ' a las ' + horaTexto + '?';
+                if (window.confirm(pregunta)) {
+                    moverForm.action = chip.dataset.moverUrl;
+                    moverForm.querySelector('input[name="hora"]').value = partesHora[0];
+                    moverForm.querySelector('input[name="minuto"]').value = partesHora[1];
+                    moverForm.querySelector('input[name="fecha"]').value = diaBoxActivo.dataset.fecha;
+                    moverForm.querySelector('input[name="next"]').value = window.location.pathname + window.location.search;
+                    moverForm.submit();
+                } else {
+                    chip.style.top = (startTopPx / gridAltoPx * 100) + '%';
+                }
+                return;
+            }
 
             var minutosPorPx = totalMin / gridAltoPx;
             var topPx = (parseFloat(chip.style.top) / 100) * gridAltoPx;
             var minutosFinal = Math.round((topPx * minutosPorPx) / 15) * 15;
             var horaFinal = (horaInicio + Math.floor(minutosFinal / 60)) % 24;
             var minFinal = minutosFinal % 60;
-            var horaTexto = String(horaFinal).padStart(2, '0') + ':' + String(minFinal).padStart(2, '0');
-            var nombre = chip.querySelector('.portal-evento-nombre').textContent.trim();
+            var horaTextoFinal = String(horaFinal).padStart(2, '0') + ':' + String(minFinal).padStart(2, '0');
 
-            if (window.confirm('¿Estás seguro que querés reprogramar el turno de ' + nombre + ' para las ' + horaTexto + '?')) {
+            if (window.confirm('¿Estás seguro que querés reprogramar el turno de ' + nombre + ' para las ' + horaTextoFinal + '?')) {
                 moverForm.action = chip.dataset.moverUrl;
                 moverForm.querySelector('input[name="hora"]').value = horaFinal;
                 moverForm.querySelector('input[name="minuto"]').value = minFinal;
+                moverForm.querySelector('input[name="fecha"]').value = '';
                 moverForm.querySelector('input[name="next"]').value = window.location.pathname + window.location.search;
                 moverForm.submit();
             } else {

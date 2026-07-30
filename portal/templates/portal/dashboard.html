@@ -33,7 +33,10 @@
     {% for dia in dias %}
     <button type="button"
             class="portal-day-box{% if dia.es_hoy %} portal-day-box-today{% endif %}"
-            data-dia="{{ forloop.counter0 }}">
+            data-dia="{{ forloop.counter0 }}"
+            data-fecha="{{ dia.fecha|date:'Y-m-d' }}"
+            data-fecha-corta="{{ dia.fecha|date:'d/m' }}"
+            data-nombre-largo="{{ dia.nombre_largo }}">
         <span class="portal-day-name">{{ dia.nombre }}</span>
         <span class="portal-day-num">{{ dia.fecha|date:"d" }}</span>
         <span class="portal-day-count">{{ dia.count }} paciente{{ dia.count|pluralize }}</span>
@@ -78,6 +81,7 @@
     {% csrf_token %}
     <input type="hidden" name="hora" value="">
     <input type="hidden" name="minuto" value="">
+    <input type="hidden" name="fecha" value="">
     <input type="hidden" name="next" value="">
 </form>
 

@@ -318,6 +318,12 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-day-box:hover { border-color: #cfe0ce; }
 .portal-day-box-today { background: #fbf6f0; }
 .portal-day-box-active { border-color: #7da87b; box-shadow: 0 4px 18px rgba(125,168,123,0.25); }
+.portal-day-box-drop-target {
+    border-color: #4a7c59;
+    background: #eaf5ea;
+    transform: scale(1.06);
+    box-shadow: 0 6px 22px rgba(74,124,89,0.35);
+}
 .portal-day-name { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #999; font-weight: 700; }
 .portal-day-num { font-size: 1.4rem; font-weight: 700; color: #333; font-family: 'Playfair Display', serif; }
 .portal-day-count { font-size: 0.72rem; color: #4a7c59; font-weight: 700; }
@@ -498,6 +504,7 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     border-radius: 20px;
     z-index: 950;
     pointer-events: none;
+    white-space: nowrap;
 }
 .portal-arrastre-etiqueta-visible { display: block; }
 .portal-evento-hora { font-size: 0.66rem; font-weight: 700; opacity: 0.85; line-height: 1.3; }

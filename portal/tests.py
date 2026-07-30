@@ -204,6 +204,30 @@ class PortalScopingTests(TestCase):
         self.assertEqual(local.date(), timezone.localtime(fecha_original).date())
         self.assertTrue(turno_a.reagendado)
 
+    def test_puede_mover_su_propio_turno_a_otro_dia(self):
+        """Arrastrar el turno hasta el selector de días lo cambia de fecha."""
+        fecha_original = timezone.now().replace(hour=10, minute=0, second=0, microsecond=0)
+        turno_a = Turno.objects.create(
+            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=fecha_original,
+        )
+        otro_dia = (timezone.localtime(fecha_original) + datetime.timedelta(days=2)).date()
+        url = reverse('portal_turno_mover', args=[turno_a.pk])
+        resp = self.client_a.post(url, {'hora': '10', 'minuto': '0', 'fecha': otro_dia.isoformat()})
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+        turno_a.refresh_from_db()
+        local = timezone.localtime(turno_a.fecha_hora)
+        self.assertEqual(local.date(), otro_dia)
+        self.assertEqual((local.hour, local.minute), (10, 0))
+
+    def test_no_puede_mover_turno_de_otro_psicologo_a_otro_dia(self):
+        fecha_original = self.turno_b.fecha_hora
+        otro_dia = (timezone.localtime(fecha_original) + datetime.timedelta(days=2)).date()
+        url = reverse('portal_turno_mover', args=[self.turno_b.pk])
+        resp = self.client_a.post(url, {'hora': '10', 'minuto': '0', 'fecha': otro_dia.isoformat()})
+        self.assertEqual(resp.status_code, 404)
+        self.turno_b.refresh_from_db()
+        self.assertEqual(self.turno_b.fecha_hora, fecha_original)
+
 
 class CambioPasswordObligatorioTests(TestCase):
     """

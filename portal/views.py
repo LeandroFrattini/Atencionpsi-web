@@ -196,9 +196,9 @@ def turno_reagendar_rapido(request, psico, pk):
 @require_POST
 def turno_mover(request, psico, pk):
     """
-    Arrastrar un turno a otro horario dentro del mismo día en la grilla.
-    Solo cambia la hora (no la fecha): el arrastre siempre ocurre dentro
-    del panel de un único día.
+    Arrastrar un turno a otro horario (dentro del mismo día) o a otro día
+    (arrastrándolo hasta el selector de días de la semana). El parámetro
+    `fecha` es opcional: si no viene, se mantiene el día original.
     """
     turno = get_turno_or_404(psico, pk)
     try:
@@ -211,10 +211,25 @@ def turno_mover(request, psico, pk):
         return redirect(request.POST.get('next') or 'portal_dashboard')
 
     local = timezone.localtime(turno.fecha_hora)
-    turno.fecha_hora = local.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+    fecha_str = (request.POST.get('fecha') or '').strip()
+    if fecha_str:
+        try:
+            nueva_fecha = datetime.date.fromisoformat(fecha_str)
+        except ValueError:
+            return redirect(request.POST.get('next') or 'portal_dashboard')
+    else:
+        nueva_fecha = local.date()
+
+    turno.fecha_hora = local.replace(
+        year=nueva_fecha.year, month=nueva_fecha.month, day=nueva_fecha.day,
+        hour=hora, minute=minuto, second=0, microsecond=0,
+    )
     turno.reagendado = True
     turno.save(update_fields=['fecha_hora', 'reagendado', 'actualizado_en'])
-    messages.success(request, f'Turno de {turno.paciente} movido a las {hora:02d}:{minuto:02d}.')
+    messages.success(
+        request,
+        f'Turno de {turno.paciente} movido al {nueva_fecha:%d/%m} a las {hora:02d}:{minuto:02d}.',
+    )
     return redirect(request.POST.get('next') or 'portal_dashboard')
 
 
