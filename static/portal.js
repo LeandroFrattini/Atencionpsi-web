@@ -80,14 +80,57 @@ document.addEventListener('DOMContentLoaded', function () {
         btnCancelar.addEventListener('click', function () { cerrarModal(true); });
     }
 
-    /* ── Confirmación antes de reagendar +1 semana ── */
+    /* ── Confirmación antes de reagendar (crea un turno nuevo +1 semana) ── */
     document.querySelectorAll('.portal-inline-form').forEach(function (form) {
         if (form.querySelector('.portal-reagendar-btn')) {
             form.addEventListener('submit', function (e) {
-                if (!window.confirm('¿Reagendar este turno una semana después, a la misma hora?')) {
+                if (!window.confirm('¿Crear un turno nuevo para este paciente la semana que viene, a la misma hora?')) {
                     e.preventDefault();
                 }
             });
         }
     });
+
+    /* ── Grilla tipo Google Calendar: tocar un evento abre su detalle abajo ── */
+    var eventoOverlay = document.getElementById('portal-evento-overlay');
+    if (eventoOverlay) {
+        document.querySelectorAll('[data-turno-abrir]').forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                var id = chip.dataset.turnoAbrir;
+                document.querySelectorAll('.portal-evento-detalle').forEach(function (d) {
+                    d.classList.toggle('portal-evento-detalle-active', d.dataset.turnoDetalle === id);
+                });
+                eventoOverlay.classList.add('portal-evento-overlay-visible');
+            });
+        });
+
+        eventoOverlay.addEventListener('click', function (e) {
+            if (e.target === eventoOverlay) {
+                eventoOverlay.classList.remove('portal-evento-overlay-visible');
+            }
+        });
+
+        var cerrarEvento = document.getElementById('portal-evento-cerrar');
+        if (cerrarEvento) {
+            cerrarEvento.addEventListener('click', function () {
+                eventoOverlay.classList.remove('portal-evento-overlay-visible');
+            });
+        }
+    }
+
+    /* ── Línea de "ahora" en la grilla del día de hoy ── */
+    var nowLine = document.querySelector('.portal-now-line');
+    if (nowLine) {
+        var horaInicio = parseFloat(nowLine.dataset.horaInicio);
+        var horaFin = parseFloat(nowLine.dataset.horaFin);
+        var ahora = new Date();
+        var minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
+        var totalMin = (horaFin - horaInicio) * 60;
+        var pct = ((minutosAhora - horaInicio * 60) / totalMin) * 100;
+        if (pct >= 0 && pct <= 100) {
+            nowLine.style.top = pct + '%';
+        } else {
+            nowLine.style.display = 'none';
+        }
+    }
 });

@@ -19,6 +19,12 @@ NOMBRES_MES = [
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ]
 
+# Rango horario por defecto de la grilla tipo Google Calendar; si hay un
+# turno fuera de este rango, la grilla de ese día se estira para incluirlo.
+HORA_INICIO_DEFECTO = 8
+HORA_FIN_DEFECTO = 21
+DURACION_TURNO_MIN = 50
+
 
 @psicologo_requerido(permitir_cambio_pendiente=True)
 def cambiar_password(request, psico):
@@ -67,6 +73,28 @@ def dashboard(request, psico):
         fecha = lunes + datetime.timedelta(days=i)
         turnos_dia = turnos_por_dia.get(fecha, [])
         es_hoy = fecha == hoy
+
+        horas_turnos = [timezone.localtime(t.fecha_hora).hour for t in turnos_dia]
+        hora_inicio = min([HORA_INICIO_DEFECTO] + horas_turnos)
+        hora_fin = max([HORA_FIN_DEFECTO] + [h + 1 for h in horas_turnos])
+        total_min = (hora_fin - hora_inicio) * 60
+
+        for turno in turnos_dia:
+            local = timezone.localtime(turno.fecha_hora)
+            offset_min = (local.hour - hora_inicio) * 60 + local.minute
+            # Atributos de solo lectura para posicionar el evento en la
+            # grilla (van directo a un style="" inline, por eso se arman
+            # como string con punto decimal: con LANGUAGE_CODE=es-ar,
+            # Django renderiza los floats con coma ("7,69%"), lo que
+            # rompe el CSS y el evento queda invisible sin ningún error).
+            turno.top_pct = f'{offset_min / total_min * 100:.2f}'
+            turno.height_pct = f'{min(DURACION_TURNO_MIN, total_min - offset_min) / total_min * 100:.2f}'
+
+        lineas = [
+            {'hora': h, 'top_pct': f'{(h - hora_inicio) / (hora_fin - hora_inicio) * 100:.2f}'}
+            for h in range(hora_inicio, hora_fin + 1)
+        ]
+
         dias.append({
             'fecha': fecha,
             'nombre': NOMBRES_DIA[i][:3],
@@ -74,6 +102,10 @@ def dashboard(request, psico):
             'es_hoy': es_hoy,
             'turnos': turnos_dia,
             'count': len([t for t in turnos_dia if t.estado != 'cancelado']),
+            'hora_inicio': hora_inicio,
+            'hora_fin': hora_fin,
+            'n_horas': hora_fin - hora_inicio,
+            'lineas': lineas,
         })
         if es_hoy:
             dia_default = i
@@ -135,13 +167,27 @@ def turno_marcar_pagado(request, psico, pk):
 @psicologo_requerido
 @require_POST
 def turno_reagendar_rapido(request, psico, pk):
+    """
+    "Reagendar" no mueve el turno original: crea uno nuevo una semana
+    después, a la misma hora, para el mismo paciente. Así se puede usar
+    sobre un turno ya realizado (ej. el paciente vino hoy a las 17hs y a
+    la noche se arma la sesión de la semana que viene) sin perder el
+    registro de lo que pasó hoy.
+    """
     turno = get_turno_or_404(psico, pk)
-    turno.fecha_hora = turno.fecha_hora + datetime.timedelta(weeks=1)
-    turno.estado = 'agendado'
-    turno.reagendado = True
-    turno.save(update_fields=['fecha_hora', 'estado', 'reagendado', 'actualizado_en'])
-    nueva_fecha_local = timezone.localtime(turno.fecha_hora)
-    messages.success(request, f'Turno de {turno.paciente} reagendado para el {nueva_fecha_local:%d/%m %H:%M}.')
+    nueva_fecha = turno.fecha_hora + datetime.timedelta(weeks=1)
+    nuevo_turno = Turno.objects.create(
+        psicologo=psico,
+        paciente=turno.paciente,
+        fecha_hora=nueva_fecha,
+        estado='agendado',
+        reagendado=True,
+    )
+    nueva_fecha_local = timezone.localtime(nuevo_turno.fecha_hora)
+    messages.success(
+        request,
+        f'Se creó un turno para {turno.paciente} el {nueva_fecha_local:%d/%m} a las {nueva_fecha_local:%H:%M}.',
+    )
     return redirect(request.POST.get('next') or 'portal_dashboard')
 
 

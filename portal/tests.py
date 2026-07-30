@@ -103,6 +103,8 @@ class PortalScopingTests(TestCase):
         self.turno_b.refresh_from_db()
         self.assertEqual(self.turno_b.fecha_hora, fecha_original)
         self.assertFalse(self.turno_b.reagendado)
+        # tampoco se creó ningún turno "copia" para el paciente de B
+        self.assertFalse(Turno.objects.filter(paciente=self.paciente_b, psicologo=self.psico_a).exists())
 
     def test_puede_marcar_su_propio_turno_como_realizado_con_comentario(self):
         turno_a = Turno.objects.create(
@@ -115,18 +117,31 @@ class PortalScopingTests(TestCase):
         self.assertEqual(turno_a.estado, 'realizado')
         self.assertEqual(turno_a.notas_sesion, 'buena evolución')
 
-    def test_puede_reagendar_su_propio_turno_una_semana_despues(self):
+    def test_reagendar_crea_turno_nuevo_y_no_toca_el_original(self):
+        """
+        "Reagendar" arma la sesión de la semana que viene sin borrar el
+        registro de la sesión original (por ejemplo, un turno ya marcado
+        como realizado con sus notas de la sesión de hoy).
+        """
         fecha_original = timezone.now()
         turno_a = Turno.objects.create(
-            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=fecha_original
+            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=fecha_original,
+            estado='realizado', notas_sesion='buena sesión de hoy',
         )
         url = reverse('portal_turno_reagendar_rapido', args=[turno_a.pk])
         resp = self.client_a.post(url, {})
         self.assertRedirects(resp, reverse('portal_dashboard'))
+
         turno_a.refresh_from_db()
-        self.assertEqual(turno_a.fecha_hora, fecha_original + datetime.timedelta(weeks=1))
-        self.assertTrue(turno_a.reagendado)
-        self.assertEqual(turno_a.estado, 'agendado')
+        self.assertEqual(turno_a.fecha_hora, fecha_original)  # el original no se mueve
+        self.assertEqual(turno_a.estado, 'realizado')
+        self.assertEqual(turno_a.notas_sesion, 'buena sesión de hoy')
+        self.assertFalse(turno_a.reagendado)
+
+        nuevo = Turno.objects.exclude(pk=turno_a.pk).get(paciente=self.paciente_a)
+        self.assertEqual(nuevo.fecha_hora, fecha_original + datetime.timedelta(weeks=1))
+        self.assertEqual(nuevo.estado, 'agendado')
+        self.assertTrue(nuevo.reagendado)
 
     def test_marcar_realizado_sin_pago_queda_pendiente_de_cobro(self):
         turno_a = Turno.objects.create(

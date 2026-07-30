@@ -325,8 +325,7 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-day-panel { display: none; }
 .portal-day-panel-active { display: block; }
 
-/* ── AGENDA: LISTA DE TARJETAS (mobile-first, sin tabla ni scroll horizontal) ── */
-.portal-turno-list { display: flex; flex-direction: column; gap: 10px; }
+/* ── TARJETA DE DETALLE DE TURNO (contenido de la hoja de evento) ── */
 .portal-turno-card {
     background: #fff;
     border-radius: 14px;
@@ -405,6 +404,136 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     min-height: 32px;
 }
 .portal-tag-alerta:hover { background: #fbe6c9; }
+
+/* ── GRILLA HORARIA (estética tipo Google Calendar) ── */
+:root { --hora-alto: 56px; }
+
+.portal-grid-wrap {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    padding: 10px 10px 10px 0;
+    overflow-x: auto;
+}
+.portal-grid {
+    position: relative;
+    margin-left: 44px;
+    margin-right: 8px;
+    min-height: 120px;
+}
+.portal-grid-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #eeece8;
+}
+.portal-grid-hour-label {
+    position: absolute;
+    left: -44px;
+    top: -8px;
+    width: 38px;
+    font-size: 0.66rem;
+    color: #aaa;
+    text-align: right;
+    padding-right: 6px;
+    font-weight: 600;
+}
+.portal-now-line {
+    position: absolute;
+    left: -44px;
+    right: 0;
+    height: 2px;
+    background: #d64545;
+    z-index: 5;
+    pointer-events: none;
+}
+.portal-now-line::before {
+    content: '';
+    position: absolute;
+    left: 35px;
+    top: -4px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #d64545;
+}
+
+.portal-evento {
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    border: none;
+    border-left: 3px solid transparent;
+    border-radius: 8px;
+    padding: 4px 8px;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    min-height: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    font-family: inherit;
+}
+.portal-evento-hora { font-size: 0.66rem; font-weight: 700; opacity: 0.85; line-height: 1.3; }
+.portal-evento-nombre {
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+.portal-evento-alerta {
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.portal-evento-agendado { background: #dcecdc; color: #2f4f37; border-left-color: #7da87b; }
+.portal-evento-realizado { background: #dbe7f2; color: #25445f; border-left-color: #4d80a8; }
+.portal-evento-cancelado { background: #f6dede; color: #7a3232; border-left-color: #c47e7b; opacity: 0.7; }
+.portal-evento-ausente { background: #f2e9d4; color: #6b551f; border-left-color: #b8863b; }
+
+/* ── HOJA DE DETALLE DEL EVENTO (se abre al tocar un turno de la grilla) ── */
+.portal-evento-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 900;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+}
+.portal-evento-overlay-visible { display: flex; }
+.portal-evento-sheet {
+    background: #f5f2ee;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 20px 20px 0 0;
+    padding: 16px 14px calc(env(safe-area-inset-bottom, 0px) + 16px);
+    max-height: 82vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+}
+.portal-evento-cerrar {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: none;
+    border: none;
+    font-size: 1.7rem;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+    width: 44px;
+    height: 44px;
+}
+.portal-evento-detalle { display: none; margin-top: 26px; }
+.portal-evento-detalle-active { display: flex; }
 
 /* ── MODAL: turno realizado (pago + comentario) ── */
 .portal-modal-overlay {
