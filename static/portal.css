@@ -414,6 +414,8 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     padding: 10px 10px 10px 0;
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 65vh;
 }
 .portal-grid {
     position: relative;
@@ -467,14 +469,37 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     border-radius: 8px;
     padding: 4px 8px;
     text-align: left;
-    cursor: pointer;
+    cursor: grab;
     overflow: hidden;
     min-height: 30px;
     display: flex;
     flex-direction: column;
     gap: 0;
     font-family: inherit;
+    touch-action: none;
+    transition: box-shadow 0.15s ease;
 }
+.portal-evento-arrastrando {
+    cursor: grabbing;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    z-index: 20;
+    opacity: 0.95;
+}
+.portal-arrastre-etiqueta {
+    display: none;
+    position: fixed;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2f2f2f;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    z-index: 950;
+    pointer-events: none;
+}
+.portal-arrastre-etiqueta-visible { display: block; }
 .portal-evento-hora { font-size: 0.66rem; font-weight: 700; opacity: 0.85; line-height: 1.3; }
 .portal-evento-nombre {
     font-size: 0.8rem;

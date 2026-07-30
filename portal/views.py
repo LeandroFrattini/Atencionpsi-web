@@ -21,9 +21,10 @@ NOMBRES_MES = [
 
 # Rango horario por defecto de la grilla tipo Google Calendar; si hay un
 # turno fuera de este rango, la grilla de ese día se estira para incluirlo.
-HORA_INICIO_DEFECTO = 8
-HORA_FIN_DEFECTO = 21
+HORA_INICIO_DEFECTO = 6
+HORA_FIN_DEFECTO = 24
 DURACION_TURNO_MIN = 50
+MINUTOS_SNAP = 15
 
 
 @psicologo_requerido(permitir_cambio_pendiente=True)
@@ -91,7 +92,7 @@ def dashboard(request, psico):
             turno.height_pct = f'{min(DURACION_TURNO_MIN, total_min - offset_min) / total_min * 100:.2f}'
 
         lineas = [
-            {'hora': h, 'top_pct': f'{(h - hora_inicio) / (hora_fin - hora_inicio) * 100:.2f}'}
+            {'hora': h % 24, 'top_pct': f'{(h - hora_inicio) / (hora_fin - hora_inicio) * 100:.2f}'}
             for h in range(hora_inicio, hora_fin + 1)
         ]
 
@@ -188,6 +189,32 @@ def turno_reagendar_rapido(request, psico, pk):
         request,
         f'Se creó un turno para {turno.paciente} el {nueva_fecha_local:%d/%m} a las {nueva_fecha_local:%H:%M}.',
     )
+    return redirect(request.POST.get('next') or 'portal_dashboard')
+
+
+@psicologo_requerido
+@require_POST
+def turno_mover(request, psico, pk):
+    """
+    Arrastrar un turno a otro horario dentro del mismo día en la grilla.
+    Solo cambia la hora (no la fecha): el arrastre siempre ocurre dentro
+    del panel de un único día.
+    """
+    turno = get_turno_or_404(psico, pk)
+    try:
+        hora = int(request.POST.get('hora'))
+        minuto = int(request.POST.get('minuto'))
+    except (TypeError, ValueError):
+        return redirect(request.POST.get('next') or 'portal_dashboard')
+
+    if not (0 <= hora <= 23 and 0 <= minuto <= 59):
+        return redirect(request.POST.get('next') or 'portal_dashboard')
+
+    local = timezone.localtime(turno.fecha_hora)
+    turno.fecha_hora = local.replace(hour=hora, minute=minuto, second=0, microsecond=0)
+    turno.reagendado = True
+    turno.save(update_fields=['fecha_hora', 'reagendado', 'actualizado_en'])
+    messages.success(request, f'Turno de {turno.paciente} movido a las {hora:02d}:{minuto:02d}.')
     return redirect(request.POST.get('next') or 'portal_dashboard')
 
 

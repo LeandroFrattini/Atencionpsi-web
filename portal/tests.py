@@ -182,6 +182,28 @@ class PortalScopingTests(TestCase):
         turno_a.refresh_from_db()
         self.assertTrue(turno_a.pagado)
 
+    def test_no_puede_mover_turno_de_otro_psicologo(self):
+        fecha_original = self.turno_b.fecha_hora
+        url = reverse('portal_turno_mover', args=[self.turno_b.pk])
+        resp = self.client_a.post(url, {'hora': '15', 'minuto': '30'})
+        self.assertEqual(resp.status_code, 404)
+        self.turno_b.refresh_from_db()
+        self.assertEqual(self.turno_b.fecha_hora, fecha_original)
+
+    def test_puede_mover_su_propio_turno_arrastrando_dentro_del_dia(self):
+        fecha_original = timezone.now().replace(hour=10, minute=0, second=0, microsecond=0)
+        turno_a = Turno.objects.create(
+            psicologo=self.psico_a, paciente=self.paciente_a, fecha_hora=fecha_original,
+        )
+        url = reverse('portal_turno_mover', args=[turno_a.pk])
+        resp = self.client_a.post(url, {'hora': '15', 'minuto': '30'})
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+        turno_a.refresh_from_db()
+        local = timezone.localtime(turno_a.fecha_hora)
+        self.assertEqual((local.hour, local.minute), (15, 30))
+        self.assertEqual(local.date(), timezone.localtime(fecha_original).date())
+        self.assertTrue(turno_a.reagendado)
+
 
 class CambioPasswordObligatorioTests(TestCase):
     """

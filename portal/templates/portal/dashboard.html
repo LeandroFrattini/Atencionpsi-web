@@ -45,34 +45,41 @@
     {% for dia in dias %}
     <div class="portal-day-panel" data-dia-panel="{{ forloop.counter0 }}">
         <h2 class="portal-subtitle">{{ dia.nombre_largo }} {{ dia.fecha|date:"d/m/Y" }}</h2>
-        {% if dia.turnos %}
-            <div class="portal-grid-wrap">
-                <div class="portal-grid" style="height: calc({{ dia.n_horas }} * var(--hora-alto));">
-                    {% for linea in dia.lineas %}
-                    <div class="portal-grid-line" style="top: {{ linea.top_pct }}%;">
-                        <span class="portal-grid-hour-label">{{ linea.hora }}:00</span>
-                    </div>
-                    {% endfor %}
-                    {% if dia.es_hoy %}
-                    <div class="portal-now-line" data-hora-inicio="{{ dia.hora_inicio }}" data-hora-fin="{{ dia.hora_fin }}"></div>
-                    {% endif %}
-                    {% for turno in dia.turnos %}
-                    <button type="button" class="portal-evento portal-evento-{{ turno.estado }}"
-                            style="top: {{ turno.top_pct }}%; height: {{ turno.height_pct }}%;"
-                            data-turno-abrir="{{ turno.pk }}">
-                        <span class="portal-evento-hora">{{ turno.fecha_hora|date:"H:i" }}</span>
-                        <span class="portal-evento-nombre">{{ turno.paciente }}</span>
-                        {% if turno.estado == 'realizado' and not turno.pagado %}<span class="portal-evento-alerta" title="Sin cobrar">$</span>{% endif %}
-                    </button>
-                    {% endfor %}
+        <div class="portal-grid-wrap">
+            <div class="portal-grid" data-hora-inicio="{{ dia.hora_inicio }}" data-hora-fin="{{ dia.hora_fin }}"
+                 style="height: calc({{ dia.n_horas }} * var(--hora-alto));">
+                {% for linea in dia.lineas %}
+                <div class="portal-grid-line" style="top: {{ linea.top_pct }}%;">
+                    <span class="portal-grid-hour-label">{{ linea.hora }}:00</span>
                 </div>
+                {% endfor %}
+                {% if dia.es_hoy %}
+                <div class="portal-now-line"></div>
+                {% endif %}
+                {% for turno in dia.turnos %}
+                <button type="button" class="portal-evento portal-evento-{{ turno.estado }}"
+                        style="top: {{ turno.top_pct }}%; height: {{ turno.height_pct }}%;"
+                        data-turno-abrir="{{ turno.pk }}"
+                        data-mover-url="{% url 'portal_turno_mover' turno.pk %}">
+                    <span class="portal-evento-hora">{{ turno.fecha_hora|date:"H:i" }}</span>
+                    <span class="portal-evento-nombre">{{ turno.paciente }}</span>
+                    {% if turno.estado == 'realizado' and not turno.pagado %}<span class="portal-evento-alerta" title="Sin cobrar">$</span>{% endif %}
+                </button>
+                {% endfor %}
             </div>
-        {% else %}
-            <p class="portal-empty">No tenés turnos este día.</p>
-        {% endif %}
+        </div>
     </div>
     {% endfor %}
 </div>
+
+<div class="portal-arrastre-etiqueta" id="portal-arrastre-etiqueta"></div>
+
+<form method="post" id="portal-mover-turno-form" class="portal-inline-form">
+    {% csrf_token %}
+    <input type="hidden" name="hora" value="">
+    <input type="hidden" name="minuto" value="">
+    <input type="hidden" name="next" value="">
+</form>
 
 <div class="portal-evento-overlay" id="portal-evento-overlay">
     <div class="portal-evento-sheet">

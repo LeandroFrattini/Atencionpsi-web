@@ -20,4 +20,5 @@ urlpatterns = [
     path('turnos/<int:pk>/marcar-realizado/', views.turno_marcar_realizado, name='portal_turno_marcar_realizado'),
     path('turnos/<int:pk>/marcar-pagado/', views.turno_marcar_pagado, name='portal_turno_marcar_pagado'),
     path('turnos/<int:pk>/reagendar-rapido/', views.turno_reagendar_rapido, name='portal_turno_reagendar_rapido'),
+    path('turnos/<int:pk>/mover/', views.turno_mover, name='portal_turno_mover'),
 ]
