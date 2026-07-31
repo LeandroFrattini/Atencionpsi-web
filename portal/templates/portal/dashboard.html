@@ -39,7 +39,7 @@
             data-nombre-largo="{{ dia.nombre_largo }}">
         <span class="portal-day-name">{{ dia.nombre }}</span>
         <span class="portal-day-num">{{ dia.fecha|date:"d" }}</span>
-        <span class="portal-day-count">{{ dia.count }} paciente{{ dia.count|pluralize }}</span>
+        <span class="portal-day-count">{{ dia.count }} turno{{ dia.count|pluralize }}</span>
     </button>
     {% endfor %}
 </div>
