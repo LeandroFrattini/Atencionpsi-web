@@ -11,20 +11,12 @@ body {
 
 h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 
-/* ── NAV ── */
-.portal-nav {
+/* ── TOPBAR (solo el logo; la navegación vive abajo, al alcance del pulgar) ── */
+.portal-topbar {
     background: #fff;
-    padding: 1rem 5%;
+    padding: 14px 5%;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-.portal-nav-inner {
-    max-width: 1100px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
+    text-align: center;
 }
 .portal-logo {
     text-decoration: none;
@@ -42,37 +34,57 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     letter-spacing: 0.06em;
     margin-left: 6px;
 }
-.portal-nav-links {
+
+/* ── NAV INFERIOR (patrón estándar de apps mobile: siempre al alcance del pulgar) ── */
+.portal-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #fff;
     display: flex;
-    list-style: none;
-    gap: 22px;
+    justify-content: space-around;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
+    padding: 4px 4px calc(env(safe-area-inset-bottom, 0px) + 4px);
+    z-index: 500;
+}
+.portal-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-}
-.portal-nav-links a {
+    justify-content: center;
+    gap: 2px;
+    flex: 1;
+    max-width: 90px;
+    min-height: 52px;
+    padding: 6px 4px;
+    margin: 4px 2px;
+    border-radius: 12px;
     text-decoration: none;
-    color: #444;
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-.portal-nav-links a:hover { color: #7da87b; }
-.portal-logout-form { margin: 0; }
-.portal-logout-form button {
+    color: #999;
     background: none;
     border: none;
     font-family: inherit;
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: #888;
+    font-size: 0.66rem;
+    font-weight: 700;
     cursor: pointer;
-    padding: 0;
+    transition: color 0.15s ease, background 0.15s ease;
 }
-.portal-logout-form button:hover { color: #c47e7b; }
+.portal-bottom-nav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
+.portal-bottom-nav-item:hover { color: #4a7c59; }
+.portal-bottom-nav-active { color: #4a7c59; background: #eaf5ea; }
+.portal-bottom-nav-form { margin: 0; flex: 1; max-width: 90px; }
+.portal-bottom-nav-form .portal-bottom-nav-item { width: 100%; }
 
 /* ── LAYOUT ── */
 .portal-main {
     max-width: 1100px;
     margin: 0 auto;
     padding: 40px 20px 60px;
+}
+/* Deja lugar para que la nav inferior fija no tape el final del contenido */
+.portal-main-con-nav {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
 }
 .portal-header {
     display: flex;
@@ -297,7 +309,7 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 
 .portal-week-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 25px;
 }
@@ -305,7 +317,7 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     background: #fff;
     border: 2px solid transparent;
     border-radius: 14px;
-    padding: 14px 8px;
+    padding: 14px 6px;
     text-align: center;
     cursor: pointer;
     font-family: inherit;
@@ -313,7 +325,13 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 4px;
+    /* min-width:0 es necesario: un flex item de un solo texto largo
+       ("pacientes") no se achica por debajo de su ancho de contenido por
+       defecto y termina saliéndose de la caja redondeada en pantallas
+       angostas si no se lo permitimos explícitamente. */
+    min-width: 0;
 }
 .portal-day-box:hover { border-color: #cfe0ce; }
 .portal-day-box-today { background: #fbf6f0; }
@@ -324,9 +342,17 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     transform: scale(1.06);
     box-shadow: 0 6px 22px rgba(74,124,89,0.35);
 }
-.portal-day-name { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #999; font-weight: 700; }
+.portal-day-name { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: #999; font-weight: 700; max-width: 100%; }
 .portal-day-num { font-size: 1.4rem; font-weight: 700; color: #333; font-family: 'Playfair Display', serif; }
-.portal-day-count { font-size: 0.72rem; color: #4a7c59; font-weight: 700; }
+.portal-day-count {
+    font-size: 0.72rem;
+    color: #4a7c59;
+    font-weight: 700;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    text-align: center;
+}
 
 .portal-day-panel { display: none; }
 .portal-day-panel-active { display: block; }
@@ -626,7 +652,7 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 @media (max-width: 700px) {
     .portal-form-grid, .portal-detail-grid { grid-template-columns: 1fr; }
     .portal-header { flex-direction: column; align-items: flex-start; }
-    .portal-week-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+    .portal-week-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
     .portal-day-box { padding: 8px 4px; }
     .portal-day-num { font-size: 1.1rem; }
     .portal-day-count { font-size: 0.62rem; }

@@ -24,7 +24,7 @@
 
 <div class="portal-week-nav">
     <a href="?semana={{ semana_offset|add:"-1" }}" class="portal-btn portal-btn-outline">&lsaquo; Semana anterior</a>
-    <span class="portal-week-label">{{ lunes|date:"d/m" }} – {{ domingo|date:"d/m" }}</span>
+    <span class="portal-week-label">{{ lunes|date:"d/m" }} – {{ sabado|date:"d/m" }}</span>
     <a href="?semana={{ semana_offset|add:"1" }}" class="portal-btn portal-btn-outline">Semana siguiente &rsaquo;</a>
     {% if semana_offset != 0 %}<a href="?semana=0" class="portal-link portal-week-today-link">Volver a hoy</a>{% endif %}
 </div>

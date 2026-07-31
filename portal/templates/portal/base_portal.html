@@ -10,30 +10,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'portal.css' %}?v=6">
+    <link rel="stylesheet" href="{% static 'portal.css' %}?v=7">
     <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
 <body>
     {% if request.user.is_authenticated %}
-    <nav class="portal-nav">
-        <div class="portal-nav-inner">
-            <a href="{% url 'portal_dashboard' %}" class="portal-logo"><span class="v">Atención</span><span class="r">Psi</span> <small>portal</small></a>
-            <ul class="portal-nav-links">
-                <li><a href="{% url 'portal_dashboard' %}">Agenda</a></li>
-                <li><a href="{% url 'portal_pacientes' %}">Pacientes</a></li>
-                <li><a href="{% url 'portal_cambiar_password' %}">Mi contraseña</a></li>
-                <li>
-                    <form method="post" action="{% url 'portal_logout' %}" class="portal-logout-form">
-                        {% csrf_token %}
-                        <button type="submit">Cerrar sesión</button>
-                    </form>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    <header class="portal-topbar">
+        <a href="{% url 'portal_dashboard' %}" class="portal-logo"><span class="v">Atención</span><span class="r">Psi</span> <small>portal</small></a>
+    </header>
     {% endif %}
 
-    <main class="portal-main">
+    <main class="portal-main{% if request.user.is_authenticated %} portal-main-con-nav{% endif %}">
         {% if messages %}
             <ul class="portal-messages">
                 {% for message in messages %}
@@ -44,6 +31,30 @@
 
         {% block content %}{% endblock %}
     </main>
+
+    {% if request.user.is_authenticated %}
+    <nav class="portal-bottom-nav">
+        <a href="{% url 'portal_dashboard' %}" class="portal-bottom-nav-item{% if request.resolver_match.url_name == 'portal_dashboard' %} portal-bottom-nav-active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+            <span>Agenda</span>
+        </a>
+        <a href="{% url 'portal_pacientes' %}" class="portal-bottom-nav-item{% if request.resolver_match.url_name == 'portal_pacientes' or request.resolver_match.url_name == 'portal_paciente_detalle' or request.resolver_match.url_name == 'portal_paciente_nuevo' or request.resolver_match.url_name == 'portal_paciente_editar' %} portal-bottom-nav-active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><circle cx="17" cy="9" r="2.6"/><path d="M15 14.2c2.3 .3 4 2 4 4.8"/></svg>
+            <span>Pacientes</span>
+        </a>
+        <a href="{% url 'portal_cambiar_password' %}" class="portal-bottom-nav-item{% if request.resolver_match.url_name == 'portal_cambiar_password' %} portal-bottom-nav-active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8"/><path d="M16 7l2.5 2.5"/><path d="M13.3 9.7L15.7 12"/></svg>
+            <span>Clave</span>
+        </a>
+        <form method="post" action="{% url 'portal_logout' %}" class="portal-bottom-nav-form">
+            {% csrf_token %}
+            <button type="submit" class="portal-bottom-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8"/><path d="M10 12h11"/><path d="M17 8l4 4-4 4"/></svg>
+                <span>Salir</span>
+            </button>
+        </form>
+    </nav>
+    {% endif %}
 
     <script src="{% static 'portal.js' %}?v=5"></script>
 </body>

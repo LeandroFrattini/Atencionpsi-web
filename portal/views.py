@@ -54,10 +54,10 @@ def dashboard(request, psico):
         offset = 0
 
     lunes = hoy - datetime.timedelta(days=hoy.weekday()) + datetime.timedelta(weeks=offset)
-    domingo = lunes + datetime.timedelta(days=6)
+    sabado = lunes + datetime.timedelta(days=5)  # la agenda es de lunes a sábado, domingo no se trabaja
 
     turnos_semana = (
-        Turno.objects.filter(psicologo=psico, fecha_hora__date__range=(lunes, domingo))
+        Turno.objects.filter(psicologo=psico, fecha_hora__date__range=(lunes, sabado))
         .select_related('paciente')
         .order_by('fecha_hora')
     )
@@ -70,7 +70,7 @@ def dashboard(request, psico):
 
     dia_default = None
     dias = []
-    for i in range(7):
+    for i in range(6):
         fecha = lunes + datetime.timedelta(days=i)
         turnos_dia = turnos_por_dia.get(fecha, [])
         es_hoy = fecha == hoy
@@ -130,7 +130,7 @@ def dashboard(request, psico):
         'psico': psico,
         'dias': dias,
         'lunes': lunes,
-        'domingo': domingo,
+        'sabado': sabado,
         'semana_offset': offset,
         'dia_default': dia_default,
         'stats': stats,
