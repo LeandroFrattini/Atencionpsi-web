@@ -23,10 +23,16 @@
 <p class="portal-stats-sub">Este mes ({{ mes_label }})</p>
 
 <div class="portal-week-nav">
-    <a href="?semana={{ semana_offset|add:"-1" }}" class="portal-btn portal-btn-outline">&lsaquo; Semana anterior</a>
-    <span class="portal-week-label">{{ lunes|date:"d/m" }} – {{ sabado|date:"d/m" }}</span>
-    <a href="?semana={{ semana_offset|add:"1" }}" class="portal-btn portal-btn-outline">Semana siguiente &rsaquo;</a>
-    {% if semana_offset != 0 %}<a href="?semana=0" class="portal-link portal-week-today-link">Volver a hoy</a>{% endif %}
+    <a href="?semana={{ semana_offset|add:"-1" }}" class="portal-week-nav-arrow" aria-label="Semana anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </a>
+    <div class="portal-week-nav-center">
+        <span class="portal-week-label">{{ lunes|date:"d/m" }} – {{ sabado|date:"d/m" }}</span>
+        {% if semana_offset != 0 %}<a href="?semana=0" class="portal-week-today-link">Hoy</a>{% endif %}
+    </div>
+    <a href="?semana={{ semana_offset|add:"1" }}" class="portal-week-nav-arrow" aria-label="Semana siguiente">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </a>
 </div>
 
 <div class="portal-week-grid" id="portal-week-grid" data-default="{{ dia_default }}">
@@ -39,7 +45,10 @@
             data-nombre-largo="{{ dia.nombre_largo }}">
         <span class="portal-day-name">{{ dia.nombre }}</span>
         <span class="portal-day-num">{{ dia.fecha|date:"d" }}</span>
-        <span class="portal-day-count">{{ dia.count }} turno{{ dia.count|pluralize }}</span>
+        <span class="portal-day-count">
+            <span class="portal-day-count-num">{{ dia.count }}</span>
+            <span class="portal-day-count-label">turno{{ dia.count|pluralize }}</span>
+        </span>
     </button>
     {% endfor %}
 </div>
