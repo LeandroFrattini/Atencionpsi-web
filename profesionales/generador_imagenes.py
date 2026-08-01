@@ -10,10 +10,13 @@ tipografía libre abajo.
 Para reutilizar este mismo diseño en las webs de otros países (.uy/.py/.cl),
 lo único que hay que tocar es el bloque de configuración de abajo.
 """
+import math
 import os
+import random
+import re
 from io import BytesIO
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 FONTS_DIR = os.path.join(_HERE, 'fonts')
@@ -132,28 +135,119 @@ def _formatear_telefono(whatsapp_limpio):
 
 # ── Fondo: gradiente + manchas difuminadas + grano ─────────────────────────
 def _gradiente_lineal(w, h, color_a, color_b, angulo=150):
-    base = Image.linear_gradient('L').rotate(angulo - 90, expand=True, resample=Image.BICUBIC)
-    base = base.resize((w, h))
-    capa_a = Image.new('RGB', (w, h), color_a)
-    capa_b = Image.new('RGB', (w, h), color_b)
-    return Image.composite(capa_b, capa_a, base)
+    """
+    Degradé diagonal calculado por proyección (no por rotar + recortar
+    Image.linear_gradient): rotar un cuadrado de 256x256 con expand=True
+    rellena las esquinas nuevas de negro, y al reescalar eso a 1080x1920
+    quedaba un parche oscuro con forma de rombo bien visible — se veía
+    como un recorte "cuadrado" encima del fondo en vez de un degradé
+    parejo. Se arma en baja resolución (es un degradé suave, no hace
+    falta más) y se escala arriba, así siempre cubre el lienzo entero.
+    """
+    sw, sh = max(2, w // 18), max(2, h // 18)
+    rad = math.radians(angulo)
+    dx, dy = math.cos(rad), math.sin(rad)
+    esquinas = [(0, 0), (sw, 0), (0, sh), (sw, sh)]
+    proyecciones = [px * dx + py * dy for px, py in esquinas]
+    p_min, p_max = min(proyecciones), max(proyecciones)
+    rango = (p_max - p_min) or 1
+
+    pequena = Image.new('RGB', (sw, sh))
+    pix = pequena.load()
+    for y in range(sh):
+        for x in range(sw):
+            t = max(0.0, min(1.0, ((x * dx + y * dy) - p_min) / rango))
+            pix[x, y] = tuple(int(color_a[i] + (color_b[i] - color_a[i]) * t) for i in range(3))
+    return pequena.resize((w, h), Image.Resampling.BICUBIC)
 
 
-def _mancha(canvas, cx, cy, radio, color, alpha=95):
-    d = radio * 2
-    capa = Image.new('RGBA', (d, d), (0, 0, 0, 0))
-    ImageDraw.Draw(capa).ellipse([0, 0, d, d], fill=color + (alpha,))
-    capa = capa.filter(ImageFilter.GaussianBlur(radio * 0.4))
-    canvas.paste(capa, (int(cx - radio), int(cy - radio)), capa)
+def _puntos_blob(cx, cy, radio, variacion=0.3, n_anclas=9, seed=0, n_muestras=72):
+    """
+    Puntos de un contorno orgánico tipo "mancha": se eligen n_anclas radios
+    al azar alrededor de un círculo y se interpola suave (coseno) entre
+    ellos, en vez de un círculo perfecto. Así se puede rellenar como
+    polígono y queda una mancha con forma irregular de verdad, no un
+    círculo con desenfoque (que se ve como un resplandor, no como una
+    mancha con contorno propio).
+    """
+    rng = random.Random(seed)
+    radios_ancla = [radio * (1 + rng.uniform(-variacion, variacion)) for _ in range(n_anclas)]
+    puntos = []
+    for i in range(n_muestras):
+        pos = (i / n_muestras) * n_anclas
+        i0 = int(pos) % n_anclas
+        i1 = (i0 + 1) % n_anclas
+        frac = pos - int(pos)
+        frac_suave = (1 - math.cos(frac * math.pi)) / 2
+        r = radios_ancla[i0] * (1 - frac_suave) + radios_ancla[i1] * frac_suave
+        ang = 2 * math.pi * i / n_muestras
+        puntos.append((cx + r * math.cos(ang), cy + r * math.sin(ang)))
+    return puntos
 
 
-def _grano(canvas, paso=26, alpha=14):
-    """canvas debe estar en modo RGB; agrega una textura sutil de puntitos."""
+def _blob(canvas, cx, cy, radio, color, alpha=210, variacion=0.3, n_anclas=9, seed=0, blur=12, con_textura=True):
+    """
+    Mancha orgánica con color fuerte en el centro que se va apagando hacia
+    el borde (degradé radial recortado con la forma orgánica), no un color
+    plano cortado en seco con blur — así "se siente" fluida en vez de un
+    bloque de color con los bordes difuminados.
+    """
+    pad = int(radio * (1 + variacion) * 0.5) + blur
+    d = int((radio * (1 + variacion) + pad) * 2)
+    centro = d // 2
+    puntos = _puntos_blob(centro, centro, radio, variacion, n_anclas, seed)
+
+    capa = Image.new('RGBA', (d, d), color + (255,))
+    if con_textura:
+        # puntitos un poco más oscuros DENTRO de la mancha (muestreo en
+        # coordenadas polares, se quedan adentro del contorno orgánico sin
+        # necesidad de comprobar el polígono exacto).
+        dib = ImageDraw.Draw(capa)
+        rng = random.Random(seed + 1000)
+        color_punto = tuple(max(0, c - 35) for c in color)
+        for _ in range(150):
+            ang = rng.uniform(0, 2 * math.pi)
+            rad_punto = radio * 0.8 * math.sqrt(rng.uniform(0, 1))
+            x = centro + rad_punto * math.cos(ang)
+            y = centro + rad_punto * math.sin(ang)
+            r = rng.uniform(1.2, 2.2)
+            dib.ellipse([x - r, y - r, x + r, y + r], fill=color_punto + (255,))
+
+    mascara_forma = Image.new('L', (d, d), 0)
+    ImageDraw.Draw(mascara_forma).polygon(puntos, fill=255)
+    gradiente = Image.radial_gradient('L').resize((d, d))
+    mascara = ImageChops.multiply(mascara_forma, gradiente)
+    mascara = mascara.point(lambda v: v * alpha // 255)
+    capa.putalpha(mascara)
+
+    if blur:
+        capa = capa.filter(ImageFilter.GaussianBlur(blur))
+    canvas.paste(capa, (int(cx - centro), int(cy - centro)), capa)
+
+
+def _anillos_concentricos(canvas, cx, cy, radios, color, alpha=90, ancho=2):
     capa = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(capa)
-    for y in range(0, canvas.size[1], paso):
-        for x in range(0, canvas.size[0], paso):
-            d.ellipse([x - 1.6, y - 1.6, x + 1.6, y + 1.6], fill=TINTA + (alpha,))
+    for r in radios:
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=color + (alpha,), width=ancho)
+    canvas.paste(capa, (0, 0), capa)
+
+
+def _grano(canvas, cantidad=2400, alpha_max=16, seed=42):
+    """
+    Textura de grano con puntos dispersos al azar (no una grilla pareja):
+    una grilla perfectamente regular de puntos se termina viendo como un
+    cuadriculado en vez de una textura orgánica.
+    """
+    rng = random.Random(seed)
+    w, h = canvas.size
+    capa = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(capa)
+    for _ in range(cantidad):
+        x, y = rng.uniform(0, w), rng.uniform(0, h)
+        r = rng.uniform(0.6, 1.8)
+        a = rng.randint(4, alpha_max)
+        d.ellipse([x - r, y - r, x + r, y + r], fill=TINTA + (a,))
     resultado = Image.alpha_composite(canvas.convert('RGBA'), capa).convert('RGB')
     canvas.paste(resultado, (0, 0))
 
@@ -190,14 +284,48 @@ def _pegar_con_sombra(canvas, capa_contenido, x, y, radio_borde):
     canvas.paste(capa_contenido, (x, y), capa_contenido)
 
 
+# Silueta real de auricular (el mismo path estándar de "llamada" que ya se
+# probó en el mockup HTML), aplanada a polígono y normalizada a 0..1 sobre
+# su viewBox de 24x24. Antes acá había dos círculos unidos por una línea:
+# matemáticamente prolijo pero se lee como ícono de "compartir/link", no
+# como teléfono — por eso se reemplaza por la forma real, no por otro
+# ajuste de tamaño/centrado.
+_PUNTOS_ICONO_TELEFONO = [
+    (0.27583, 0.44958), (0.29492, 0.48429), (0.31611, 0.51762), (0.33932, 0.54948),
+    (0.36445, 0.57978), (0.39141, 0.60844), (0.4201, 0.63537), (0.45045, 0.6605),
+    (0.48234, 0.68373), (0.51569, 0.70498), (0.55042, 0.72417), (0.64208, 0.6325),
+    (0.64561, 0.62935), (0.64942, 0.62666), (0.65347, 0.62443), (0.6577, 0.62268),
+    (0.66208, 0.62141), (0.66656, 0.62062), (0.6711, 0.62033), (0.67564, 0.62054),
+    (0.68015, 0.62126), (0.68458, 0.6225), (0.69869, 0.62691), (0.71301, 0.63089),
+    (0.72753, 0.63443), (0.74222, 0.63752), (0.75708, 0.64016), (0.77209, 0.64233),
+    (0.78724, 0.64403), (0.8025, 0.64526), (0.81787, 0.646), (0.83333, 0.64625),
+    (0.84007, 0.6468), (0.84647, 0.64838), (0.85244, 0.65092), (0.8579, 0.65432),
+    (0.86276, 0.65849), (0.86693, 0.66335), (0.87033, 0.66881), (0.87287, 0.67478),
+    (0.87445, 0.68118), (0.875, 0.68792), (0.875, 0.83333), (0.87445, 0.84007),
+    (0.87287, 0.84647), (0.87033, 0.85244), (0.86693, 0.8579), (0.86276, 0.86276),
+    (0.8579, 0.86693), (0.85244, 0.87033), (0.84647, 0.87287), (0.84007, 0.87445),
+    (0.83333, 0.875), (0.71843, 0.86573), (0.60943, 0.83889), (0.50779, 0.79595),
+    (0.41498, 0.73835), (0.33245, 0.66755), (0.26165, 0.58502), (0.20405, 0.49221),
+    (0.16111, 0.39057), (0.13427, 0.28157), (0.125, 0.16667), (0.12555, 0.15993),
+    (0.12713, 0.15353), (0.12967, 0.14756), (0.13307, 0.1421), (0.13724, 0.13724),
+    (0.1421, 0.13307), (0.14756, 0.12967), (0.15353, 0.12713), (0.15993, 0.12555),
+    (0.16667, 0.125), (0.3125, 0.125), (0.31924, 0.12555), (0.32563, 0.12713),
+    (0.33161, 0.12967), (0.33707, 0.13307), (0.34193, 0.13724), (0.3461, 0.1421),
+    (0.3495, 0.14756), (0.35203, 0.15353), (0.35362, 0.15993), (0.35417, 0.16667),
+    (0.35442, 0.18223), (0.35516, 0.19766), (0.35638, 0.21295), (0.35809, 0.22809),
+    (0.36026, 0.24307), (0.3629, 0.2579), (0.36599, 0.27255), (0.36953, 0.28703),
+    (0.37351, 0.30132), (0.37792, 0.31542), (0.37905, 0.31984), (0.37971, 0.32432),
+    (0.37989, 0.32882), (0.37959, 0.33332), (0.3788, 0.33776), (0.37753, 0.34212),
+    (0.37576, 0.34635), (0.3735, 0.35042), (0.37075, 0.35429), (0.3675, 0.35792),
+    (0.27583, 0.44958),
+]
+
+
 def _icono_telefono(draw, cx, cy, r, color, ancho=5):
-    off = r * 0.5
-    p1 = (cx - off, cy + off * 0.6)
-    p2 = (cx + off * 0.7, cy - off)
-    draw.line([p1, p2], fill=color, width=ancho)
-    er = r * 0.34
-    draw.ellipse([p1[0] - er, p1[1] - er, p1[0] + er, p1[1] + er], outline=color, width=ancho)
-    draw.ellipse([p2[0] - er, p2[1] - er, p2[0] + er, p2[1] + er], outline=color, width=ancho)
+    tam = r * 2.4
+    x0, y0 = cx - tam / 2, cy - tam / 2
+    puntos = [(x0 + nx * tam, y0 + ny * tam) for nx, ny in _PUNTOS_ICONO_TELEFONO]
+    draw.polygon(puntos, fill=color)
 
 
 def _icono_ubicacion(draw, cx, cy, r, color, ancho=5):
@@ -228,19 +356,34 @@ def _icono_instagram(draw, cx, cy, r, color, ancho=3):
     draw.ellipse([px - pr, py - pr, px + pr, py + pr], fill=color)
 
 
-def _dibujar_burbuja_dato(draw_fn, ancho, alto, icono_fn, estilo='claro'):
+def _ancho_burbuja_dato(draw, lineas_y_fuentes, icono_cx=66, icono_r=33, gap=26):
+    """
+    Ancho de la burbuja calculado a partir del contenido real (ícono +
+    texto más largo) en vez de un porcentaje fijo del canvas. Con un
+    ancho fijo, textos cortos (p.ej. "Presencial" solo) quedaban con el
+    ícono y el texto pegados a la izquierda y un montón de aire vacío a
+    la derecha -- el mismo problema ya resuelto en el mockup HTML, acá
+    con el mismo criterio: margen simétrico entre ícono y borde.
+    """
+    margen = icono_cx - icono_r  # ya es el margen que deja el ícono a la izquierda
+    x_texto = icono_cx + icono_r + gap
+    ancho_texto = max(_tw(draw, texto, fnt) for texto, fnt in lineas_y_fuentes)
+    return x_texto + ancho_texto + margen
+
+
+def _dibujar_burbuja_dato(draw_fn, ancho, alto, icono_fn, estilo='claro', icono_cx=66, icono_r=33, gap=26):
     """
     Arma en una capa aparte una burbuja con ícono + contenido (dibujado por
     draw_fn). estilo='claro' -> burbuja blanca, ícono en circulito verde
     suave. estilo='solido' -> burbuja verde llena, ícono en circulito
     blanco (para el teléfono, que tiene que resaltar más que el resto).
+    icono_cx/icono_r/gap dejan escalar el ícono y su margen (p.ej. para que
+    la burbuja del teléfono se vea un poco más grande que el resto).
     """
     capa = Image.new('RGBA', (ancho, alto), (0, 0, 0, 0))
     fondo_burbuja = VERDE_OSCURO if estilo == 'solido' else BLANCO
     ImageDraw.Draw(capa).rounded_rectangle([0, 0, ancho, alto], radius=alto // 2, fill=fondo_burbuja + (255,))
     d = ImageDraw.Draw(capa)
-    icono_cx = 66
-    icono_r = 33
     if estilo == 'solido':
         d.ellipse([icono_cx - icono_r, alto // 2 - icono_r, icono_cx + icono_r, alto // 2 + icono_r], fill=BLANCO)
         color_icono = VERDE_OSCURO
@@ -251,7 +394,7 @@ def _dibujar_burbuja_dato(draw_fn, ancho, alto, icono_fn, estilo='claro'):
         )
         color_icono = VERDE_OSCURO
     icono_fn(d, icono_cx, alto // 2, icono_r * 0.55, color_icono)
-    draw_fn(d, icono_cx + icono_r + 26)
+    draw_fn(d, icono_cx + icono_r + gap)
     return capa
 
 
@@ -324,19 +467,38 @@ def _medallion(canvas, cx, cy, diametro, foto_field):
     if not data:
         interior.putalpha(mask_int)
         canvas.paste(interior, (ix, iy), interior)
+
+        # Forma abstracta muy suave detrás del ícono (un cuadrado rotado
+        # casi transparente), recortada al círculo interior.
+        lado = interior_d * 0.62
+        capa_forma = Image.new('RGBA', (interior_d, interior_d), (0, 0, 0, 0))
+        cf = interior_r
+        ImageDraw.Draw(capa_forma).polygon(
+            [(cf, cf - lado / 2), (cf + lado / 2, cf), (cf, cf + lado / 2), (cf - lado / 2, cf)],
+            fill=ROSA + (55,),
+        )
+        capa_forma.putalpha(ImageChops.multiply(capa_forma.split()[3], mask_int))
+        canvas.paste(capa_forma, (ix, iy), capa_forma)
+
         d = ImageDraw.Draw(canvas)
         _icono_persona_placeholder(d, cx, cy, interior_r * 0.62, VERDE_OSCURO)
 
 
 # ── Generador principal ─────────────────────────────────────────────────
-def generar_imagen_story(psicologo):
-    canvas = _gradiente_lineal(W, H, CREMA, BLUSH, angulo=150).convert('RGB')
+def generar_imagen_story(psicologo, telefono_manual=None):
+    """
+    telefono_manual: si se pasa, se usa este número para la imagen en vez
+    del guardado en el campo WhatsApp del profesional. Sirve porque el
+    número del botón de WhatsApp del sitio y el número que se quiere
+    mostrar en la foto de la historia no siempre son el mismo.
+    """
+    canvas = Image.new('RGB', (W, H), CREMA)
 
-    # Manchas orgánicas en capas (verde, rosa, oro) + arco punteado + grano
-    _mancha(canvas, -30, 60, 390, VERDE, alpha=95)
-    _mancha(canvas, W + 60, H - 100, 450, ROSA, alpha=100)
-    _mancha(canvas, W + 60, 900, 280, ORO, alpha=75)
-    _mancha(canvas, -60, 1400, 230, VERDE, alpha=65)
+    # Manchas orgánicas (contorno irregular, no círculos difuminados) + anillos + grano
+    _blob(canvas, -30, 170, 370, VERDE, alpha=110, variacion=0.32, n_anclas=9, seed=3, blur=20)
+    _blob(canvas, W + 140, H - 280, 560, ROSA, alpha=125, variacion=0.30, n_anclas=10, seed=7, blur=26)
+    _blob(canvas, -10, H - 40, 190, ROSA, alpha=110, variacion=0.35, n_anclas=7, seed=11, blur=16)
+    _anillos_concentricos(canvas, W - 55, 65, [55, 95, 138], ROSA, alpha=110, ancho=2)
     _arco_punteado(canvas, W // 2, 502, 350, VERDE_OSCURO, ancho=2, alpha=60)
     _grano(canvas)
 
@@ -381,34 +543,44 @@ def generar_imagen_story(psicologo):
         texto_modalidad = modalidades[0] if modalidades else ''
         texto_ciudad = ''
 
-    whatsapp_limpio = psicologo.whatsapp_limpio()
-    texto_telefono = _formatear_telefono(whatsapp_limpio) if whatsapp_limpio else ''
+    if telefono_manual:
+        digitos = re.sub(r'\D', '', telefono_manual)
+    else:
+        digitos = psicologo.whatsapp_limpio()
+    texto_telefono = _formatear_telefono(digitos) if digitos else ''
 
-    ancho_burbuja = int(W * 0.68)
     f_dato = _font('montserrat', 800, 36)
     f_dato_sub = _font('montserrat', 500, 23)
+    f_tel = _font('montserrat', 800, 41)   # un poco más grande que el resto de las burbujas
 
     datos_bloques = []
     if texto_telefono:
-        alto = 96
+        alto = 110
+        icono_cx_tel, icono_r_tel, gap_tel = 74, 37, 29
+        ancho_tel = _ancho_burbuja_dato(
+            draw, [(texto_telefono, f_tel)], icono_cx=icono_cx_tel, icono_r=icono_r_tel, gap=gap_tel,
+        )
         capa = _dibujar_burbuja_dato(
-            lambda d, x: d.text((x, alto // 2), texto_telefono, font=f_dato, fill=BLANCO, anchor='lm'),
-            ancho_burbuja, alto, _icono_telefono, estilo='solido',
+            lambda d, x: d.text((x, alto // 2), texto_telefono, font=f_tel, fill=BLANCO, anchor='lm'),
+            ancho_tel, alto, _icono_telefono, estilo='solido',
+            icono_cx=icono_cx_tel, icono_r=icono_r_tel, gap=gap_tel,
         )
         datos_bloques.append(capa)
     if texto_modalidad:
         alto = 112 if texto_ciudad else 96
+        lineas_modal = [(texto_modalidad, f_dato)] + ([(texto_ciudad, f_dato_sub)] if texto_ciudad else [])
+        ancho_modal = _ancho_burbuja_dato(draw, lineas_modal)
         def _dibujar_modalidad(d, x, alto=alto, texto_ciudad=texto_ciudad, texto_modalidad=texto_modalidad):
             if texto_ciudad:
                 d.text((x, alto // 2 - 20), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
                 d.text((x, alto // 2 + 22), texto_ciudad, font=f_dato_sub, fill=TINTA_SUAVE, anchor='lm')
             else:
                 d.text((x, alto // 2), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
-        capa = _dibujar_burbuja_dato(_dibujar_modalidad, ancho_burbuja, alto, _icono_ubicacion)
+        capa = _dibujar_burbuja_dato(_dibujar_modalidad, ancho_modal, alto, _icono_ubicacion)
         datos_bloques.append(capa)
 
-    bx = (W - ancho_burbuja) // 2
     for capa in datos_bloques:
+        bx = (W - capa.size[0]) // 2
         _pegar_con_sombra(canvas, capa, bx, cy, capa.size[1] // 2)
         cy += capa.size[1] + 22
     cy += 30

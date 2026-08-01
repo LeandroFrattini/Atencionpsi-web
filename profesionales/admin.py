@@ -154,11 +154,12 @@ class PsicologoAdmin(admin.ModelAdmin):
         from .generador_imagenes import generar_imagen_story
 
         if 'apply' in request.POST:
+            telefono_manual = request.POST.get('telefono_manual', '').strip()
             buf = BytesIO()
             with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for p in queryset:
                     nombre_slug = p.slug or p.nombre.lower().replace(' ', '-')
-                    story_img = generar_imagen_story(p)
+                    story_img = generar_imagen_story(p, telefono_manual=telefono_manual or None)
                     story_buf = BytesIO()
                     story_img.save(story_buf, 'JPEG', quality=92)
                     zf.writestr(f'{nombre_slug}_historia.jpg', story_buf.getvalue())

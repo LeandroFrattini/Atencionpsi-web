@@ -68,3 +68,17 @@ class GenerarImagenesAdminActionTests(TestCase):
         nombres = zf.namelist()
         self.assertEqual(len(nombres), 1)
         self.assertTrue(nombres[0].endswith('_historia.jpg'))
+
+    def test_telefono_manual_override_no_rompe_la_descarga(self):
+        """El campo opcional del admin para pisar el número de la imagen no debe fallar."""
+        url = reverse('admin:profesionales_psicologo_changelist')
+        resp = self.client.post(url, {
+            'action': 'generar_imagenes_action',
+            '_selected_action': [self.psico.pk],
+            'apply': '1',
+            'telefono_manual': '542914250495',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/zip')
+        zf = zipfile.ZipFile(BytesIO(resp.content))
+        self.assertEqual(len(zf.namelist()), 1)
