@@ -21,7 +21,7 @@ FONTS_DIR = os.path.join(_HERE, 'fonts')
 # ── Configuración por país — lo único que cambia entre sitios ─────────────
 DOMINIO_SITIO = 'www.atencionpsi.com.ar'
 INSTAGRAM_HANDLE = '@atencionpsi.ar'
-PREFIJO_TELEFONO = '+54 9 '  # Uruguay: '+598 ', Paraguay: '+595 ', Chile: '+56 '
+CODIGO_PAIS = '54'  # Uruguay: '598', Paraguay: '595', Chile: '56'
 
 # ── Paleta (igual a static/style.css / portal.css) ─────────────────────────
 CREMA = (253, 251, 249)
@@ -106,13 +106,28 @@ def _limpiar_nombre(nombre):
 
 
 def _formatear_telefono(whatsapp_limpio):
-    """Agrupa el número (10 dígitos: área + local) para que se lea mejor."""
+    """
+    Devuelve el teléfono ya con "+54 9 " y agrupado para leerse bien.
+
+    Algunos profesionales cargan el WhatsApp ya con el código de país y el 9
+    adelante (asi funciona bien el link de WhatsApp), otros cargan solo el
+    número local. Si no se detecta esto, el prefijo se termina agregando
+    dos veces (se ve "+54 9 549..."). Por eso primero se le saca el 54 y el
+    9 si ya los tiene, y recién ahí se arma el texto siempre igual.
+    """
     n = whatsapp_limpio
+    if n.startswith(CODIGO_PAIS):
+        n = n[len(CODIGO_PAIS):]
+    if n.startswith('9') and len(n) > 10:
+        n = n[1:]
+
     if len(n) == 10:
-        return f'{n[:3]} {n[3:7]}-{n[7:]}'
-    if len(n) >= 8:
-        return f'{n[:-4]}-{n[-4:]}'
-    return n
+        cuerpo = f'{n[:3]} {n[3:7]}-{n[7:]}'
+    elif len(n) >= 8:
+        cuerpo = f'{n[:-4]}-{n[-4:]}'
+    else:
+        cuerpo = n
+    return f'+{CODIGO_PAIS} 9 {cuerpo}'
 
 
 # ── Fondo: gradiente + manchas difuminadas + grano ─────────────────────────
@@ -196,30 +211,67 @@ def _icono_ubicacion(draw, cx, cy, r, color, ancho=5):
     draw.line([(cx + rc * 0.72, top + rc * 0.55), punta], fill=color, width=ancho)
 
 
-def _dibujar_burbuja_dato(draw_fn, ancho, alto, icono_fn):
-    """Arma en una capa aparte una burbuja blanca con ícono + contenido (dibujado por draw_fn)."""
+def _icono_globo(draw, cx, cy, r, color, ancho=3):
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r], outline=color, width=ancho)
+    draw.line([(cx - r, cy), (cx + r, cy)], fill=color, width=ancho)
+    draw.ellipse([cx - r * 0.42, cy - r, cx + r * 0.42, cy + r], outline=color, width=max(2, ancho - 1))
+    draw.line([(cx, cy - r), (cx, cy + r)], fill=color, width=max(2, ancho - 1))
+
+
+def _icono_instagram(draw, cx, cy, r, color, ancho=3):
+    draw.rounded_rectangle(
+        [cx - r, cy - r * 0.82, cx + r, cy + r * 0.82], radius=r * 0.4, outline=color, width=ancho
+    )
+    draw.ellipse([cx - r * 0.42, cy - r * 0.42, cx + r * 0.42, cy + r * 0.42], outline=color, width=ancho)
+    pr = r * 0.12
+    px, py = cx + r * 0.55, cy - r * 0.55
+    draw.ellipse([px - pr, py - pr, px + pr, py + pr], fill=color)
+
+
+def _dibujar_burbuja_dato(draw_fn, ancho, alto, icono_fn, estilo='claro'):
+    """
+    Arma en una capa aparte una burbuja con ícono + contenido (dibujado por
+    draw_fn). estilo='claro' -> burbuja blanca, ícono en circulito verde
+    suave. estilo='solido' -> burbuja verde llena, ícono en circulito
+    blanco (para el teléfono, que tiene que resaltar más que el resto).
+    """
     capa = Image.new('RGBA', (ancho, alto), (0, 0, 0, 0))
-    ImageDraw.Draw(capa).rounded_rectangle([0, 0, ancho, alto], radius=alto // 2, fill=BLANCO + (255,))
+    fondo_burbuja = VERDE_OSCURO if estilo == 'solido' else BLANCO
+    ImageDraw.Draw(capa).rounded_rectangle([0, 0, ancho, alto], radius=alto // 2, fill=fondo_burbuja + (255,))
     d = ImageDraw.Draw(capa)
     icono_cx = 66
     icono_r = 33
-    d.ellipse(
-        [icono_cx - icono_r, alto // 2 - icono_r, icono_cx + icono_r, alto // 2 + icono_r],
-        fill=(*VERDE, 38),
-    )
-    icono_fn(d, icono_cx, alto // 2, icono_r * 0.55, VERDE_OSCURO)
+    if estilo == 'solido':
+        d.ellipse([icono_cx - icono_r, alto // 2 - icono_r, icono_cx + icono_r, alto // 2 + icono_r], fill=BLANCO)
+        color_icono = VERDE_OSCURO
+    else:
+        d.ellipse(
+            [icono_cx - icono_r, alto // 2 - icono_r, icono_cx + icono_r, alto // 2 + icono_r],
+            fill=(*VERDE, 38),
+        )
+        color_icono = VERDE_OSCURO
+    icono_fn(d, icono_cx, alto // 2, icono_r * 0.55, color_icono)
     draw_fn(d, icono_cx + icono_r + 26)
     return capa
 
 
 # ── Foto / placeholder circular ─────────────────────────────────────────
-def _crop_cuadrado(img, lado):
+def _crop_cuadrado(img, lado, foco_vertical=0.12):
+    """
+    Recorta a cuadrado. El recorte vertical se sesga hacia arriba (no al
+    centro): la mayoría de las fotos que suben los profesionales son de
+    cuerpo entero o 3/4, con la cara en el tercio superior. Centrar el
+    recorte dejaba medio cuerpo y fondo de oficina en el medallón en vez
+    de un encuadre tipo retrato — se veía "cuadrado" en lugar de una
+    foto de perfil recortada en círculo.
+    """
     sw, sh = img.size
     ratio = max(lado / sw, lado / sh)
     nw, nh = int(sw * ratio), int(sh * ratio)
     img = img.resize((nw, nh), Image.Resampling.LANCZOS)
     left = (nw - lado) // 2
-    top = (nh - lado) // 2
+    top = int((nh - lado) * foco_vertical)
+    top = max(0, min(nh - lado, top))
     return img.crop((left, top, left + lado, top + lado))
 
 
@@ -329,8 +381,8 @@ def generar_imagen_story(psicologo):
         texto_modalidad = modalidades[0] if modalidades else ''
         texto_ciudad = ''
 
-    telefono = _formatear_telefono(psicologo.whatsapp_limpio())
-    texto_telefono = f'{PREFIJO_TELEFONO}{telefono}' if telefono else ''
+    whatsapp_limpio = psicologo.whatsapp_limpio()
+    texto_telefono = _formatear_telefono(whatsapp_limpio) if whatsapp_limpio else ''
 
     ancho_burbuja = int(W * 0.68)
     f_dato = _font('montserrat', 800, 36)
@@ -340,8 +392,8 @@ def generar_imagen_story(psicologo):
     if texto_telefono:
         alto = 96
         capa = _dibujar_burbuja_dato(
-            lambda d, x: d.text((x, alto // 2), texto_telefono, font=f_dato, fill=TINTA, anchor='lm'),
-            ancho_burbuja, alto, _icono_telefono,
+            lambda d, x: d.text((x, alto // 2), texto_telefono, font=f_dato, fill=BLANCO, anchor='lm'),
+            ancho_burbuja, alto, _icono_telefono, estilo='solido',
         )
         datos_bloques.append(capa)
     if texto_modalidad:
@@ -361,36 +413,48 @@ def generar_imagen_story(psicologo):
         cy += capa.size[1] + 22
     cy += 30
 
-    # ── Burbujas inferiores (ancladas al fondo) ──
+    # ── Burbujas inferiores (ancladas al fondo), con ícono + texto ──
     f_burbuja_web = _font('montserrat', 700, 38)
     f_burbuja_ig = _font('montserrat', 600, 26)
     web_texto = DOMINIO_SITIO
     ig_texto = INSTAGRAM_HANDLE
 
-    pad_web_x, pad_web_y = 52, 20
-    web_w = _tw(draw, web_texto, f_burbuja_web) + pad_web_x * 2
+    pad_web_x, pad_web_y = 40, 20
+    icono_web_d = 44
+    web_texto_w = _tw(draw, web_texto, f_burbuja_web)
     web_h = _th(draw, web_texto, f_burbuja_web) + pad_web_y * 2 + 10
+    web_w = pad_web_x * 2 + icono_web_d + 18 + web_texto_w
 
-    pad_ig_x, pad_ig_y = 32, 11
-    ig_w = _tw(draw, ig_texto, f_burbuja_ig) + pad_ig_x * 2
+    pad_ig_x, pad_ig_y = 28, 11
+    icono_ig_d = 32
+    ig_texto_w = _tw(draw, ig_texto, f_burbuja_ig)
     ig_h = _th(draw, ig_texto, f_burbuja_ig) + pad_ig_y * 2 + 8
+    ig_w = pad_ig_x * 2 + icono_ig_d + 14 + ig_texto_w
 
     margen_inferior = 90
     gap_burbujas = 18
     ig_y = H - margen_inferior - ig_h
     web_y = ig_y - gap_burbujas - web_h
 
+    web_x0 = (W - web_w) // 2
     draw.rounded_rectangle(
-        [(W - web_w) // 2, web_y, (W + web_w) // 2, web_y + web_h],
+        [web_x0, web_y, web_x0 + web_w, web_y + web_h],
         radius=web_h // 2, fill=VERDE_OSCURO,
     )
-    _center(draw, web_texto, W // 2, web_y + pad_web_y, f_burbuja_web, BLANCO)
+    icono_web_cx = web_x0 + pad_web_x + icono_web_d // 2
+    icono_web_cy = web_y + web_h // 2
+    _icono_globo(draw, icono_web_cx, icono_web_cy, icono_web_d * 0.42, BLANCO)
+    draw.text((icono_web_cx + icono_web_d // 2 + 18, icono_web_cy), web_texto, font=f_burbuja_web, fill=BLANCO, anchor='lm')
 
+    ig_x0 = (W - ig_w) // 2
     draw.rounded_rectangle(
-        [(W - ig_w) // 2, ig_y, (W + ig_w) // 2, ig_y + ig_h],
+        [ig_x0, ig_y, ig_x0 + ig_w, ig_y + ig_h],
         radius=ig_h // 2, outline=ROSA_OSCURO, width=3,
     )
-    _center(draw, ig_texto, W // 2, ig_y + pad_ig_y, f_burbuja_ig, ROSA_OSCURO)
+    icono_ig_cx = ig_x0 + pad_ig_x + icono_ig_d // 2
+    icono_ig_cy = ig_y + ig_h // 2
+    _icono_instagram(draw, icono_ig_cx, icono_ig_cy, icono_ig_d * 0.42, ROSA_OSCURO)
+    draw.text((icono_ig_cx + icono_ig_d // 2 + 14, icono_ig_cy), ig_texto, font=f_burbuja_ig, fill=ROSA_OSCURO, anchor='lm')
 
     # ── Franja etaria: tipografía libre, se achica sola si la lista es larga ──
     destinatarios = ', '.join(psicologo.destinatarios.values_list('nombre', flat=True))
