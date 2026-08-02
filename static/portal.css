@@ -362,31 +362,19 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-stat-warn-empty .portal-stat-num { color: #4a7c59; }
 .portal-stats-sub { font-size: 0.78rem; color: #999; margin: 0 0 22px; text-transform: capitalize; }
 
-/* display:flex (no grid) a propósito: en pantallas anchas los 6 días
-   crecen parejo y llenan la fila (como antes), pero en un celular angosto
-   cada uno tiene un piso de 68px y en vez de aplastarse todos para entrar,
-   la fila se desliza para el costado -- igual que el selector de días de
-   Google Calendar o Apple Calendar en el celular, un gesto que cualquiera
-   que use WhatsApp ya conoce. */
+/* Toda la semana tiene que verse entera, sin deslizar para ningún lado:
+   3 columnas x 2 filas en un celular (cada casillero queda cómodo, ~100px,
+   en vez de aplastar los 6 en una sola fila) y en pantallas con más lugar
+   pasa a una sola fila de 6 -- nunca hace falta scroll horizontal. */
 .portal-week-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
-    margin-bottom: 6px;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding-bottom: 2px;
+    margin-bottom: 25px;
 }
-.portal-week-grid::-webkit-scrollbar { display: none; }
-.portal-week-hint {
-    display: none;
-    text-align: center;
-    font-size: 0.74rem;
-    color: #aaa;
-    margin: 0 0 20px;
+@media (min-width: 560px) {
+    .portal-week-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
-.portal-week-hint-visible { display: block; }
 .portal-day-box {
     background: #fff;
     border: 2px solid transparent;
@@ -401,12 +389,11 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    /* flex-shrink:0 + flex-basis fijo: cada día no baja de un ancho cómodo
-       para tocar y leer (antes se achicaban a 51px en un iPhone SE para
-       que los 6 entraran igual, y el texto quedaba pegado al borde). */
-    flex: 1 0 68px;
+    /* min-width:0 es necesario: un flex item de un solo texto largo
+       ("pacientes") no se achica por debajo de su ancho de contenido por
+       defecto y termina saliéndose de la caja redondeada en pantallas
+       angostas si no se lo permitimos explícitamente. */
     min-width: 0;
-    scroll-snap-align: start;
 }
 .portal-day-box:hover { border-color: #cfe0ce; }
 .portal-day-box-today { background: #fbf6f0; }
