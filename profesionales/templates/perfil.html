@@ -58,6 +58,11 @@
                rel="noopener">
                 💬 Contactar por WhatsApp
             </a>
+
+            <button type="button" class="perfil-btn-compartir" id="btnCompartir">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
+                <span id="btnCompartirTexto">Compartir este perfil</span>
+            </button>
         </div>
 
         <!-- COLUMNA DERECHA -->
@@ -142,4 +147,62 @@
     </div>
 
 </main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (function () {
+        var btn = document.getElementById('btnCompartir');
+        if (!btn) return;
+        var textoEl = document.getElementById('btnCompartirTexto');
+        var textoOriginal = textoEl.textContent;
+        var url = window.location.href;
+        var titulo = '{{ p.nombre|escapejs }} | Atención Psi';
+
+        function mostrarConfirmacion() {
+            textoEl.textContent = '¡Enlace copiado!';
+            btn.classList.add('perfil-btn-compartir-copiado');
+            setTimeout(function () {
+                textoEl.textContent = textoOriginal;
+                btn.classList.remove('perfil-btn-compartir-copiado');
+            }, 2200);
+        }
+
+        // Último recurso si no hay clipboard API (o falla por permisos):
+        // seleccionar el link en un campo temporal y copiarlo con el
+        // comando viejo de copiar -- funciona en casi cualquier navegador.
+        function copiarConExecCommand() {
+            var input = document.createElement('input');
+            input.value = url;
+            input.style.position = 'fixed';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            input.focus();
+            input.select();
+            var funciono = false;
+            try { funciono = document.execCommand('copy'); } catch (e) { funciono = false; }
+            document.body.removeChild(input);
+            if (funciono) {
+                mostrarConfirmacion();
+            } else {
+                window.prompt('Copiá este link para compartirlo:', url);
+            }
+        }
+
+        btn.addEventListener('click', function () {
+            // En el celular, el panel nativo para compartir (WhatsApp, SMS,
+            // etc.) es mucho más directo para alguien sin práctica en webs
+            // que copiar un link a mano.
+            if (navigator.share) {
+                navigator.share({ title: titulo, url: url }).catch(function () {});
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(mostrarConfirmacion).catch(copiarConExecCommand);
+            } else {
+                copiarConExecCommand();
+            }
+        });
+    })();
+</script>
 {% endblock %}

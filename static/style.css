@@ -1630,6 +1630,31 @@ main.buscador-main {
     border-radius: 14px !important;
 }
 
+/* Compartir: esta página ya es una URL real y linkeable por psicólogo/a,
+   pero sin un botón bien visible casi nadie se da cuenta de que puede
+   copiar/compartir el link -- mucha gente no sabe que se puede tocar y
+   mantener la barra de direcciones. */
+.perfil-btn-compartir {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px !important;
+    font-size: 0.92rem !important;
+    border-radius: 14px !important;
+    background: transparent;
+    color: #4a7c59;
+    border: 2px solid #cfe0ce;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+.perfil-btn-compartir:hover { background: #eaf5ea; border-color: #7da87b; }
+.perfil-btn-compartir.perfil-btn-compartir-copiado { background: #eaf5ea; border-color: #4a7c59; color: #3f6647; }
+
 /* COLUMNA DERECHA */
 .perfil-col-der {
     flex: 1;
