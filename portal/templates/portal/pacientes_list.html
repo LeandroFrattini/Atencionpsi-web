@@ -7,27 +7,19 @@
 </div>
 
 {% if pacientes %}
-    <div class="portal-table-wrap">
-        <table class="portal-table">
-            <thead>
-                <tr>
-                    <th>Apellido y nombre</th>
-                    <th>Teléfono</th>
-                    <th>Estado</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for paciente in pacientes %}
-                <tr>
-                    <td><a href="{% url 'portal_paciente_detalle' paciente.pk %}">{{ paciente.apellido }}, {{ paciente.nombre }}</a></td>
-                    <td>{{ paciente.telefono|default:"—" }}</td>
-                    <td>{% if paciente.activo %}<span class="portal-estado portal-estado-agendado">Activo</span>{% else %}<span class="portal-estado portal-estado-cancelado">Inactivo</span>{% endif %}</td>
-                    <td><a href="{% url 'portal_paciente_detalle' paciente.pk %}" class="portal-link">Ver</a></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="portal-lista-cards">
+        {% for paciente in pacientes %}
+        <a href="{% url 'portal_paciente_detalle' paciente.pk %}" class="portal-persona-card">
+            <div class="portal-persona-card-info">
+                <span class="portal-persona-nombre">{{ paciente.apellido }}, {{ paciente.nombre }}</span>
+                <span class="portal-persona-sub">{{ paciente.telefono|default:"Sin teléfono cargado" }}</span>
+            </div>
+            <div class="portal-persona-card-right">
+                {% if paciente.activo %}<span class="portal-estado portal-estado-agendado">Activo</span>{% else %}<span class="portal-estado portal-estado-cancelado">Inactivo</span>{% endif %}
+                <svg class="portal-persona-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+        </a>
+        {% endfor %}
     </div>
 {% else %}
     <p class="portal-empty">Todavía no cargaste ningún paciente.</p>

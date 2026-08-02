@@ -134,19 +134,50 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-btn-outline:hover { border-color: #aaa; color: #333; }
 .portal-btn-block { width: 100%; text-align: center; }
 
-/* ── TABLA ── */
-.portal-table-wrap { overflow-x: auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-.portal-table { width: 100%; border-collapse: collapse; min-width: 480px; }
-.portal-table th, .portal-table td {
-    text-align: left;
-    padding: 14px 18px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.92rem;
+/* ── LISTAS EN TARJETA (reemplaza tablas: en un celular angosto una tabla
+   de 4 columnas obliga a hacer scroll horizontal para ver el teléfono o
+   el estado, y a alguien sin práctica en webs eso le puede pasar
+   desapercibido -- con tarjetas apiladas todo el dato está siempre a la
+   vista sin deslizar para ningún lado). ── */
+.portal-lista-cards { display: flex; flex-direction: column; gap: 10px; }
+
+.portal-persona-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    text-decoration: none;
+    color: inherit;
+    min-height: 44px;
+    transition: box-shadow 0.15s ease;
 }
-.portal-table th { color: #888; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
-.portal-table tr:last-child td { border-bottom: none; }
-.portal-table a { color: #4a7c59; font-weight: 600; text-decoration: none; }
-.portal-table a:hover { text-decoration: underline; }
+.portal-persona-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.09); }
+.portal-persona-card-info { min-width: 0; }
+.portal-persona-nombre {
+    display: block;
+    font-weight: 700;
+    color: #333;
+    font-size: 0.98rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.portal-persona-sub { display: block; font-size: 0.82rem; color: #888; margin-top: 2px; }
+.portal-persona-card-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.portal-persona-chevron { width: 18px; height: 18px; color: #ccc; flex-shrink: 0; }
+
+.portal-turno-historial-card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    padding: 14px 16px;
+}
+.portal-turno-comentario { font-size: 0.88rem; color: #555; margin: 6px 0 0; line-height: 1.5; }
+
 .portal-link { color: #4a7c59; font-weight: 600; text-decoration: none; }
 .portal-link:hover { text-decoration: underline; }
 
@@ -331,12 +362,31 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-stat-warn-empty .portal-stat-num { color: #4a7c59; }
 .portal-stats-sub { font-size: 0.78rem; color: #999; margin: 0 0 22px; text-transform: capitalize; }
 
+/* display:flex (no grid) a propósito: en pantallas anchas los 6 días
+   crecen parejo y llenan la fila (como antes), pero en un celular angosto
+   cada uno tiene un piso de 68px y en vez de aplastarse todos para entrar,
+   la fila se desliza para el costado -- igual que el selector de días de
+   Google Calendar o Apple Calendar en el celular, un gesto que cualquiera
+   que use WhatsApp ya conoce. */
 .portal-week-grid {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    display: flex;
     gap: 10px;
-    margin-bottom: 25px;
+    margin-bottom: 6px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
 }
+.portal-week-grid::-webkit-scrollbar { display: none; }
+.portal-week-hint {
+    display: none;
+    text-align: center;
+    font-size: 0.74rem;
+    color: #aaa;
+    margin: 0 0 20px;
+}
+.portal-week-hint-visible { display: block; }
 .portal-day-box {
     background: #fff;
     border: 2px solid transparent;
@@ -351,11 +401,12 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     flex-direction: column;
     align-items: center;
     gap: 4px;
-    /* min-width:0 es necesario: un flex item de un solo texto largo
-       ("pacientes") no se achica por debajo de su ancho de contenido por
-       defecto y termina saliéndose de la caja redondeada en pantallas
-       angostas si no se lo permitimos explícitamente. */
+    /* flex-shrink:0 + flex-basis fijo: cada día no baja de un ancho cómodo
+       para tocar y leer (antes se achicaban a 51px en un iPhone SE para
+       que los 6 entraran igual, y el texto quedaba pegado al borde). */
+    flex: 1 0 68px;
     min-width: 0;
+    scroll-snap-align: start;
 }
 .portal-day-box:hover { border-color: #cfe0ce; }
 .portal-day-box-today { background: #fbf6f0; }
@@ -686,11 +737,6 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 @media (max-width: 700px) {
     .portal-form-grid, .portal-detail-grid { grid-template-columns: 1fr; }
     .portal-header { flex-direction: column; align-items: flex-start; }
-    .portal-week-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
-    .portal-day-box { padding: 8px 4px; }
-    .portal-day-num { font-size: 1.1rem; }
-    .portal-day-count-num { font-size: 0.72rem; }
-    .portal-day-count-label { font-size: 0.58rem; }
 
     .portal-stat-tile { padding: 12px 4px; }
     .portal-stat-num { font-size: 1.4rem; }

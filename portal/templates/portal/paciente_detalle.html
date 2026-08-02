@@ -35,36 +35,26 @@
 
 <h2 class="portal-subtitle">Turnos</h2>
 {% if turnos %}
-    <div class="portal-table-wrap">
-        <table class="portal-table">
-            <thead>
-                <tr>
-                    <th>Fecha y hora</th>
-                    <th>Estado</th>
-                    <th>Comentarios de la sesión</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for turno in turnos %}
-                <tr>
-                    <td>{{ turno.fecha_hora|date:"d/m/Y H:i" }} {% if turno.reagendado %}<span class="portal-tag-reagendado">reagendado</span>{% endif %}</td>
-                    <td>
-                        <span class="portal-estado portal-estado-{{ turno.estado }}">{{ turno.get_estado_display }}</span>
-                        {% if turno.estado == 'realizado' and not turno.pagado %}
-                            <form method="post" action="{% url 'portal_turno_marcar_pagado' turno.pk %}" class="portal-inline-form">
-                                {% csrf_token %}
-                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <button type="submit" class="portal-tag-alerta">Sin cobrar</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>{{ turno.notas_sesion|truncatewords:15|default:"—" }}</td>
-                    <td><a href="{% url 'portal_turno_editar' turno.pk %}" class="portal-link">Editar</a></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="portal-lista-cards">
+        {% for turno in turnos %}
+        <div class="portal-turno-historial-card">
+            <div class="portal-turno-card-top">
+                <span class="portal-turno-hora">{{ turno.fecha_hora|date:"d/m/Y H:i" }}{% if turno.reagendado %}<span class="portal-tag-reagendado">reagendado</span>{% endif %}</span>
+                <span class="portal-estado portal-estado-{{ turno.estado }}">{{ turno.get_estado_display }}</span>
+            </div>
+            {% if turno.notas_sesion %}<p class="portal-turno-comentario">{{ turno.notas_sesion|truncatewords:20 }}</p>{% endif %}
+            <div class="portal-turno-card-actions">
+                {% if turno.estado == 'realizado' and not turno.pagado %}
+                    <form method="post" action="{% url 'portal_turno_marcar_pagado' turno.pk %}" class="portal-inline-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit" class="portal-tag-alerta">Sin cobrar — tocar cuando pague</button>
+                    </form>
+                {% endif %}
+                <a href="{% url 'portal_turno_editar' turno.pk %}" class="portal-link">Editar</a>
+            </div>
+        </div>
+        {% endfor %}
     </div>
 {% else %}
     <p class="portal-empty">Todavía no hay turnos cargados para este paciente.</p>

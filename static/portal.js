@@ -37,12 +37,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* ── Acordeón semanal: un cuadrado de día por vez ── */
     var semanaGrid = document.getElementById('portal-week-grid');
+    var semanaHint = document.getElementById('portal-week-hint');
     if (semanaGrid) {
         var defaultDia = semanaGrid.dataset.default || '0';
 
-        function activarDia(idx) {
+        function activarDia(idx, sinAnimar) {
             document.querySelectorAll('.portal-day-box').forEach(function (b) {
-                b.classList.toggle('portal-day-box-active', b.dataset.dia === idx);
+                var esActivo = b.dataset.dia === idx;
+                b.classList.toggle('portal-day-box-active', esActivo);
+                // La fila de días ahora se puede deslizar para el costado en
+                // vez de aplastarse para que entren los 6 -- si el día
+                // elegido queda fuera de vista, lo traemos a la vista solos.
+                if (esActivo) {
+                    b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: sinAnimar ? 'auto' : 'smooth' });
+                }
             });
             document.querySelectorAll('.portal-day-panel').forEach(function (p) {
                 var activo = p.dataset.diaPanel === idx;
@@ -55,7 +63,17 @@ document.addEventListener('DOMContentLoaded', function () {
             box.addEventListener('click', function () { activarDia(box.dataset.dia); });
         });
 
-        activarDia(defaultDia);
+        activarDia(defaultDia, true);
+
+        // El aviso "Deslizá para ver los otros días" solo tiene sentido
+        // cuando de verdad no entran los 6 juntos (pantalla angosta).
+        function actualizarHintSemana() {
+            if (!semanaHint) return;
+            var sePuedeDeslizar = semanaGrid.scrollWidth > semanaGrid.clientWidth + 2;
+            semanaHint.classList.toggle('portal-week-hint-visible', sePuedeDeslizar);
+        }
+        actualizarHintSemana();
+        window.addEventListener('resize', actualizarHintSemana);
     }
 
     /* ── Modal: al marcar un turno como realizado, preguntar si pagó + comentario opcional ── */
