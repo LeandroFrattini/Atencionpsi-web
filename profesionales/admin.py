@@ -31,7 +31,9 @@ class ModalidadAdmin(admin.ModelAdmin):
 
 @admin.register(Publico)
 class PublicoAdmin(admin.ModelAdmin):
-    list_display = ('nombre',)
+    list_display = ('nombre', 'orden')
+    list_editable = ('orden',)
+    ordering = ('orden', 'nombre')
 
 
 class PsicologoAdminForm(forms.ModelForm):

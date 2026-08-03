@@ -12,9 +12,15 @@ class Modalidad(models.Model):
 
 class Publico(models.Model):
     nombre = models.CharField(max_length=50)
+    orden = models.PositiveIntegerField(
+        default=100,
+        verbose_name='Orden',
+        help_text='Los números más bajos aparecen primero. Empatados se ordenan alfabéticamente.'
+    )
     class Meta:
         verbose_name = "Público"
         verbose_name_plural = "Públicos"
+        ordering = ['orden', 'nombre']
     def __str__(self):
         return self.nombre
 
