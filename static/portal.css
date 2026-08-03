@@ -170,6 +170,28 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-persona-card-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .portal-persona-chevron { width: 18px; height: 18px; color: #ccc; flex-shrink: 0; }
 
+/* Panel general (dueña del sitio): tarjeta fija, no un link a ningún lado */
+.portal-persona-card-estatica { cursor: default; }
+.portal-persona-card-estatica:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.portal-persona-card-inactiva { opacity: 0.7; }
+.portal-persona-card-inactiva .portal-persona-nombre { color: #888; }
+
+.portal-toggle-btn {
+    padding: 9px 16px;
+    min-height: 40px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+}
+.portal-toggle-btn-baja { background: #fff; color: #a13d3d; border-color: #f3d4d4; }
+.portal-toggle-btn-baja:hover { background: #fbeaea; }
+.portal-toggle-btn-alta { background: #eaf5ea; color: #3f6647; border-color: #cfe0ce; }
+.portal-toggle-btn-alta:hover { background: #dcecdc; }
+
 .portal-turno-historial-card {
     background: #fff;
     border-radius: 14px;

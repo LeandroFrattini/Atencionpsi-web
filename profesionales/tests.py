@@ -82,3 +82,26 @@ class GenerarImagenesAdminActionTests(TestCase):
         self.assertEqual(resp['Content-Type'], 'application/zip')
         zf = zipfile.ZipFile(BytesIO(resp.content))
         self.assertEqual(len(zf.namelist()), 1)
+
+
+class PsicologoActivoTests(TestCase):
+    """Un profesional dado de baja (activo=False) tiene que desaparecer del sitio público."""
+
+    def setUp(self):
+        self.activo = Psicologo.objects.create(nombre='Lic. Activa', whatsapp='2911111111', activo=True)
+        self.inactivo = Psicologo.objects.create(nombre='Lic. De Baja', whatsapp='2912222222', activo=False)
+        self.client = Client()
+
+    def test_buscador_no_muestra_a_los_dados_de_baja(self):
+        resp = self.client.get(reverse('buscador'))
+        nombres = [p.nombre for p in resp.context['psicologos']]
+        self.assertIn('Lic. Activa', nombres)
+        self.assertNotIn('Lic. De Baja', nombres)
+
+    def test_perfil_de_dado_de_baja_no_es_accesible(self):
+        resp = self.client.get(reverse('perfil_psicologo', args=[self.inactivo.slug]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_perfil_de_activo_si_es_accesible(self):
+        resp = self.client.get(reverse('perfil_psicologo', args=[self.activo.slug]))
+        self.assertEqual(resp.status_code, 200)

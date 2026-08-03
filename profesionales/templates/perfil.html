@@ -8,7 +8,7 @@
 {% block og_type %}profile{% endblock %}
 {% block og_url %}/psicologo/{{ p.slug }}/{% endblock %}
 {% block canonical %}/psicologo/{{ p.slug }}/{% endblock %}
-{% if p.foto %}{% block og_image %}{{ p.foto.url }}{% endblock %}{% endif %}
+{% block og_image %}{% if p.foto %}{{ p.foto.url }}{% else %}https://atencionpsi.com.ar{% static 'img/og-default.png' %}{% endif %}{% endblock %}
 
 {% block content %}
 <main class="perfil-main">

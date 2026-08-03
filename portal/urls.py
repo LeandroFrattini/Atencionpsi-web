@@ -10,6 +10,9 @@ urlpatterns = [
     path('', views.dashboard, name='portal_dashboard'),
     path('cambiar-password/', views.cambiar_password, name='portal_cambiar_password'),
 
+    path('admin/', views.admin_dashboard, name='portal_admin_dashboard'),
+    path('admin/psicologo/<int:pk>/dar-de-alta-baja/', views.psicologo_toggle_activo, name='portal_psicologo_toggle'),
+
     path('pacientes/', views.pacientes_lista, name='portal_pacientes'),
     path('pacientes/nuevo/', views.paciente_nuevo, name='portal_paciente_nuevo'),
     path('pacientes/<int:pk>/', views.paciente_detalle, name='portal_paciente_detalle'),

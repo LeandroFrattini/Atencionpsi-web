@@ -290,4 +290,60 @@ class CrearAccesoPortalAdminActionTests(TestCase):
         self.assertEqual(self.psico.usuario.username, 'nuevo.psicologo@example.com')
         self.assertTrue(self.psico.usuario.check_password('2915551234'))
         self.assertFalse(self.psico.usuario.is_staff)
+
+
+class PortalAdminDashboardTests(TestCase):
+    """
+    Cuenta superuser sin Psicologo asociado (la dueña del sitio): en vez de
+    romper, tiene que caer en su propio panel general con estadísticas de
+    todos los profesionales y el alta/baja del buscador.
+    """
+
+    def setUp(self):
+        self.superuser = User.objects.create_superuser('duena_test', 'duena@example.com', 'ClaveDuenaSegura2026')
+        self.user_psico = User.objects.create_user('psico_normal', password='ClaveDePrueba123')
+        self.psico = Psicologo.objects.create(nombre='Psicólogo Normal', whatsapp='3333333333', usuario=self.user_psico)
+
+        self.client_super = Client()
+        self.client_super.force_login(self.superuser)
+        self.client_psico = Client()
+        self.client_psico.force_login(self.user_psico)
+
+    def test_superuser_sin_psicologo_no_rompe_al_entrar_al_portal(self):
+        resp = self.client_super.get(reverse('portal_dashboard'), follow=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTemplateUsed(resp, 'portal/admin_dashboard.html')
+
+    def test_superuser_ve_estadisticas_agregadas(self):
+        Turno.objects.create(
+            psicologo=self.psico, paciente=Paciente.objects.create(psicologo=self.psico, nombre='P', apellido='A'),
+            fecha_hora=timezone.now(), estado='realizado', pagado=False,
+        )
+        resp = self.client_super.get(reverse('portal_admin_dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['stats']['atendidos'], 1)
+        self.assertEqual(resp.context['stats']['sin_cobrar'], 1)
+
+    def test_psicologo_normal_no_puede_entrar_al_panel_general(self):
+        resp = self.client_psico.get(reverse('portal_admin_dashboard'), follow=True)
+        self.assertTemplateNotUsed(resp, 'portal/admin_dashboard.html')
+
+    def test_superuser_puede_dar_de_baja_y_alta(self):
+        self.assertTrue(self.psico.activo)
+        url = reverse('portal_psicologo_toggle', args=[self.psico.pk])
+
+        resp = self.client_super.post(url)
+        self.assertEqual(resp.status_code, 302)
+        self.psico.refresh_from_db()
+        self.assertFalse(self.psico.activo)
+
+        self.client_super.post(url)
+        self.psico.refresh_from_db()
+        self.assertTrue(self.psico.activo)
+
+    def test_psicologo_normal_no_puede_dar_de_baja_a_nadie(self):
+        url = reverse('portal_psicologo_toggle', args=[self.psico.pk])
+        self.client_psico.post(url)
+        self.psico.refresh_from_db()
+        self.assertTrue(self.psico.activo)  # no cambió
         self.assertFalse(self.psico.usuario.is_superuser)

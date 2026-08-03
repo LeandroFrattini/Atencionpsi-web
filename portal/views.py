@@ -4,11 +4,13 @@ import datetime
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .decorators import psicologo_requerido
+from profesionales.models import Psicologo
+
+from .decorators import psicologo_requerido, superuser_requerido
 from .forms import PacienteForm, TurnoForm
 from .models import Paciente, Turno
 from .scoping import get_paciente_or_404, get_turno_or_404
@@ -326,3 +328,47 @@ def turno_editar(request, psico, pk):
     return render(request, 'portal/turno_form.html', {
         'psico': psico, 'form': form, 'modo': 'editar', 'turno': turno,
     })
+
+
+@superuser_requerido
+def admin_dashboard(request):
+    """
+    Panel general para la cuenta de la dueña del sitio (superuser sin
+    Psicologo asociado): estadísticas de turnos de TODOS los profesionales
+    juntos, y la lista completa para dar de alta/baja quién aparece en el
+    buscador público.
+    """
+    hoy = timezone.localdate()
+    ultimo_dia_mes = calendar.monthrange(hoy.year, hoy.month)[1]
+    mes_inicio = hoy.replace(day=1)
+    mes_fin = hoy.replace(day=ultimo_dia_mes)
+    turnos_mes = Turno.objects.filter(fecha_hora__date__range=(mes_inicio, mes_fin))
+    stats = {
+        'atendidos': turnos_mes.filter(estado='realizado').count(),
+        'cancelados': turnos_mes.filter(estado='cancelado').count(),
+        'sin_cobrar': turnos_mes.filter(estado='realizado', pagado=False).count(),
+    }
+    mes_label = f'{NOMBRES_MES[hoy.month - 1]} {hoy.year}'
+
+    psicologos = Psicologo.objects.all().order_by('-activo', 'nombre')
+
+    return render(request, 'portal/admin_dashboard.html', {
+        'stats': stats,
+        'mes_label': mes_label,
+        'psicologos': psicologos,
+        'total_activos': sum(1 for p in psicologos if p.activo),
+        'total_psicologos': len(psicologos),
+    })
+
+
+@superuser_requerido
+@require_POST
+def psicologo_toggle_activo(request, pk):
+    psico = get_object_or_404(Psicologo, pk=pk)
+    psico.activo = not psico.activo
+    psico.save(update_fields=['activo'])
+    if psico.activo:
+        messages.success(request, f'{psico.nombre} vuelve a aparecer en el buscador.')
+    else:
+        messages.warning(request, f'{psico.nombre} dado de baja: ya no aparece en el buscador.')
+    return redirect('portal_admin_dashboard')

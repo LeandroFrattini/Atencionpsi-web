@@ -10,7 +10,7 @@ from .bot_detector import es_bot
 
 # --- VISTA DE INICIO ---
 def inicio(request):
-    total_profesionales = Psicologo.objects.count()
+    total_profesionales = Psicologo.objects.filter(activo=True).count()
     # Ciudades únicas no vacías (excluyendo "Online")
     total_ciudades = Ciudad.objects.filter(psicologo__isnull=False).distinct().count()
 
@@ -26,7 +26,7 @@ def buscador(request):
     dirigido_a_id = request.GET.get('dirigido_a')
     ciudad = request.GET.get('ciudad')
 
-    queryset = Psicologo.objects.all()
+    queryset = Psicologo.objects.filter(activo=True)
 
     if modalidad_id:
         queryset = queryset.filter(modalidades__id=modalidad_id)
@@ -63,7 +63,7 @@ def buscador(request):
 
 # --- VISTA DE PERFIL ---
 def detalle_psicologo(request, slug):
-    psicologo = get_object_or_404(Psicologo, slug=slug)
+    psicologo = get_object_or_404(Psicologo, slug=slug, activo=True)
     return render(request, 'perfil.html', {'p': psicologo})
 
 

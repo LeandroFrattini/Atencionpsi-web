@@ -46,8 +46,8 @@ class PsicologoAdminForm(forms.ModelForm):
 @admin.register(Psicologo)
 class PsicologoAdmin(admin.ModelAdmin):
     form = PsicologoAdminForm
-    list_display = ('nombre', 'ciudades_display', 'destacado', 'clicks_totales')
-    list_filter = ('destacado', 'ciudades', 'modalidades', 'destinatarios')
+    list_display = ('nombre', 'ciudades_display', 'activo', 'destacado', 'clicks_totales')
+    list_filter = ('activo', 'destacado', 'ciudades', 'modalidades', 'destinatarios')
     search_fields = ('nombre', 'orientacion', 'ciudades__nombre')
     prepopulated_fields = {'slug': ('nombre',)}
     filter_horizontal = ('modalidades', 'destinatarios', 'obras_sociales', 'ciudades')
@@ -63,7 +63,7 @@ class PsicologoAdmin(admin.ModelAdmin):
             'description': 'Seleccioná las obras sociales que acepta y agregá una nota si trabaja con factura.'
         }),
         ('Contacto y configuración', {
-            'fields': ('whatsapp', 'destacado')
+            'fields': ('whatsapp', 'destacado', 'activo')
         }),
         ('Acceso al portal', {
             'fields': ('usuario',),

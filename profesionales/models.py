@@ -64,6 +64,11 @@ class Psicologo(models.Model):
     destinatarios = models.ManyToManyField(Publico, blank=True)
     whatsapp = models.CharField(max_length=20)
     destacado = models.BooleanField(default=False)
+    activo = models.BooleanField(
+        default=True,
+        verbose_name='Activo',
+        help_text='Si está desactivado, no aparece en el buscador público del sitio.'
+    )
     orientacion = models.CharField(max_length=100, blank=True)
     descripcion = models.TextField(blank=True)
     obras_sociales = models.ManyToManyField('ObraSocial', blank=True, verbose_name='Obras Sociales / Prepagas')
