@@ -176,6 +176,32 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-persona-card-inactiva { opacity: 0.7; }
 .portal-persona-card-inactiva .portal-persona-nombre { color: #888; }
 
+/* Tarjeta de profesional con acciones (dar de alta/baja + acceso a la
+   agenda): apilada en dos filas -- info arriba, botones abajo a todo el
+   ancho -- en vez del layout de una sola fila que usa el resto de las
+   tarjetas, porque acá pueden convivir hasta 2 botones y en un celular
+   angosto no entran bien al lado del nombre. */
+.portal-persona-card-admin {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+}
+.portal-persona-card-acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.portal-persona-card-acciones .portal-inline-form { flex: 1 1 140px; margin: 0; }
+.portal-persona-card-acciones .portal-toggle-btn { width: 100%; }
+.portal-persona-card-acciones a.portal-toggle-btn {
+    flex: 1 1 140px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
 .portal-toggle-btn {
     padding: 9px 16px;
     min-height: 40px;
@@ -191,6 +217,8 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-toggle-btn-baja:hover { background: #fbeaea; }
 .portal-toggle-btn-alta { background: #eaf5ea; color: #3f6647; border-color: #cfe0ce; }
 .portal-toggle-btn-alta:hover { background: #dcecdc; }
+.portal-toggle-btn-neutro { background: #fff; color: #4a7c59; border-color: #cfe0ce; }
+.portal-toggle-btn-neutro:hover { background: #eaf5ea; }
 
 .portal-turno-historial-card {
     background: #fff;
@@ -260,6 +288,7 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
 .portal-field { margin-bottom: 16px; }
 .portal-field label { display: block; font-size: 0.8rem; font-weight: 700; color: #666; margin-bottom: 5px; }
+.portal-field-help { font-size: 0.78rem; color: #999; margin: 5px 0 0; }
 .portal-checkbox-field { display: flex; align-items: center; gap: 8px; }
 .portal-checkbox-field label { margin: 0; }
 

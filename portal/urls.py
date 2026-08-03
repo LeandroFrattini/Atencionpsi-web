@@ -12,6 +12,8 @@ urlpatterns = [
 
     path('admin/', views.admin_dashboard, name='portal_admin_dashboard'),
     path('admin/psicologo/<int:pk>/dar-de-alta-baja/', views.psicologo_toggle_activo, name='portal_psicologo_toggle'),
+    path('admin/psicologo/<int:pk>/crear-acceso/', views.psicologo_crear_acceso, name='portal_psicologo_crear_acceso'),
+    path('admin/psicologo/<int:pk>/blanquear-password/', views.psicologo_blanquear_password, name='portal_psicologo_blanquear_password'),
 
     path('pacientes/', views.pacientes_lista, name='portal_pacientes'),
     path('pacientes/nuevo/', views.paciente_nuevo, name='portal_paciente_nuevo'),

@@ -347,3 +347,53 @@ class PortalAdminDashboardTests(TestCase):
         self.psico.refresh_from_db()
         self.assertTrue(self.psico.activo)  # no cambió
         self.assertFalse(self.psico.usuario.is_superuser)
+
+    def test_superuser_puede_crear_acceso_a_psicologo_sin_usuario(self):
+        sin_acceso = Psicologo.objects.create(nombre='Sin Acceso', whatsapp='4444444444')
+        url = reverse('portal_psicologo_crear_acceso', args=[sin_acceso.pk])
+        resp = self.client_super.post(url, {'email': 'nueva@example.com', 'password_inicial': '4444444444'})
+        self.assertEqual(resp.status_code, 302)
+
+        sin_acceso.refresh_from_db()
+        self.assertIsNotNone(sin_acceso.usuario)
+        self.assertEqual(sin_acceso.usuario.username, 'nueva@example.com')
+        self.assertTrue(sin_acceso.usuario.check_password('4444444444'))
+        self.assertTrue(sin_acceso.debe_cambiar_password)
+        self.assertFalse(sin_acceso.usuario.is_staff)
+        self.assertFalse(sin_acceso.usuario.is_superuser)
+
+    def test_no_deja_crear_acceso_con_email_repetido(self):
+        sin_acceso = Psicologo.objects.create(nombre='Sin Acceso Dos', whatsapp='5555555555')
+        url = reverse('portal_psicologo_crear_acceso', args=[sin_acceso.pk])
+        resp = self.client_super.post(url, {'email': 'psico_normal', 'password_inicial': '5555555555'})
+        self.assertEqual(resp.status_code, 200)  # vuelve a mostrar el form con el error
+        sin_acceso.refresh_from_db()
+        self.assertIsNone(sin_acceso.usuario)
+
+    def test_psicologo_normal_no_puede_crear_accesos(self):
+        sin_acceso = Psicologo.objects.create(nombre='Sin Acceso Tres', whatsapp='6666666666')
+        url = reverse('portal_psicologo_crear_acceso', args=[sin_acceso.pk])
+        self.client_psico.post(url, {'email': 'colada@example.com', 'password_inicial': '6666666666'})
+        sin_acceso.refresh_from_db()
+        self.assertIsNone(sin_acceso.usuario)
+
+    def test_superuser_puede_blanquear_password(self):
+        self.user_psico.set_password('LoQueSeaMenosSuWhatsapp')
+        self.user_psico.save()
+        self.psico.debe_cambiar_password = False
+        self.psico.save(update_fields=['debe_cambiar_password'])
+
+        url = reverse('portal_psicologo_blanquear_password', args=[self.psico.pk])
+        resp = self.client_super.post(url)
+        self.assertEqual(resp.status_code, 302)
+
+        self.psico.refresh_from_db()
+        self.user_psico.refresh_from_db()
+        self.assertTrue(self.user_psico.check_password(self.psico.whatsapp_limpio()))
+        self.assertTrue(self.psico.debe_cambiar_password)
+
+    def test_blanquear_password_sin_usuario_no_rompe(self):
+        sin_acceso = Psicologo.objects.create(nombre='Sin Acceso Cuatro', whatsapp='7777777777')
+        url = reverse('portal_psicologo_blanquear_password', args=[sin_acceso.pk])
+        resp = self.client_super.post(url)
+        self.assertEqual(resp.status_code, 302)

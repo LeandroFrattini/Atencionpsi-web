@@ -4,10 +4,12 @@ import datetime
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from profesionales.admin import CrearAccesoPortalForm
 from profesionales.models import Psicologo
 
 from .decorators import psicologo_requerido, superuser_requerido
@@ -371,4 +373,75 @@ def psicologo_toggle_activo(request, pk):
         messages.success(request, f'{psico.nombre} vuelve a aparecer en el buscador.')
     else:
         messages.warning(request, f'{psico.nombre} dado de baja: ya no aparece en el buscador.')
+    return redirect('portal_admin_dashboard')
+
+
+@superuser_requerido
+def psicologo_crear_acceso(request, pk):
+    """
+    Mismo formulario y misma lógica que la acción del admin de Django
+    (crear_acceso_portal_action) para no duplicar reglas -- pero acá, sin
+    tener que salir del panel del portal.
+    """
+    psico = get_object_or_404(Psicologo, pk=pk)
+
+    if request.method == 'POST':
+        form = CrearAccesoPortalForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            password_inicial = form.cleaned_data['password_inicial']
+
+            ya_existe = User.objects.filter(username__iexact=email)
+            if psico.usuario_id:
+                ya_existe = ya_existe.exclude(pk=psico.usuario_id)
+
+            if ya_existe.exists():
+                form.add_error('email', 'Ya hay un usuario con ese email.')
+            else:
+                if psico.usuario:
+                    user = psico.usuario
+                    user.username = email
+                    user.email = email
+                else:
+                    user = User(username=email, email=email)
+                user.is_staff = False
+                user.is_superuser = False
+                user.set_password(password_inicial)
+                user.save()
+
+                psico.usuario = user
+                psico.debe_cambiar_password = True
+                psico.save(update_fields=['usuario', 'debe_cambiar_password'])
+
+                messages.success(
+                    request,
+                    f'Acceso creado para {psico.nombre}. Usuario: {email} — contraseña inicial: {password_inicial}. '
+                    f'Pasale estos datos; en el primer ingreso va a tener que cambiarla.',
+                )
+                return redirect('portal_admin_dashboard')
+    else:
+        form = CrearAccesoPortalForm(initial={'password_inicial': psico.whatsapp_limpio()})
+
+    return render(request, 'portal/psicologo_acceso_form.html', {'psico': psico, 'form': form})
+
+
+@superuser_requerido
+@require_POST
+def psicologo_blanquear_password(request, pk):
+    """Para cuando un profesional se olvida la clave: la resetea a su WhatsApp y lo obliga a cambiarla de nuevo."""
+    psico = get_object_or_404(Psicologo, pk=pk)
+    if not psico.usuario_id:
+        messages.error(request, f'{psico.nombre} todavía no tiene acceso al portal creado.')
+        return redirect('portal_admin_dashboard')
+
+    nueva_password = psico.whatsapp_limpio()
+    psico.usuario.set_password(nueva_password)
+    psico.usuario.save(update_fields=['password'])
+    psico.debe_cambiar_password = True
+    psico.save(update_fields=['debe_cambiar_password'])
+    messages.success(
+        request,
+        f'Contraseña de {psico.nombre} reseteada a su WhatsApp ({nueva_password}). '
+        f'Va a tener que cambiarla en el próximo ingreso.',
+    )
     return redirect('portal_admin_dashboard')

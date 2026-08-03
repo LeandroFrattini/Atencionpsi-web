@@ -1,0 +1,28 @@
+{% extends 'portal/base_portal.html' %}
+{% block title %}Dar de alta agenda | Portal Atención Psi{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>Dar de alta agenda a {{ psico.nombre }}</h1>
+</div>
+
+<form method="post" class="portal-form">
+    {% csrf_token %}
+
+    <div class="portal-field">
+        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+        {{ form.email }}
+        {% if form.email.errors %}<p class="portal-form-error">{{ form.email.errors|join:", " }}</p>{% endif %}
+    </div>
+
+    <div class="portal-field">
+        <label for="{{ form.password_inicial.id_for_label }}">{{ form.password_inicial.label }}</label>
+        {{ form.password_inicial }}
+        <p class="portal-field-help">{{ form.password_inicial.help_text }}</p>
+    </div>
+
+    <div class="portal-form-actions">
+        <button type="submit" class="portal-btn portal-btn-primary">Crear acceso</button>
+        <a href="{% url 'portal_admin_dashboard' %}" class="portal-btn portal-btn-outline">Cancelar</a>
+    </div>
+</form>
+{% endblock %}
