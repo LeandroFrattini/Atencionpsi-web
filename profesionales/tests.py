@@ -105,3 +105,88 @@ class PsicologoActivoTests(TestCase):
     def test_perfil_de_activo_si_es_accesible(self):
         resp = self.client.get(reverse('perfil_psicologo', args=[self.activo.slug]))
         self.assertEqual(resp.status_code, 200)
+
+
+class OrientacionFiltroTests(TestCase):
+    """El filtro de Orientación del buscador funciona sobre las categorías fijas (M2M),
+    no sobre el texto libre que cada profesional escribe."""
+
+    def setUp(self):
+        from .models import Orientacion
+        self.tcc = Orientacion.objects.create(nombre='Cognitivo Conductual (TCC)')
+        self.psa = Orientacion.objects.create(nombre='Psicoanálisis')
+
+        self.psico_tcc = Psicologo.objects.create(nombre='Lic. TCC', whatsapp='2911111111', orientacion='TCC')
+        self.psico_tcc.orientaciones.add(self.tcc)
+
+        self.psico_psa = Psicologo.objects.create(nombre='Lic. PSA', whatsapp='2912222222', orientacion='Psicoanalisis')
+        self.psico_psa.orientaciones.add(self.psa)
+
+    def test_filtra_por_orientacion(self):
+        resp = self.client.get(reverse('buscador'), {'orientacion': self.tcc.pk})
+        nombres = [p.nombre for p in resp.context['psicologos']]
+        self.assertIn('Lic. TCC', nombres)
+        self.assertNotIn('Lic. PSA', nombres)
+
+    def test_sin_filtro_muestra_todos(self):
+        resp = self.client.get(reverse('buscador'))
+        nombres = [p.nombre for p in resp.context['psicologos']]
+        self.assertIn('Lic. TCC', nombres)
+        self.assertIn('Lic. PSA', nombres)
+
+
+class AsignarOrientacionesCommandTests(TestCase):
+    """El comando que mapea el texto libre de orientacion a las categorías fijas."""
+
+    def test_categorias_para_texto_mapea_multiples(self):
+        from .management.commands.asignar_orientaciones import categorias_para_texto
+        encontradas = categorias_para_texto('Terapia cognitivo conductual y sistémica - Tercera Ola')
+        self.assertEqual(
+            set(encontradas),
+            {'Cognitivo Conductual (TCC)', 'Sistémica', 'Tercera Ola'},
+        )
+
+    def test_categorias_para_texto_variante_femenina_cognitiva(self):
+        from .management.commands.asignar_orientaciones import categorias_para_texto
+        self.assertIn('Cognitivo Conductual (TCC)', categorias_para_texto('Terapia Cognitiva'))
+
+    def test_categorias_para_texto_mapea_perinatal(self):
+        from .management.commands.asignar_orientaciones import categorias_para_texto
+        self.assertEqual(categorias_para_texto('Perinatal'), ['Perinatal'])
+
+    def test_categorias_para_texto_sin_match_devuelve_vacio(self):
+        from .management.commands.asignar_orientaciones import categorias_para_texto
+        self.assertEqual(categorias_para_texto('mirada metafísica sin escuela definida'), [])
+
+    def test_dry_run_no_toca_la_base(self):
+        from django.core.management import call_command
+        from .models import Orientacion
+
+        psico = Psicologo.objects.create(nombre='Lic. Dry Run', whatsapp='2913333333', orientacion='Psicoanalisis')
+        call_command('asignar_orientaciones')  # sin --apply
+
+        self.assertEqual(Orientacion.objects.count(), 0)
+        self.assertEqual(psico.orientaciones.count(), 0)
+
+    def test_apply_crea_categorias_y_asigna(self):
+        from django.core.management import call_command
+        from .models import Orientacion
+
+        psico = Psicologo.objects.create(
+            nombre='Lic. Apply Test', whatsapp='2914444444',
+            orientacion='Terapia cognitivo conductual y sistémica',
+        )
+        call_command('asignar_orientaciones', '--apply')
+
+        self.assertTrue(Orientacion.objects.filter(nombre='Cognitivo Conductual (TCC)').exists())
+        nombres_asignados = set(psico.orientaciones.values_list('nombre', flat=True))
+        self.assertEqual(nombres_asignados, {'Cognitivo Conductual (TCC)', 'Sistémica'})
+
+    def test_apply_no_duplica_si_se_corre_dos_veces(self):
+        from django.core.management import call_command
+
+        psico = Psicologo.objects.create(nombre='Lic. Doble Run', whatsapp='2915555555', orientacion='TCC')
+        call_command('asignar_orientaciones', '--apply')
+        call_command('asignar_orientaciones', '--apply')
+
+        self.assertEqual(psico.orientaciones.count(), 1)

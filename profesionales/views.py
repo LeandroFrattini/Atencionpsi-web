@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Psicologo, Modalidad, Publico, ClickWhatsApp, Ciudad
+from .models import Psicologo, Modalidad, Publico, Orientacion, ClickWhatsApp, Ciudad
 from .bot_detector import es_bot
 
 
@@ -24,6 +24,7 @@ def inicio(request):
 def buscador(request):
     modalidad_id = request.GET.get('modalidad')
     dirigido_a_id = request.GET.get('dirigido_a')
+    orientacion_id = request.GET.get('orientacion')
     ciudad = request.GET.get('ciudad')
 
     queryset = Psicologo.objects.filter(activo=True)
@@ -33,6 +34,9 @@ def buscador(request):
 
     if dirigido_a_id:
         queryset = queryset.filter(destinatarios__id=dirigido_a_id)
+
+    if orientacion_id:
+        queryset = queryset.filter(orientaciones__id=orientacion_id)
 
     if ciudad:
         # Incluir profesionales de esa ciudad Y de todos sus barrios
@@ -57,6 +61,7 @@ def buscador(request):
         'psicologos': lista_final,
         'modalidades_list': Modalidad.objects.all(),
         'destinatarios_list': Publico.objects.all(),
+        'orientaciones_list': Orientacion.objects.all(),
         'ciudades_padres': ciudades_padres,
     })
 

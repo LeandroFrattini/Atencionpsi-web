@@ -25,6 +25,28 @@ class Publico(models.Model):
         return self.nombre
 
 
+class Orientacion(models.Model):
+    """
+    Categoría fija de orientación teórica (Psicoanálisis, Cognitivo
+    Conductual, etc.) para poder filtrar en el buscador. Es aparte del
+    texto libre que cada profesional escribe en Psicologo.orientacion
+    (que sigue existiendo tal cual, para la descripción personal en el
+    perfil) -- esto es solo la etiqueta con la que se filtra.
+    """
+    nombre = models.CharField(max_length=80, unique=True)
+    orden = models.PositiveIntegerField(
+        default=100,
+        verbose_name='Orden',
+        help_text='Los números más bajos aparecen primero. Empatados se ordenan alfabéticamente.'
+    )
+    class Meta:
+        verbose_name = "Orientación"
+        verbose_name_plural = "Orientaciones"
+        ordering = ['orden', 'nombre']
+    def __str__(self):
+        return self.nombre
+
+
 class Ciudad(models.Model):
     nombre = models.CharField(max_length=100)
     ciudad_padre = models.ForeignKey(
@@ -75,7 +97,16 @@ class Psicologo(models.Model):
         verbose_name='Activo',
         help_text='Si está desactivado, no aparece en el buscador público del sitio.'
     )
-    orientacion = models.CharField(max_length=100, blank=True)
+    orientacion = models.CharField(
+        max_length=100, blank=True,
+        help_text='Texto libre para el perfil (lo que escribe cada profesional). '
+                   'Para que se pueda filtrar en el buscador, marcá también las Orientaciones de abajo.'
+    )
+    orientaciones = models.ManyToManyField(
+        Orientacion, blank=True, verbose_name='Orientaciones (filtro)',
+        help_text='Categorías fijas para el filtro del buscador (Psicoanálisis, Cognitivo Conductual, etc.). '
+                   'Podés marcar más de una.'
+    )
     descripcion = models.TextField(blank=True)
     obras_sociales = models.ManyToManyField('ObraSocial', blank=True, verbose_name='Obras Sociales / Prepagas')
     nota_facturacion = models.CharField(max_length=200, blank=True, verbose_name='Nota de facturación', help_text='Ej: Hace facturas para reintegro')

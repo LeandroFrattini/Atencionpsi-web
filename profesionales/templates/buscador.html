@@ -46,6 +46,18 @@
         </div>
 
         <div class="buscador-filtro-grupo">
+            <label class="buscador-filtro-label">Orientación</label>
+            <select name="orientacion" class="buscador-select">
+                <option value="">Todas</option>
+                {% for orient in orientaciones_list %}
+                    <option value="{{ orient.id }}" {% if request.GET.orientacion == orient.id|stringformat:"i" %}selected{% endif %}>
+                        {{ orient.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="buscador-filtro-grupo">
             <label class="buscador-filtro-label">Ciudad</label>
             <select name="ciudad" class="buscador-select">
                 <option value="">Todas</option>

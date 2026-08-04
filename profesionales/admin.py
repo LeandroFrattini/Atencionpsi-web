@@ -13,7 +13,7 @@ from django.urls import path
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from datetime import timedelta
-from .models import Psicologo, Modalidad, Publico, Visita, ClickWhatsApp, Ciudad, ObraSocial
+from .models import Psicologo, Modalidad, Publico, Orientacion, Visita, ClickWhatsApp, Ciudad, ObraSocial
 
 
 class CrearAccesoPortalForm(forms.Form):
@@ -36,6 +36,13 @@ class PublicoAdmin(admin.ModelAdmin):
     ordering = ('orden', 'nombre')
 
 
+@admin.register(Orientacion)
+class OrientacionAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'orden')
+    list_editable = ('orden',)
+    ordering = ('orden', 'nombre')
+
+
 class PsicologoAdminForm(forms.ModelForm):
     class Meta:
         model = Psicologo
@@ -49,16 +56,16 @@ class PsicologoAdminForm(forms.ModelForm):
 class PsicologoAdmin(admin.ModelAdmin):
     form = PsicologoAdminForm
     list_display = ('nombre', 'ciudades_display', 'activo', 'destacado', 'clicks_totales')
-    list_filter = ('activo', 'destacado', 'ciudades', 'modalidades', 'destinatarios')
+    list_filter = ('activo', 'destacado', 'ciudades', 'modalidades', 'destinatarios', 'orientaciones')
     search_fields = ('nombre', 'orientacion', 'ciudades__nombre')
     prepopulated_fields = {'slug': ('nombre',)}
-    filter_horizontal = ('modalidades', 'destinatarios', 'obras_sociales', 'ciudades')
+    filter_horizontal = ('modalidades', 'destinatarios', 'orientaciones', 'obras_sociales', 'ciudades')
     fieldsets = (
         ('Datos personales', {
             'fields': ('nombre', 'slug', 'foto', 'descripcion')
         }),
         ('Atención', {
-            'fields': ('orientacion', 'ciudades', 'modalidades', 'destinatarios')
+            'fields': ('orientacion', 'orientaciones', 'ciudades', 'modalidades', 'destinatarios')
         }),
         ('Cobertura', {
             'fields': ('obras_sociales', 'nota_facturacion'),
