@@ -7,19 +7,15 @@
 
 <div class="portal-stats-row">
     <div class="portal-stat-tile portal-stat-ok">
-        <span class="portal-stat-num">{{ stats.atendidos }}</span>
-        <span class="portal-stat-label">Atendidos</span>
+        <span class="portal-stat-num">{{ stats.total_pacientes }}</span>
+        <span class="portal-stat-label">Pacientes cargados</span>
     </div>
-    <div class="portal-stat-tile portal-stat-bad">
-        <span class="portal-stat-num">{{ stats.cancelados }}</span>
-        <span class="portal-stat-label">Cancelados</span>
-    </div>
-    <div class="portal-stat-tile portal-stat-warn{% if stats.sin_cobrar == 0 %} portal-stat-warn-empty{% endif %}">
-        <span class="portal-stat-num">{{ stats.sin_cobrar }}</span>
-        <span class="portal-stat-label">Sin cobrar</span>
+    <div class="portal-stat-tile portal-stat-ok">
+        <span class="portal-stat-num">{{ stats.total_con_agenda }}</span>
+        <span class="portal-stat-label">Con agenda activa</span>
     </div>
 </div>
-<p class="portal-stats-sub">Todos los profesionales juntos · {{ mes_label }}</p>
+<p class="portal-stats-sub">Estadísticas generales de toda la red</p>
 
 <h2 class="portal-subtitle">Profesionales ({{ total_activos }} de {{ total_psicologos }} visibles en el buscador)</h2>
 

@@ -314,15 +314,27 @@ class PortalAdminDashboardTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, 'portal/admin_dashboard.html')
 
-    def test_superuser_ve_estadisticas_agregadas(self):
-        Turno.objects.create(
-            psicologo=self.psico, paciente=Paciente.objects.create(psicologo=self.psico, nombre='P', apellido='A'),
-            fecha_hora=timezone.now(), estado='realizado', pagado=False,
-        )
+    def test_superuser_ve_estadisticas_generales_no_privadas(self):
+        """
+        El panel general solo muestra conteos agregados (cuántos pacientes en
+        toda la red, cuántos profesionales con agenda activa) -- NO datos de
+        turnos por profesional (atendidos/cancelados/sin cobrar), porque eso
+        es privado de cada psicólogo con sus pacientes.
+        """
+        Paciente.objects.create(psicologo=self.psico, nombre='P', apellido='A')
+        Paciente.objects.create(psicologo=self.psico, nombre='Q', apellido='B')
+
+        psico_sin_agenda = Psicologo.objects.create(nombre='Psicólogo Sin Agenda', whatsapp='9999999999')
+
         resp = self.client_super.get(reverse('portal_admin_dashboard'))
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.context['stats']['atendidos'], 1)
-        self.assertEqual(resp.context['stats']['sin_cobrar'], 1)
+        self.assertEqual(resp.context['stats']['total_pacientes'], 2)
+        self.assertEqual(resp.context['stats']['total_con_agenda'], 1)  # solo self.psico tiene usuario
+        self.assertNotIn('atendidos', resp.context['stats'])
+        self.assertNotIn('cancelados', resp.context['stats'])
+        self.assertNotIn('sin_cobrar', resp.context['stats'])
+        self.assertNotContains(resp, 'Atendidos')
+        self.assertNotContains(resp, 'Sin cobrar')
 
     def test_psicologo_normal_no_puede_entrar_al_panel_general(self):
         resp = self.client_psico.get(reverse('portal_admin_dashboard'), follow=True)

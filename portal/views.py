@@ -336,30 +336,30 @@ def turno_editar(request, psico, pk):
 def admin_dashboard(request):
     """
     Panel general para la cuenta de la dueña del sitio (superuser sin
-    Psicologo asociado): estadísticas de turnos de TODOS los profesionales
-    juntos, y la lista completa para dar de alta/baja quién aparece en el
-    buscador público.
-    """
-    hoy = timezone.localdate()
-    ultimo_dia_mes = calendar.monthrange(hoy.year, hoy.month)[1]
-    mes_inicio = hoy.replace(day=1)
-    mes_fin = hoy.replace(day=ultimo_dia_mes)
-    turnos_mes = Turno.objects.filter(fecha_hora__date__range=(mes_inicio, mes_fin))
-    stats = {
-        'atendidos': turnos_mes.filter(estado='realizado').count(),
-        'cancelados': turnos_mes.filter(estado='cancelado').count(),
-        'sin_cobrar': turnos_mes.filter(estado='realizado', pagado=False).count(),
-    }
-    mes_label = f'{NOMBRES_MES[hoy.month - 1]} {hoy.year}'
+    Psicologo asociado): estadísticas GENERALES nada más (cantidad de
+    pacientes cargados en toda la red, cantidad de profesionales con
+    agenda activa) y la lista completa para dar de alta/baja quién
+    aparece en el buscador público.
 
+    A propósito NO se muestran acá los datos de turnos por profesional
+    (atendidos/cancelados/sin cobrar) -- eso es información privada de
+    cada psicólogo con sus pacientes, no algo que la dueña del sitio
+    tenga que ver agregado.
+    """
     psicologos = Psicologo.objects.all().order_by('-activo', 'nombre')
+    total_psicologos = len(psicologos)
+    total_con_agenda = sum(1 for p in psicologos if p.usuario_id)
+
+    stats = {
+        'total_pacientes': Paciente.objects.count(),
+        'total_con_agenda': total_con_agenda,
+    }
 
     return render(request, 'portal/admin_dashboard.html', {
         'stats': stats,
-        'mes_label': mes_label,
         'psicologos': psicologos,
         'total_activos': sum(1 for p in psicologos if p.activo),
-        'total_psicologos': len(psicologos),
+        'total_psicologos': total_psicologos,
     })
 
 
