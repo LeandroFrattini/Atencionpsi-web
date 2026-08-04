@@ -348,16 +348,18 @@ def admin_dashboard(request):
     """
     psicologos = Psicologo.objects.all().order_by('-activo', 'nombre')
     total_psicologos = len(psicologos)
-    total_con_agenda = sum(1 for p in psicologos if p.usuario_id)
+    con_agenda = [p for p in psicologos if p.usuario_id]
+    sin_agenda = [p for p in psicologos if not p.usuario_id]
 
     stats = {
         'total_pacientes': Paciente.objects.count(),
-        'total_con_agenda': total_con_agenda,
+        'total_con_agenda': len(con_agenda),
     }
 
     return render(request, 'portal/admin_dashboard.html', {
         'stats': stats,
-        'psicologos': psicologos,
+        'con_agenda': con_agenda,
+        'sin_agenda': sin_agenda,
         'total_activos': sum(1 for p in psicologos if p.activo),
         'total_psicologos': total_psicologos,
     })
