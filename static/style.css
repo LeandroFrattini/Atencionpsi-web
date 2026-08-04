@@ -72,8 +72,29 @@ nav {
 }
 
 /* EFECTO HOVER: Rosa -> Verde */
-.nav-links a.btn-unete-nav:hover { 
-    background-color: #7da87b !important; 
+.nav-links a.btn-unete-nav:hover {
+    background-color: #7da87b !important;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(125, 168, 123, 0.3);
+}
+
+/* Botón del portal de profesionales: borde verde, más discreto que el CTA
+   rosa de "Únete al Equipo" -- es para quien ya es parte del equipo y
+   quiere entrar a su agenda, no una invitación a sumarse. */
+.nav-links a.btn-portal-nav {
+    background-color: transparent !important;
+    color: #4a7c59 !important;
+    border: 2px solid #7da87b;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    display: inline-block;
+    transition: all 0.3s ease !important;
+}
+
+.nav-links a.btn-portal-nav:hover {
+    background-color: #7da87b !important;
+    color: white !important;
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(125, 168, 123, 0.3);
 }
@@ -462,6 +483,12 @@ footer {
     /* El botón rosa lo hacemos un poquito más chico y centrado */
     .nav-links a.btn-unete-nav {
         padding: 8px 18px;
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+
+    .nav-links a.btn-portal-nav {
+        padding: 7px 16px;
         font-size: 0.85rem;
         margin-top: 5px;
     }
