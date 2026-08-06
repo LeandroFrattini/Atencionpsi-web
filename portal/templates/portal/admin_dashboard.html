@@ -34,45 +34,25 @@
 
 <h2 class="portal-subtitle">Profesionales ({{ total_activos }} de {{ total_psicologos }} visibles en el buscador)</h2>
 
-{% if psicologos %}
+{% if sin_agenda %}
+    <h3 class="portal-subtitle portal-subtitle-chica">Sin agenda ({{ sin_agenda|length }}) — para dar de alta</h3>
     <div class="portal-lista-cards">
-        {% for p in psicologos %}
-        <div class="portal-persona-card portal-persona-card-estatica portal-persona-card-admin{% if not p.activo %} portal-persona-card-inactiva{% endif %}">
-            <div class="portal-persona-card-info">
-                <span class="portal-persona-nombre">{{ p.nombre }}</span>
-                <span class="portal-persona-sub">
-                    {% if p.activo %}Visible en el buscador{% else %}Dado de baja — oculto del buscador{% endif %}
-                    · {% if p.usuario_id %}Tiene acceso a la agenda{% else %}Sin acceso a la agenda{% endif %}
-                </span>
-            </div>
-            <div class="portal-persona-card-acciones">
-                {% if p.activo %}
-                    <form method="post" action="{% url 'portal_psicologo_toggle' p.pk %}" class="portal-inline-form"
-                          onsubmit="return confirm('¿Dar de baja a {{ p.nombre|escapejs }}? Va a dejar de aparecer en el buscador del sitio (sus datos y turnos no se borran).');">
-                        {% csrf_token %}
-                        <button type="submit" class="portal-toggle-btn portal-toggle-btn-baja">Dar de baja</button>
-                    </form>
-                {% else %}
-                    <form method="post" action="{% url 'portal_psicologo_toggle' p.pk %}" class="portal-inline-form">
-                        {% csrf_token %}
-                        <button type="submit" class="portal-toggle-btn portal-toggle-btn-alta">Dar de alta</button>
-                    </form>
-                {% endif %}
-
-                {% if p.usuario_id %}
-                    <form method="post" action="{% url 'portal_psicologo_blanquear_password' p.pk %}" class="portal-inline-form"
-                          onsubmit="return confirm('¿Resetear la contraseña de {{ p.nombre|escapejs }} a su WhatsApp? Va a tener que cambiarla en el próximo ingreso.');">
-                        {% csrf_token %}
-                        <button type="submit" class="portal-toggle-btn portal-toggle-btn-neutro">Blanquear contraseña</button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'portal_psicologo_crear_acceso' p.pk %}" class="portal-toggle-btn portal-toggle-btn-neutro">Dar de alta agenda</a>
-                {% endif %}
-            </div>
-        </div>
+        {% for p in sin_agenda %}
+            {% include 'portal/_admin_psicologo_card.html' %}
         {% endfor %}
     </div>
-{% else %}
+{% endif %}
+
+{% if con_agenda %}
+    <h3 class="portal-subtitle portal-subtitle-chica">Con agenda activa ({{ con_agenda|length }})</h3>
+    <div class="portal-lista-cards">
+        {% for p in con_agenda %}
+            {% include 'portal/_admin_psicologo_card.html' %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if not sin_agenda and not con_agenda %}
     <p class="portal-empty">Todavía no hay profesionales cargados.</p>
 {% endif %}
 {% endblock %}

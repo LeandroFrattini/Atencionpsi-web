@@ -101,6 +101,13 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     color: #4a7c59;
     margin: 30px 0 14px;
 }
+.portal-subtitle-chica {
+    font-size: 0.95rem;
+    color: #6b6b6b;
+    margin: 20px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
 
 /* ── MENSAJES ── */
 .portal-messages { list-style: none; margin-bottom: 20px; }
