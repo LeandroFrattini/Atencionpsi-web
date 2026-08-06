@@ -361,10 +361,10 @@ nav {
     margin-top: auto; 
 }
 
-/* Estilo Base para ambos (para que midan lo mismo) */
-.btn-view, .btn-ws {
+/* Estilo Base para los 3 (para que midan lo mismo) */
+.btn-view, .btn-ws, .btn-reservar {
     width: 100%;           /* Ocupan todo el ancho de la card */
-    padding: 14px;         /* Misma altura para ambos */
+    padding: 14px;         /* Misma altura para las tres */
     border-radius: 12px;
     text-align: center;
     font-weight: 700;
@@ -383,16 +383,17 @@ nav {
     padding: 80px 20px;
 }
 
-/* Ajuste específico para el botón para que no se estire */
+/* Sólido en vez del outline pastel de antes -- más presencia junto a WhatsApp/Sacar turno */
 .btn-view {
-    background-color: transparent;
-    color: #e9a8a6;         /* El rosa de tu logo */
-    border: 2px solid #e9a8a6;
+    background-color: #c1467a;
+    color: #ffffff !important;
+    border: 2px solid #c1467a;
 }
 
 .btn-view:hover {
-    background-color: #d89694; /* Un tono más oscuro al pasar el mouse */
-    transform: scale(1.05);    /* Efecto de crecimiento suave */
+    background-color: #96355c;
+    border-color: #96355c;
+    transform: scale(1.05);
 }
 
 .btn-ws {
@@ -405,6 +406,18 @@ nav {
     background-color: #128c7e;
     border-color: #128c7e;
     transform: translateY(-2px); /* Un pequeño salto para darle vida */
+}
+
+.btn-reservar {
+    background-color: #4a7c59;
+    color: #ffffff !important;
+    border: 2px solid #4a7c59;
+}
+
+.btn-reservar:hover {
+    background-color: #3a6347;
+    border-color: #3a6347;
+    transform: translateY(-2px);
 }
 
 /* --- 5. PERFIL DETALLE --- */
@@ -1661,6 +1674,9 @@ main.buscador-main {
     background-color: #4a7c59 !important;
     color: #fff !important;
     border: 2px solid #4a7c59 !important;
+    text-decoration: none !important;
+    text-align: center;
+    font-weight: 700;
 }
 .perfil-btn-reservar:hover {
     background-color: #3a6347 !important;
