@@ -67,7 +67,7 @@ INSTALLED_APPS = [
 
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    'profesionales.auth_backends.EmailCaseInsensitiveBackend',
 ]
 
 AXES_COOLOFF_TIME = 1  # hora de bloqueo automático tras superar el límite de intentos

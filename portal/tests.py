@@ -464,3 +464,46 @@ class IngresoPortalTests(TestCase):
         self.assertEqual(len(dias), 7)
         self.assertTrue(dias[-1]['es_hoy'])
         self.assertEqual(dias[-1]['cantidad'], 1)
+
+
+class LoginCaseInsensitiveEndToEndTests(TestCase):
+    """
+    Login real (por POST, no force_login) para probar el flujo completo:
+    el username queda guardado con mayúsculas mezcladas, pero el
+    profesional lo escribe en minúscula (o al revés) y el login tiene
+    que funcionar igual.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='Juan.Perez@Gmail.com', password='ClaveDePrueba123')
+        Psicologo.objects.create(nombre='Lic. Juan Perez', whatsapp='2918888888', usuario=self.user)
+
+    def test_login_funciona_con_otra_capitalizacion(self):
+        resp = self.client.post(reverse('portal_login'), {
+            'username': 'juan.perez@gmail.com',  # todo en minúscula, distinto a como está guardado
+            'password': 'ClaveDePrueba123',
+        })
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+
+    def test_login_sigue_funcionando_tal_cual_estaba_guardado(self):
+        resp = self.client.post(reverse('portal_login'), {
+            'username': 'Juan.Perez@Gmail.com',
+            'password': 'ClaveDePrueba123',
+        })
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+
+    def test_login_funciona_en_mayuscula_total_sin_correr_ningun_comando(self):
+        # A propósito NO corre normalizar_emails_usuario acá -- el arreglo
+        # tiene que andar solo, sin depender de un paso manual previo.
+        resp = self.client.post(reverse('portal_login'), {
+            'username': 'JUAN.PEREZ@GMAIL.COM',
+            'password': 'ClaveDePrueba123',
+        })
+        self.assertRedirects(resp, reverse('portal_dashboard'))
+
+    def test_login_con_password_incorrecta_sigue_fallando(self):
+        resp = self.client.post(reverse('portal_login'), {
+            'username': 'juan.perez@gmail.com',
+            'password': 'ClaveIncorrecta',
+        })
+        self.assertEqual(resp.status_code, 200)  # vuelve al form, no te deja entrar

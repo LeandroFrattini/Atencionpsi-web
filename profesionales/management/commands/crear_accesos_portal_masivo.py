@@ -98,6 +98,7 @@ class Command(BaseCommand):
                 saltados += 1
                 continue
             nombre, email, telefono = (x.strip() for x in fila[:3])
+            email = email.lower()  # el login queda roto si el username no está en minúscula
             candidatos = _buscar_psicologo(nombre)
             password = re.sub(r'[^\d]', '', telefono)
 

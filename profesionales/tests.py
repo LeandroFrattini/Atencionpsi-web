@@ -190,3 +190,47 @@ class AsignarOrientacionesCommandTests(TestCase):
         call_command('asignar_orientaciones', '--apply')
 
         self.assertEqual(psico.orientaciones.count(), 1)
+
+
+class LoginCaseInsensitiveTests(TestCase):
+    """
+    El username siempre es el email cargado. Si queda guardado con
+    mayúsculas mezcladas y el profesional lo escribe distinto, el login
+    no puede fallar por eso -- ni para cuentas nuevas ni para las que ya
+    estaban mal guardadas.
+    """
+
+    def test_crear_acceso_guarda_el_email_en_minuscula(self):
+        from .admin import CrearAccesoPortalForm
+        form = CrearAccesoPortalForm(data={'email': 'Juan.Perez@Gmail.com', 'password_inicial': '123'})
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['email'], 'juan.perez@gmail.com')
+
+    def test_comando_normaliza_usuarios_existentes(self):
+        from django.contrib.auth.models import User
+        from django.core.management import call_command
+
+        user = User.objects.create_user(username='Juan.Perez@Gmail.com', email='Juan.Perez@Gmail.com', password='x')
+        psico = Psicologo.objects.create(nombre='Lic. Mayúsculas', whatsapp='2916666666', usuario=user)
+
+        call_command('normalizar_emails_usuario')  # dry-run: no cambia nada
+        user.refresh_from_db()
+        self.assertEqual(user.username, 'Juan.Perez@Gmail.com')
+
+        call_command('normalizar_emails_usuario', '--apply')
+        user.refresh_from_db()
+        self.assertEqual(user.username, 'juan.perez@gmail.com')
+        self.assertEqual(user.email, 'juan.perez@gmail.com')
+
+    def test_comando_no_pisa_si_hay_conflicto(self):
+        from django.contrib.auth.models import User
+        from django.core.management import call_command
+
+        User.objects.create_user(username='juan.perez@gmail.com', password='x')
+        user_mayus = User.objects.create_user(username='Juan.Perez@Gmail.com', password='y')
+        Psicologo.objects.create(nombre='Lic. Conflicto', whatsapp='2917777777', usuario=user_mayus)
+
+        call_command('normalizar_emails_usuario', '--apply')
+
+        user_mayus.refresh_from_db()
+        self.assertEqual(user_mayus.username, 'Juan.Perez@Gmail.com')  # no se tocó

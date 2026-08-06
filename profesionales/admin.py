@@ -23,6 +23,12 @@ class CrearAccesoPortalForm(forms.Form):
         help_text='Por defecto es el WhatsApp cargado. El profesional va a tener que cambiarla obligatoriamente en su primer ingreso.'
     )
 
+    def clean_email(self):
+        # Siempre en minúscula: si se guarda mezclado (p.ej. "Juan@Gmail.com")
+        # y el profesional lo escribe distinto al loguearse, el login falla
+        # aunque la contraseña esté bien.
+        return self.cleaned_data['email'].strip().lower()
+
 
 @admin.register(Modalidad)
 class ModalidadAdmin(admin.ModelAdmin):
