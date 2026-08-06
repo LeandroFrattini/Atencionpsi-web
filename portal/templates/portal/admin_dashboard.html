@@ -14,8 +14,23 @@
         <span class="portal-stat-num">{{ stats.total_con_agenda }}</span>
         <span class="portal-stat-label">Con agenda activa</span>
     </div>
+    <div class="portal-stat-tile{% if stats.ingresos_hoy == 0 %} portal-stat-warn{% else %} portal-stat-ok{% endif %}">
+        <span class="portal-stat-num">{{ stats.ingresos_hoy }}</span>
+        <span class="portal-stat-label">Entraron hoy</span>
+    </div>
 </div>
 <p class="portal-stats-sub">Estadísticas generales de toda la red</p>
+
+<h2 class="portal-subtitle">¿Se está usando la agenda?</h2>
+<div class="portal-mini-semana">
+    {% for dia in ultimos_7_dias %}
+    <div class="portal-mini-dia{% if dia.es_hoy %} portal-mini-dia-hoy{% endif %}{% if dia.cantidad == 0 %} portal-mini-dia-vacio{% endif %}">
+        <span class="portal-mini-dia-nombre">{{ dia.nombre_dia }}</span>
+        <span class="portal-mini-dia-num">{{ dia.cantidad }}</span>
+    </div>
+    {% endfor %}
+</div>
+<p class="portal-stats-sub">Profesionales distintos que entraron cada día, últimos 7 días</p>
 
 <h2 class="portal-subtitle">Profesionales ({{ total_activos }} de {{ total_psicologos }} visibles en el buscador)</h2>
 

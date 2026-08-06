@@ -409,3 +409,58 @@ class PortalAdminDashboardTests(TestCase):
         url = reverse('portal_psicologo_blanquear_password', args=[sin_acceso.pk])
         resp = self.client_super.post(url)
         self.assertEqual(resp.status_code, 302)
+
+
+class IngresoPortalTests(TestCase):
+    """El login de un profesional al portal queda registrado (uno por día);
+    el login de la dueña del sitio (superuser sin Psicologo) no cuenta."""
+
+    def setUp(self):
+        self.user_psico = User.objects.create_user('psico_ingreso_test', password='ClaveDePrueba123')
+        self.psico = Psicologo.objects.create(nombre='Psicólogo Ingreso', whatsapp='8888888888', usuario=self.user_psico)
+        self.superuser = User.objects.create_superuser('duena_ingreso_test', 'd@example.com', 'ClaveDuenaSegura2026')
+
+    def test_login_de_psicologo_queda_registrado(self):
+        # force_login (no login con password) porque axes exige un request
+        # real en authenticate(), que el helper login() no provee -- mismo
+        # motivo que en PortalScopingTests. force_login sigue disparando la
+        # señal user_logged_in igual, así que sirve para probar esto.
+        from .models import IngresoPortal
+        self.assertEqual(IngresoPortal.objects.count(), 0)
+
+        self.client.force_login(self.user_psico)
+
+        self.assertEqual(IngresoPortal.objects.count(), 1)
+        ingreso = IngresoPortal.objects.first()
+        self.assertEqual(ingreso.psicologo, self.psico)
+        self.assertEqual(ingreso.fecha, timezone.localdate())
+        self.assertEqual(ingreso.cantidad, 1)
+
+    def test_dos_logins_el_mismo_dia_suman_uno_solo_pero_cuentan_cantidad(self):
+        from .models import IngresoPortal
+        self.client.force_login(self.user_psico)
+        self.client.logout()
+        self.client.force_login(self.user_psico)
+
+        self.assertEqual(IngresoPortal.objects.count(), 1)  # una sola fila para hoy
+        self.assertEqual(IngresoPortal.objects.first().cantidad, 2)  # pero se contaron los 2 ingresos
+
+    def test_login_de_superuser_no_se_cuenta(self):
+        from .models import IngresoPortal
+        self.client.force_login(self.superuser)
+        self.assertEqual(IngresoPortal.objects.count(), 0)
+
+    def test_panel_general_muestra_ingresos_de_hoy(self):
+        client_super = Client()
+        client_super.force_login(self.superuser)
+
+        self.client.force_login(self.user_psico)
+
+        resp = client_super.get(reverse('portal_admin_dashboard'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['stats']['ingresos_hoy'], 1)
+
+        dias = resp.context['ultimos_7_dias']
+        self.assertEqual(len(dias), 7)
+        self.assertTrue(dias[-1]['es_hoy'])
+        self.assertEqual(dias[-1]['cantidad'], 1)

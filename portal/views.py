@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -14,7 +15,7 @@ from profesionales.models import Psicologo
 
 from .decorators import psicologo_requerido, superuser_requerido
 from .forms import PacienteForm, TurnoForm
-from .models import Paciente, Turno
+from .models import IngresoPortal, Paciente, Turno
 from .scoping import get_paciente_or_404, get_turno_or_404
 
 NOMBRES_DIA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -350,9 +351,34 @@ def admin_dashboard(request):
     total_psicologos = len(psicologos)
     total_con_agenda = sum(1 for p in psicologos if p.usuario_id)
 
+    hoy = timezone.localdate()
+    ingresos_hoy = IngresoPortal.objects.filter(fecha=hoy).count()
+
+    # Últimos 7 días completos (con 0 en los días sin ingresos, para que se
+    # note si un día nadie entró en vez de que ese día directamente falte).
+    inicio_semana = hoy - datetime.timedelta(days=6)
+    conteo_por_fecha = {
+        fila['fecha']: fila['cantidad']
+        for fila in (
+            IngresoPortal.objects.filter(fecha__gte=inicio_semana)
+            .values('fecha')
+            .annotate(cantidad=Count('id'))
+        )
+    }
+    ultimos_7_dias = [
+        {
+            'fecha': fecha,
+            'nombre_dia': NOMBRES_DIA[fecha.weekday()][:3],
+            'cantidad': conteo_por_fecha.get(fecha, 0),
+            'es_hoy': fecha == hoy,
+        }
+        for fecha in (inicio_semana + datetime.timedelta(days=i) for i in range(7))
+    ]
+
     stats = {
         'total_pacientes': Paciente.objects.count(),
         'total_con_agenda': total_con_agenda,
+        'ingresos_hoy': ingresos_hoy,
     }
 
     return render(request, 'portal/admin_dashboard.html', {
@@ -360,6 +386,7 @@ def admin_dashboard(request):
         'psicologos': psicologos,
         'total_activos': sum(1 for p in psicologos if p.activo),
         'total_psicologos': total_psicologos,
+        'ultimos_7_dias': ultimos_7_dias,
     })
 
 

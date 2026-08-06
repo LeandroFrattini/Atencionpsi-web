@@ -1,6 +1,28 @@
 from django.db import models
 
 
+class IngresoPortal(models.Model):
+    """
+    Registra que un profesional entró al portal, por día -- para ver si la
+    agenda se está usando o no, sin guardar nada más que eso (mismo criterio
+    que ClickWhatsApp en profesionales: una fila por psicólogo y día).
+    """
+    fecha = models.DateField(auto_now_add=True)
+    psicologo = models.ForeignKey(
+        'profesionales.Psicologo', on_delete=models.CASCADE, related_name='ingresos_portal'
+    )
+    cantidad = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        unique_together = ('fecha', 'psicologo')
+        verbose_name = 'Ingreso al portal'
+        verbose_name_plural = 'Ingresos al portal'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f'{self.fecha} | {self.psicologo.nombre} ({self.cantidad})'
+
+
 class Paciente(models.Model):
     psicologo = models.ForeignKey(
         'profesionales.Psicologo', on_delete=models.CASCADE, related_name='pacientes'

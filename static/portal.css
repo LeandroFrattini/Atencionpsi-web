@@ -413,6 +413,32 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-stat-warn-empty .portal-stat-num { color: #4a7c59; }
 .portal-stats-sub { font-size: 0.78rem; color: #999; margin: 0 0 22px; text-transform: capitalize; }
 
+/* Mini-tira de 7 días para ver de un vistazo si la agenda se usa o no --
+   mismo lenguaje visual que el selector de días, pero solo para leer, no
+   se toca. */
+.portal-mini-semana {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.portal-mini-dia {
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px 2px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+.portal-mini-dia-nombre { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.03em; color: #999; font-weight: 700; }
+.portal-mini-dia-num { font-size: 1.15rem; font-weight: 700; font-family: 'Playfair Display', serif; color: #333; }
+.portal-mini-dia-hoy { border: 2px solid #7da87b; background: #fbf6f0; }
+.portal-mini-dia-vacio .portal-mini-dia-num { color: #ccc; }
+
 /* Toda la semana tiene que verse entera, sin deslizar para ningún lado:
    3 columnas x 2 filas en un celular (cada casillero queda cómodo, ~100px,
    en vez de aplastar los 6 en una sola fila) y en pantallas con más lugar
