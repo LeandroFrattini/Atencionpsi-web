@@ -65,15 +65,18 @@ def slots_para_fecha(psico, fecha, duracion_min=None):
     """
     Devuelve la lista de horarios de ese día, partidos según la duración de
     turno del psicólogo: [{'hora': time, 'modalidad': 'presencial'|'virtual',
-    'tomado': bool}, ...]. Vacía si el día cae en un período de "no atiende"
-    o es domingo.
+    'tomado': bool}, ...]. Vacía si el día ya pasó, cae en un período de
+    "no atiende", o es domingo. Si el día es hoy, también se descartan los
+    horarios que ya pasaron.
     """
-    if fecha.weekday() == 6 or esta_en_dia_no_atiende(psico, fecha):
+    hoy = timezone.localdate()
+    if fecha < hoy or fecha.weekday() == 6 or esta_en_dia_no_atiende(psico, fecha):
         return []
 
     duracion_min = duracion_min or psico.duracion_turno_min
     paso = datetime.timedelta(minutes=duracion_min)
     ocupadas = _horas_ocupadas(psico, fecha)
+    ahora = timezone.localtime().time() if fecha == hoy else None
 
     slots = []
     bloques = psico.disponibilidad_semanal.filter(dia_semana=fecha.weekday()).order_by('hora_desde')
@@ -82,7 +85,8 @@ def slots_para_fecha(psico, fecha, duracion_min=None):
         fin = datetime.datetime.combine(fecha, bloque.hora_hasta)
         while cursor + paso <= fin:
             hora = cursor.time()
-            slots.append({'hora': hora, 'modalidad': bloque.modalidad, 'tomado': hora in ocupadas})
+            if ahora is None or hora > ahora:
+                slots.append({'hora': hora, 'modalidad': bloque.modalidad, 'tomado': hora in ocupadas})
             cursor += paso
     slots.sort(key=lambda s: s['hora'])
     return slots

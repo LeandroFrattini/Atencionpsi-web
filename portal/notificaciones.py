@@ -16,7 +16,10 @@ from .disponibilidad import fecha_larga as _fecha_larga
 
 def enviar_con_contexto(destinatario_email, contexto):
     """Punto de entrada compartido por el aviso real y por el comando test_email."""
-    asunto = f"Nuevo turno: {contexto['paciente_nombre']} — {contexto['fecha_corta']} · Atención Psi"
+    asunto = (
+        f"{contexto['psicologo_nombre']} - Nuevo turno - {contexto['paciente_nombre']} - "
+        f"{contexto['fecha_corta']} {contexto['hora_desde']}hs - Atención Psi"
+    )
     texto = render_to_string('portal/email_nuevo_turno.txt', contexto)
     html = render_to_string('portal/email_nuevo_turno.html', contexto)
     mail = EmailMultiAlternatives(
