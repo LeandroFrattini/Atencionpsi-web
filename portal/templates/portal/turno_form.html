@@ -10,10 +10,17 @@
 
     <div class="portal-field"><label>Paciente</label>{{ form.paciente }}</div>
     <div class="portal-field"><label>Fecha y hora</label>{{ form.fecha_hora }}</div>
+    <div class="portal-field"><label>Modalidad</label>{{ form.modalidad }}</div>
     <div class="portal-field"><label>Estado</label>{{ form.estado }}</div>
     <div class="portal-field portal-checkbox-field">
         {{ form.pagado }} <label for="{{ form.pagado.id_for_label }}">Ya pagó esta sesión</label>
     </div>
+    {% if modo == 'nuevo' %}
+    <div class="portal-field portal-checkbox-field">
+        {{ form.recurrente }} <label for="{{ form.recurrente.id_for_label }}">Turno recurrente</label>
+    </div>
+    <p class="portal-field-help">{{ form.recurrente.help_text }}</p>
+    {% endif %}
     <div class="portal-field"><label>Comentarios de la sesión</label>{{ form.notas_sesion }}</div>
 
     <div class="portal-form-actions">

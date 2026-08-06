@@ -5,7 +5,7 @@ del portal. Toda vista que necesite un objeto individual DEBE pasar por acá
 psicólogo jamás pueda ver/editar el registro de otro cambiando el id en la URL.
 """
 from django.shortcuts import get_object_or_404
-from .models import Paciente, Turno
+from .models import DiaNoAtiende, DisponibilidadSemanal, Paciente, Turno
 
 
 def get_paciente_or_404(psico, pk):
@@ -14,3 +14,11 @@ def get_paciente_or_404(psico, pk):
 
 def get_turno_or_404(psico, pk):
     return get_object_or_404(Turno, pk=pk, psicologo=psico)
+
+
+def get_bloque_disponibilidad_or_404(psico, pk):
+    return get_object_or_404(DisponibilidadSemanal, pk=pk, psicologo=psico)
+
+
+def get_dia_no_atiende_or_404(psico, pk):
+    return get_object_or_404(DiaNoAtiende, pk=pk, psicologo=psico)

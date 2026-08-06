@@ -1,6 +1,8 @@
 from django import forms
 
-from .models import Paciente, Turno
+from profesionales.models import Psicologo
+
+from .models import DiaNoAtiende, DisponibilidadSemanal, Paciente, Turno
 
 
 class PacienteForm(forms.ModelForm):
@@ -21,9 +23,15 @@ class PacienteForm(forms.ModelForm):
 
 
 class TurnoForm(forms.ModelForm):
+    recurrente = forms.BooleanField(
+        required=False,
+        label='Turno recurrente',
+        help_text='Vas a reservar todo el mes: el mismo día, a la misma hora, durante 4 semanas.',
+    )
+
     class Meta:
         model = Turno
-        fields = ['paciente', 'fecha_hora', 'estado', 'pagado', 'notas_sesion']
+        fields = ['paciente', 'fecha_hora', 'estado', 'modalidad', 'pagado', 'notas_sesion']
         widgets = {
             'fecha_hora': forms.DateTimeInput(
                 attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'
@@ -39,3 +47,52 @@ class TurnoForm(forms.ModelForm):
         # paciente de otro profesional aunque se manipule el POST.
         if psico is not None:
             self.fields['paciente'].queryset = Paciente.objects.filter(psicologo=psico, activo=True)
+
+
+class DisponibilidadBloqueForm(forms.ModelForm):
+    class Meta:
+        model = DisponibilidadSemanal
+        fields = ['dia_semana', 'hora_desde', 'hora_hasta', 'modalidad']
+        widgets = {
+            'hora_desde': forms.TimeInput(attrs={'type': 'time'}),
+            'hora_hasta': forms.TimeInput(attrs={'type': 'time'}),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        desde, hasta = cleaned.get('hora_desde'), cleaned.get('hora_hasta')
+        if desde and hasta and desde >= hasta:
+            raise forms.ValidationError('La hora de inicio tiene que ser antes que la de fin.')
+        return cleaned
+
+
+class DiaNoAtiendeForm(forms.ModelForm):
+    class Meta:
+        model = DiaNoAtiende
+        fields = ['fecha_desde', 'fecha_hasta', 'motivo']
+        widgets = {
+            'fecha_desde': forms.DateInput(attrs={'type': 'date'}),
+            'fecha_hasta': forms.DateInput(attrs={'type': 'date'}),
+            'motivo': forms.TextInput(attrs={'placeholder': 'Opcional, ej: Vacaciones'}),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        desde, hasta = cleaned.get('fecha_desde'), cleaned.get('fecha_hasta')
+        if desde and hasta and desde > hasta:
+            raise forms.ValidationError('La fecha "desde" tiene que ser antes (o igual) que "hasta".')
+        return cleaned
+
+
+class DisponibilidadSettingsForm(forms.ModelForm):
+    class Meta:
+        model = Psicologo
+        fields = ['duracion_turno_min', 'direccion_consultorio']
+
+
+class ReservaPublicaForm(forms.Form):
+    nombre = forms.CharField(max_length=100)
+    apellido = forms.CharField(max_length=100)
+    email = forms.EmailField()
+    telefono = forms.CharField(max_length=30)
+    fecha_nacimiento = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))

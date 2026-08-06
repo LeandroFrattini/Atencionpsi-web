@@ -26,4 +26,10 @@ urlpatterns = [
     path('turnos/<int:pk>/marcar-pagado/', views.turno_marcar_pagado, name='portal_turno_marcar_pagado'),
     path('turnos/<int:pk>/reagendar-rapido/', views.turno_reagendar_rapido, name='portal_turno_reagendar_rapido'),
     path('turnos/<int:pk>/mover/', views.turno_mover, name='portal_turno_mover'),
+
+    path('disponibilidad/', views.disponibilidad, name='portal_disponibilidad'),
+    path('disponibilidad/bloque/nuevo/', views.disponibilidad_bloque_crear, name='portal_disponibilidad_bloque_crear'),
+    path('disponibilidad/bloque/<int:pk>/eliminar/', views.disponibilidad_bloque_eliminar, name='portal_disponibilidad_bloque_eliminar'),
+    path('disponibilidad/no-atiende/nuevo/', views.excepcion_crear, name='portal_excepcion_crear'),
+    path('disponibilidad/no-atiende/<int:pk>/eliminar/', views.excepcion_eliminar, name='portal_excepcion_eliminar'),
 ]

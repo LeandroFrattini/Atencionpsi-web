@@ -50,6 +50,12 @@
                 {% endfor %}
             </div>
 
+            {% if p.disponibilidad_semanal.exists %}
+            <a href="{% url 'reservar_turno' p.slug %}" class="perfil-btn-ws perfil-btn-reservar">
+                📅 Reservar turno
+            </a>
+            {% endif %}
+
             <!-- CTA PRINCIPAL -->
             <a href="https://wa.me/{{ p.whatsapp_limpio }}?text=Hola,%20te%20escribo%20desde%20Atenci%C3%B3n%20Psi,%20me%20gustar%C3%ADa%20coordinar%20un%20turno%20con%20vos!"
                class="btn-ws perfil-btn-ws js-wa-click"

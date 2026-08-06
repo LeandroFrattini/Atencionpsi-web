@@ -1,4 +1,6 @@
+import datetime
 import random
+from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db import transaction
@@ -6,6 +8,11 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .models import Psicologo, Modalidad, Publico, Orientacion, ClickWhatsApp, Ciudad
 from .bot_detector import es_bot
+
+from portal.disponibilidad import fecha_larga, fechas_horizonte, slot_disponible, slots_para_fecha
+from portal.forms import ReservaPublicaForm
+from portal.models import Paciente, Turno
+from portal.notificaciones import enviar_aviso_nuevo_turno
 
 
 # --- VISTA DE INICIO ---
@@ -70,6 +77,115 @@ def buscador(request):
 def detalle_psicologo(request, slug):
     psicologo = get_object_or_404(Psicologo, slug=slug, activo=True)
     return render(request, 'perfil.html', {'p': psicologo})
+
+
+# --- TURNERO PÚBLICO ---
+def reservar_turno(request, slug):
+    """
+    Paso 1: calendario con los horarios libres de esta semana y la próxima
+    (3 días visibles por vez, con "grupo" para paginar). Paso 2 (elegir un
+    horario libre vía ?fecha=&hora=): formulario de datos del paciente.
+    La disponibilidad sale de DisponibilidadSemanal/DiaNoAtiende -- ver
+    portal/disponibilidad.py.
+    """
+    psicologo = get_object_or_404(Psicologo, slug=slug, activo=True)
+
+    try:
+        grupo = int(request.GET.get('grupo', 0))
+    except ValueError:
+        grupo = 0
+    grupo = max(0, min(3, grupo))
+
+    fechas = fechas_horizonte()
+    dias_visibles = fechas[grupo * 3: grupo * 3 + 3]
+    dias = [{'fecha': fecha, 'slots': slots_para_fecha(psicologo, fecha)} for fecha in dias_visibles]
+
+    elegido = None
+    form = None
+    fecha_str, hora_str = request.GET.get('fecha'), request.GET.get('hora')
+    if fecha_str and hora_str:
+        try:
+            fecha_e = datetime.date.fromisoformat(fecha_str)
+            hora_e = datetime.time.fromisoformat(hora_str)
+        except ValueError:
+            fecha_e = hora_e = None
+        if fecha_e and hora_e:
+            disponible, modalidad = slot_disponible(psicologo, fecha_e, hora_e)
+            if disponible:
+                elegido = {
+                    'fecha': fecha_e,
+                    'hora': hora_e,
+                    'modalidad': modalidad,
+                    'hora_hasta': _sumar_minutos(hora_e, fecha_e, psicologo.duracion_turno_min),
+                    'fecha_larga': fecha_larga(fecha_e),
+                }
+                form = ReservaPublicaForm()
+            else:
+                messages.error(request, 'Ese horario ya no está disponible, elegí otro.')
+
+    return render(request, 'reservar.html', {
+        'p': psicologo, 'dias': dias, 'grupo': grupo,
+        'elegido': elegido, 'form': form,
+    })
+
+
+def _sumar_minutos(hora, fecha, minutos):
+    return (datetime.datetime.combine(fecha, hora) + datetime.timedelta(minutes=minutos)).time()
+
+
+@require_POST
+def reservar_confirmar(request, slug):
+    psicologo = get_object_or_404(Psicologo, slug=slug, activo=True)
+    fecha_str, hora_str = request.POST.get('fecha'), request.POST.get('hora')
+    try:
+        fecha = datetime.date.fromisoformat(fecha_str)
+        hora = datetime.time.fromisoformat(hora_str)
+    except (TypeError, ValueError):
+        messages.error(request, 'Hubo un problema con el horario elegido. Probá de nuevo.')
+        return redirect('reservar_turno', slug=slug)
+
+    disponible, modalidad = slot_disponible(psicologo, fecha, hora)
+    if not disponible:
+        messages.error(request, 'Uy, justo se ocupó ese horario. Elegí otro.')
+        return redirect('reservar_turno', slug=slug)
+
+    form = ReservaPublicaForm(request.POST)
+    if form.is_valid():
+        with transaction.atomic():
+            fecha_hora = timezone.make_aware(datetime.datetime.combine(fecha, hora))
+            # último chequeo dentro de la transacción, por si dos personas
+            # reservan el mismo horario casi al mismo tiempo
+            ya_ocupado = Turno.objects.filter(
+                psicologo=psicologo, fecha_hora=fecha_hora
+            ).exclude(estado='cancelado').exists()
+            if ya_ocupado:
+                messages.error(request, 'Uy, justo se ocupó ese horario. Elegí otro.')
+                return redirect('reservar_turno', slug=slug)
+
+            paciente, _creado = Paciente.objects.get_or_create(
+                psicologo=psicologo, email=form.cleaned_data['email'],
+                defaults={
+                    'nombre': form.cleaned_data['nombre'],
+                    'apellido': form.cleaned_data['apellido'],
+                    'telefono': form.cleaned_data['telefono'],
+                    'fecha_nacimiento': form.cleaned_data['fecha_nacimiento'],
+                },
+            )
+            turno = Turno.objects.create(
+                psicologo=psicologo, paciente=paciente, fecha_hora=fecha_hora,
+                modalidad=modalidad, origen='publico',
+            )
+        enviar_aviso_nuevo_turno(turno)
+        return render(request, 'reserva_confirmada.html', {'p': psicologo, 'turno': turno})
+
+    elegido = {
+        'fecha': fecha, 'hora': hora, 'modalidad': modalidad,
+        'hora_hasta': _sumar_minutos(hora, fecha, psicologo.duracion_turno_min),
+        'fecha_larga': fecha_larga(fecha),
+    }
+    return render(request, 'reservar.html', {
+        'p': psicologo, 'dias': [], 'grupo': 0, 'elegido': elegido, 'form': form,
+    })
 
 
 # --- REDIRECT WHATSAPP (fallback por compatibilidad, YA NO cuenta clicks) ---

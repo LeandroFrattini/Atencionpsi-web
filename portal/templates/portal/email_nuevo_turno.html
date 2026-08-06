@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuevo turno</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f5f2ee; font-family:Arial, Helvetica, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f2ee; padding:24px 12px;">
+<tr><td align="center">
+<table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%; background-color:#ffffff; border-radius:14px; overflow:hidden;">
+
+<tr><td style="padding:20px 28px 4px;">
+    <span style="font-family:Georgia, 'Times New Roman', serif; font-size:20px; font-weight:bold; color:#7da87b;">Atención</span><span style="font-family:Georgia, 'Times New Roman', serif; font-size:20px; font-weight:bold; color:#c1467a;">Psi</span>
+</td></tr>
+
+<tr><td style="padding:12px 28px 0; font-size:15px; color:#333333; line-height:1.6;">
+    Hola {{ psicologo_nombre }},<br>tenés una nueva reserva a través de tu perfil de Atención Psi.
+</td></tr>
+
+<tr><td style="padding:18px 28px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:{% if es_virtual %}#fbe6ee{% else %}#e5f4ea{% endif %}; border-radius:12px;">
+        <tr><td style="padding:14px 16px;">
+            <div style="font-size:16px; font-weight:bold; color:{% if es_virtual %}#7a1d49{% else %}#1a5c34{% endif %};">
+                {{ fecha_larga }} · {{ hora_desde }} – {{ hora_hasta }}hs
+            </div>
+            <div style="font-size:13px; color:#4a463c; margin-top:4px;">
+                {{ modalidad_label }}{% if es_virtual %} · el link de la videollamada se coordina con la paciente{% else %} · {{ direccion }}{% endif %}
+            </div>
+        </td></tr>
+    </table>
+</td></tr>
+
+<tr><td style="padding:18px 28px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px; color:#333333;">
+        <tr><td style="padding:6px 0; border-bottom:1px solid #f0ebdd; color:#948f80; width:42%;">Paciente</td><td style="padding:6px 0; border-bottom:1px solid #f0ebdd; font-weight:bold; text-align:right;">{{ paciente_nombre }}</td></tr>
+        <tr><td style="padding:6px 0; border-bottom:1px solid #f0ebdd; color:#948f80;">Email</td><td style="padding:6px 0; border-bottom:1px solid #f0ebdd; font-weight:bold; text-align:right;">{{ paciente_email }}</td></tr>
+        <tr><td style="padding:6px 0; border-bottom:1px solid #f0ebdd; color:#948f80;">Teléfono</td><td style="padding:6px 0; border-bottom:1px solid #f0ebdd; font-weight:bold; text-align:right;">{{ paciente_telefono }}</td></tr>
+        <tr><td style="padding:6px 0; color:#948f80;">Fecha de nacimiento</td><td style="padding:6px 0; font-weight:bold; text-align:right;">{{ paciente_fecha_nacimiento }}</td></tr>
+    </table>
+</td></tr>
+
+<tr><td style="padding:18px 28px 24px; font-size:13px; color:#666666; line-height:1.6;">
+    Ya quedó cargado en tu agenda, no hace falta que hagas nada.
+</td></tr>
+
+<tr><td style="padding:14px 28px; border-top:1px solid #f0ebdd; font-size:11px; color:#b6b0a0;">
+    Atención Psi · atencionpsi.com.ar
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

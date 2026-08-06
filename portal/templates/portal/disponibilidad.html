@@ -1,0 +1,96 @@
+{% extends 'portal/base_portal.html' %}
+{% block title %}Mi disponibilidad | Portal Atención Psi{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>Mi disponibilidad</h1>
+</div>
+<p class="portal-disp-intro">Se repite todas las semanas — la cargás una vez y no hace falta que la vuelvas a tocar.</p>
+
+<details class="portal-help">
+    <summary>¿Cómo funciona esto?</summary>
+    <ul>
+        <li>Lo que cargás abajo se repite <b>todas las semanas sola</b> — no hace falta que la vuelvas a poner cada semana.</li>
+        <li>Si vos agendás un turno con un paciente, o te lo reserva alguien por su cuenta desde tu perfil, ese horario puntual queda bloqueado — tu disponibilidad general de abajo no se toca.</li>
+        <li>Para vacaciones o algún día puntual que no atendés, usá "Días que no atendés" más abajo — durante esas fechas no aparecés disponible para nadie, sin importar lo que hayas cargado arriba.</li>
+        <li>Los pacientes solo pueden reservar dentro de esta semana y la próxima.</li>
+    </ul>
+</details>
+
+<div class="portal-card" style="margin-bottom: 20px;">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="settings">
+        <div class="portal-form-grid">
+            <div class="portal-field">
+                <label for="{{ settings_form.duracion_turno_min.id_for_label }}">Duración de mis turnos</label>
+                {{ settings_form.duracion_turno_min }}
+            </div>
+            <div class="portal-field">
+                <label for="{{ settings_form.direccion_consultorio.id_for_label }}">Dirección del consultorio</label>
+                {{ settings_form.direccion_consultorio }}
+                <p class="portal-field-help">Se muestra en la reserva y en el mail cuando el turno es presencial.</p>
+            </div>
+        </div>
+        <button type="submit" class="portal-btn portal-btn-outline">Guardar</button>
+    </form>
+</div>
+
+<h2 class="portal-subtitle">Disponibilidad semanal</h2>
+<div class="portal-card">
+    {% for dia in dias %}
+    <div class="portal-disp-dia">
+        <h3 class="portal-disp-dia-nombre">{{ dia.nombre }}</h3>
+        {% if dia.bloques %}
+            <div class="portal-disp-bloques">
+                {% for bloque in dia.bloques %}
+                <div class="portal-disp-bloque portal-disp-bloque-{{ bloque.modalidad }}">
+                    <span>{{ bloque.hora_desde|time:"H:i" }} a {{ bloque.hora_hasta|time:"H:i" }} · {{ bloque.get_modalidad_display }}</span>
+                    <form method="post" action="{% url 'portal_disponibilidad_bloque_eliminar' bloque.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" aria-label="Eliminar horario">&times;</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="portal-disp-vacio">No atendés este día.</p>
+        {% endif %}
+        <form method="post" action="{% url 'portal_disponibilidad_bloque_crear' %}" class="portal-disp-add-row">
+            {% csrf_token %}
+            <input type="hidden" name="dia_semana" value="{{ dia.idx }}">
+            <input type="time" name="hora_desde" required>
+            <span>a</span>
+            <input type="time" name="hora_hasta" required>
+            <select name="modalidad">
+                <option value="presencial">Presencial</option>
+                <option value="virtual">Virtual</option>
+            </select>
+            <button type="submit" class="portal-btn portal-btn-outline">+ Agregar</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+
+<h2 class="portal-subtitle">Días que no atendés</h2>
+<div class="portal-card">
+    {% for ex in excepciones %}
+    <div class="portal-disp-excepcion">
+        <span>{{ ex.fecha_desde|date:"d/m/Y" }} — {{ ex.fecha_hasta|date:"d/m/Y" }}{% if ex.motivo %} · {{ ex.motivo }}{% endif %}</span>
+        <form method="post" action="{% url 'portal_excepcion_eliminar' ex.pk %}">
+            {% csrf_token %}
+            <button type="submit" aria-label="Eliminar período">&times;</button>
+        </form>
+    </div>
+    {% empty %}
+    <p class="portal-disp-vacio">No tenés períodos cargados.</p>
+    {% endfor %}
+    <form method="post" action="{% url 'portal_excepcion_crear' %}" class="portal-disp-add-row">
+        {% csrf_token %}
+        <input type="date" name="fecha_desde" required>
+        <span>a</span>
+        <input type="date" name="fecha_hasta" required>
+        <input type="text" name="motivo" placeholder="Motivo (opcional)">
+        <button type="submit" class="portal-btn portal-btn-outline">+ Agregar</button>
+    </form>
+</div>
+{% endblock %}

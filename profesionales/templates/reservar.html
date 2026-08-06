@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Reservar turno con {{ p.nombre }} | Atención Psi{% endblock %}
+{% block content %}
+<main class="reservar-main">
+    <div class="reservar-volver">
+        <a href="{% url 'perfil_psicologo' p.slug %}" class="perfil-volver-link">← Volver al perfil</a>
+    </div>
+
+    {% if messages %}
+        <ul class="reservar-messages">
+            {% for message in messages %}<li class="reservar-message reservar-message-{{ message.tags }}">{{ message }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="reservar-card">
+        <div class="reservar-card-head">
+            <h1>Calendario</h1>
+            <p>{{ p.nombre }}</p>
+        </div>
+
+        {% if elegido %}
+            <a href="{% url 'reservar_turno' p.slug %}?grupo={{ grupo }}" class="reservar-volver-paso">← Elegir otro horario</a>
+            <div class="reservar-resumen reservar-resumen-{{ elegido.modalidad }}">
+                <b>{{ elegido.hora|time:"H:i" }} – {{ elegido.hora_hasta|time:"H:i" }}hs</b>
+                {% if elegido.modalidad == 'virtual' %}Virtual · el link llega por mail{% else %}Presencial{% if p.direccion_consultorio %} · {{ p.direccion_consultorio }}{% endif %}{% endif %}
+                · {{ elegido.fecha_larga }}
+            </div>
+            <form method="post" action="{% url 'reservar_confirmar' p.slug %}" class="reservar-form">
+                {% csrf_token %}
+                <input type="hidden" name="fecha" value="{{ elegido.fecha|date:'Y-m-d' }}">
+                <input type="hidden" name="hora" value="{{ elegido.hora|time:'H:i' }}">
+                <div class="reservar-form-row">
+                    <div class="reservar-field">
+                        {{ form.nombre.label_tag }}{{ form.nombre }}
+                        {% for error in form.nombre.errors %}<p class="reservar-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="reservar-field">
+                        {{ form.apellido.label_tag }}{{ form.apellido }}
+                        {% for error in form.apellido.errors %}<p class="reservar-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+                <div class="reservar-field">
+                    {{ form.email.label_tag }}{{ form.email }}
+                    {% for error in form.email.errors %}<p class="reservar-field-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="reservar-form-row">
+                    <div class="reservar-field">
+                        {{ form.telefono.label_tag }}{{ form.telefono }}
+                        {% for error in form.telefono.errors %}<p class="reservar-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="reservar-field">
+                        {{ form.fecha_nacimiento.label_tag }}{{ form.fecha_nacimiento }}
+                        {% for error in form.fecha_nacimiento.errors %}<p class="reservar-field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                </div>
+                <button type="submit" class="reservar-cta reservar-cta-{{ elegido.modalidad }}">Confirmar reserva</button>
+            </form>
+        {% else %}
+            <div class="reservar-legend">
+                <span class="reservar-legend-item"><span class="reservar-swatch reservar-swatch-presencial"></span>Presencial</span>
+                <span class="reservar-legend-item"><span class="reservar-swatch reservar-swatch-virtual"></span>Virtual</span>
+            </div>
+            <p class="reservar-nota">Elegí un horario libre. Mostramos los turnos de esta semana y la próxima.</p>
+
+            <div class="reservar-pager">
+                {% if grupo > 0 %}
+                    <a href="?grupo={{ grupo|add:'-1' }}" class="reservar-pager-btn">‹</a>
+                {% else %}
+                    <span class="reservar-pager-btn reservar-pager-btn-disabled">‹</span>
+                {% endif %}
+
+                <div class="reservar-cols">
+                    {% for dia in dias %}
+                    <div class="reservar-col">
+                        <div class="reservar-col-head">
+                            <span class="reservar-col-dia">{{ dia.fecha|date:"D" }}</span>
+                            <span class="reservar-col-fecha">{{ dia.fecha|date:"d/m" }}</span>
+                        </div>
+                        <div class="reservar-col-slots">
+                            {% for slot in dia.slots %}
+                                {% if slot.tomado %}
+                                    <span class="reservar-slot-tomado">{{ slot.hora|time:"H:i" }}</span>
+                                {% else %}
+                                    <a href="?grupo={{ grupo }}&fecha={{ dia.fecha|date:'Y-m-d' }}&hora={{ slot.hora|time:'H:i' }}" class="reservar-slotpill reservar-slotpill-{{ slot.modalidad }}">{{ slot.hora|time:"H:i" }}</a>
+                                {% endif %}
+                            {% empty %}
+                                <span class="reservar-slot-vacio">Sin turnos</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if grupo < 3 %}
+                    <a href="?grupo={{ grupo|add:'1' }}" class="reservar-pager-btn">›</a>
+                {% else %}
+                    <span class="reservar-pager-btn reservar-pager-btn-disabled">›</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</main>
+{% endblock %}

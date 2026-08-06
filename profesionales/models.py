@@ -123,6 +123,17 @@ class Psicologo(models.Model):
         verbose_name='Debe cambiar la contraseña',
         help_text='Se marca sola al crear el acceso con contraseña provisoria. Se desmarca cuando el profesional la cambia.'
     )
+    duracion_turno_min = models.PositiveSmallIntegerField(
+        default=45,
+        choices=[(30, '30 minutos'), (45, '45 minutos'), (60, '60 minutos')],
+        verbose_name='Duración de los turnos',
+        help_text='Se usa para partir la disponibilidad semanal en horarios reservables desde el turnero público.'
+    )
+    direccion_consultorio = models.CharField(
+        max_length=255, blank=True,
+        verbose_name='Dirección del consultorio',
+        help_text='Se muestra en la reserva y en el mail de aviso cuando el turno es presencial.'
+    )
 
     def whatsapp_limpio(self):
         """Retorna el número de WhatsApp en formato internacional sin símbolos."""

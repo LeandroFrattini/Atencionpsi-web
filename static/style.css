@@ -1657,6 +1657,16 @@ main.buscador-main {
     border-radius: 14px !important;
 }
 
+.perfil-btn-reservar {
+    background-color: #4a7c59 !important;
+    color: #fff !important;
+    border: 2px solid #4a7c59 !important;
+}
+.perfil-btn-reservar:hover {
+    background-color: #3a6347 !important;
+    border-color: #3a6347 !important;
+}
+
 /* Compartir: esta página ya es una URL real y linkeable por psicólogo/a,
    pero sin un botón bien visible casi nadie se da cuenta de que puede
    copiar/compartir el link -- mucha gente no sabe que se puede tocar y
@@ -1973,4 +1983,109 @@ main.buscador-main {
     font-size: 0.88rem;
     margin-top: 8px;
     font-style: italic;
+}
+
+/* =============================================
+   TURNERO PÚBLICO (reservar.html / reserva_confirmada.html)
+   ============================================= */
+.reservar-main {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 30px 16px 60px;
+}
+.reservar-volver { margin-bottom: 20px; }
+
+.reservar-messages { list-style: none; margin: 0 0 16px; padding: 0; }
+.reservar-message {
+    padding: 10px 14px; border-radius: 10px; margin-bottom: 8px; font-size: 0.9rem; font-weight: 600;
+}
+.reservar-message-error { background: #fbeaea; color: #a13d3d; }
+.reservar-message-success { background: #eaf5ea; color: #3f6647; }
+
+.reservar-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    padding: 24px;
+}
+.reservar-card-confirmacion { text-align: center; }
+.reservar-card-head { margin-bottom: 18px; }
+.reservar-card-head h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.5rem;
+    color: #222;
+    margin: 0 0 2px;
+}
+.reservar-card-head p { color: #999; font-size: 0.9rem; margin: 0; }
+
+.reservar-legend { display: flex; gap: 16px; margin-bottom: 14px; }
+.reservar-legend-item { display: flex; align-items: center; gap: 7px; font-size: 0.85rem; font-weight: 700; color: #555; }
+.reservar-swatch { width: 13px; height: 13px; border-radius: 4px; display: inline-block; }
+.reservar-swatch-presencial { background: #4a7c59; }
+.reservar-swatch-virtual { background: #d79a9f; }
+.reservar-nota { font-size: 0.82rem; color: #999; margin: 0 0 18px; line-height: 1.5; }
+
+.reservar-pager { display: flex; align-items: flex-start; gap: 4px; }
+.reservar-pager-btn {
+    width: 30px; height: 30px; border-radius: 50%; background: #f5f2ee; color: #666;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    text-decoration: none; font-size: 1.1rem; margin-top: 4px;
+}
+.reservar-pager-btn:hover { background: #eee; }
+.reservar-pager-btn-disabled { opacity: 0.3; pointer-events: none; }
+
+.reservar-cols { flex: 1; display: flex; gap: 6px; min-width: 0; }
+.reservar-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.reservar-col-head { text-align: center; margin-bottom: 10px; }
+.reservar-col-dia { display: block; font-size: 0.82rem; font-weight: 700; color: #222; text-transform: uppercase; }
+.reservar-col-fecha { display: block; font-size: 0.72rem; color: #999; margin-top: 1px; }
+.reservar-col-slots { display: flex; flex-direction: column; gap: 8px; }
+
+.reservar-slotpill, .reservar-slot-tomado, .reservar-slot-vacio {
+    display: block; text-align: center; border-radius: 14px; padding: 7px 4px; font-size: 0.82rem; font-weight: 700;
+}
+.reservar-slotpill { text-decoration: none; border: none; cursor: pointer; }
+.reservar-slotpill-presencial { background: #eaf5ea; color: #3f6647; }
+.reservar-slotpill-virtual { background: #fbeef1; color: #96355c; }
+.reservar-slotpill:hover { filter: brightness(0.97); }
+.reservar-slot-tomado { color: #ccc; text-decoration: line-through; font-weight: 500; }
+.reservar-slot-vacio { color: #ddd; font-weight: 500; }
+
+.reservar-volver-paso {
+    display: inline-block; color: #999; font-size: 0.82rem; font-weight: 700;
+    text-decoration: none; margin-bottom: 14px;
+}
+.reservar-resumen {
+    border-radius: 12px; padding: 12px 14px; font-size: 0.85rem; line-height: 1.5; margin-bottom: 18px;
+}
+.reservar-resumen-presencial { background: #eaf5ea; color: #3f6647; }
+.reservar-resumen-virtual { background: #fbeef1; color: #96355c; }
+.reservar-resumen b { display: block; font-size: 1rem; margin-bottom: 2px; }
+
+.reservar-form-row { display: flex; gap: 10px; }
+.reservar-field { flex: 1; min-width: 0; margin-bottom: 14px; }
+.reservar-field label { display: block; font-size: 0.78rem; font-weight: 700; color: #666; margin-bottom: 5px; }
+.reservar-field input {
+    width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid #e0e0e0;
+    font-size: 0.92rem; color: #333; background: #fafafa; box-sizing: border-box;
+}
+.reservar-field input:focus { outline: none; border-color: #7da87b; background: #fff; }
+.reservar-field-error { font-size: 0.78rem; color: #a13d3d; margin: 5px 0 0; font-weight: 600; }
+
+.reservar-cta {
+    width: 100%; padding: 13px; border-radius: 24px; border: none; font-weight: 700; font-size: 0.95rem;
+    color: #fff; cursor: pointer; font-family: inherit;
+}
+.reservar-cta-presencial { background: #4a7c59; }
+.reservar-cta-virtual { background: #96355c; }
+
+.reservar-toast {
+    background: #eaf5ea; color: #3f6647; border-radius: 12px; padding: 14px; font-size: 0.9rem;
+    line-height: 1.5; margin: 16px 0;
+}
+.reservar-toast-virtual { background: #fbeef1; color: #96355c; }
+
+@media (max-width: 480px) {
+    .reservar-form-row { flex-direction: column; gap: 0; }
+    .reservar-card { padding: 20px 16px; }
 }

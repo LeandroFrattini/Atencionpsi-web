@@ -14,9 +14,17 @@ from profesionales.admin import CrearAccesoPortalForm
 from profesionales.models import Psicologo
 
 from .decorators import psicologo_requerido, superuser_requerido
-from .forms import PacienteForm, TurnoForm
-from .models import IngresoPortal, Paciente, Turno
-from .scoping import get_paciente_or_404, get_turno_or_404
+from .disponibilidad import fechas_horizonte, slot_disponible, slots_para_fecha
+from .forms import (
+    DiaNoAtiendeForm, DisponibilidadBloqueForm, DisponibilidadSettingsForm,
+    PacienteForm, ReservaPublicaForm, TurnoForm,
+)
+from .models import DiaNoAtiende, DisponibilidadSemanal, IngresoPortal, Paciente, Turno
+from .notificaciones import enviar_aviso_nuevo_turno
+from .scoping import (
+    get_bloque_disponibilidad_or_404, get_dia_no_atiende_or_404,
+    get_paciente_or_404, get_turno_or_404,
+)
 
 NOMBRES_DIA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 NOMBRES_MES = [
@@ -297,7 +305,19 @@ def turno_nuevo(request, psico):
             turno = form.save(commit=False)
             turno.psicologo = psico
             turno.save()
-            messages.success(request, 'Turno agendado.')
+
+            if form.cleaned_data.get('recurrente'):
+                for semana in range(1, 4):
+                    Turno.objects.create(
+                        psicologo=psico,
+                        paciente=turno.paciente,
+                        fecha_hora=turno.fecha_hora + datetime.timedelta(weeks=semana),
+                        estado='agendado',
+                        modalidad=turno.modalidad,
+                    )
+                messages.success(request, 'Turno agendado y repetido las próximas 3 semanas.')
+            else:
+                messages.success(request, 'Turno agendado.')
             return redirect('portal_paciente_detalle', pk=turno.paciente_id)
     else:
         initial = {}
@@ -331,6 +351,90 @@ def turno_editar(request, psico, pk):
     return render(request, 'portal/turno_form.html', {
         'psico': psico, 'form': form, 'modo': 'editar', 'turno': turno,
     })
+
+
+@psicologo_requerido
+def disponibilidad(request, psico):
+    """
+    Plantilla semanal de disponibilidad (se repite sola todas las semanas)
+    más los días que no atiende (vacaciones, etc). Es lo que alimenta el
+    turnero público -- ver portal/disponibilidad.py.
+    """
+    if request.method == 'POST' and request.POST.get('accion') == 'settings':
+        settings_form = DisponibilidadSettingsForm(request.POST, instance=psico)
+        if settings_form.is_valid():
+            settings_form.save()
+            messages.success(request, 'Configuración actualizada.')
+            return redirect('portal_disponibilidad')
+    else:
+        settings_form = DisponibilidadSettingsForm(instance=psico)
+
+    bloques_por_dia = {i: [] for i in range(6)}
+    for bloque in psico.disponibilidad_semanal.all().order_by('dia_semana', 'hora_desde'):
+        bloques_por_dia[bloque.dia_semana].append(bloque)
+    dias = [
+        {
+            'idx': i,
+            'nombre': nombre,
+            'bloques': bloques_por_dia[i],
+        }
+        for i, nombre in DisponibilidadSemanal.DIA_CHOICES
+    ]
+
+    return render(request, 'portal/disponibilidad.html', {
+        'psico': psico,
+        'dias': dias,
+        'settings_form': settings_form,
+        'bloque_form': DisponibilidadBloqueForm(),
+        'excepciones': psico.dias_no_atiende.all().order_by('fecha_desde'),
+        'excepcion_form': DiaNoAtiendeForm(),
+    })
+
+
+@psicologo_requerido
+@require_POST
+def disponibilidad_bloque_crear(request, psico):
+    form = DisponibilidadBloqueForm(request.POST)
+    if form.is_valid():
+        bloque = form.save(commit=False)
+        bloque.psicologo = psico
+        bloque.save()
+        messages.success(request, 'Horario agregado.')
+    else:
+        messages.error(request, 'No se pudo agregar ese horario: revisá los datos.')
+    return redirect('portal_disponibilidad')
+
+
+@psicologo_requerido
+@require_POST
+def disponibilidad_bloque_eliminar(request, psico, pk):
+    bloque = get_bloque_disponibilidad_or_404(psico, pk)
+    bloque.delete()
+    messages.success(request, 'Horario eliminado.')
+    return redirect('portal_disponibilidad')
+
+
+@psicologo_requerido
+@require_POST
+def excepcion_crear(request, psico):
+    form = DiaNoAtiendeForm(request.POST)
+    if form.is_valid():
+        excepcion = form.save(commit=False)
+        excepcion.psicologo = psico
+        excepcion.save()
+        messages.success(request, 'Período agregado: no vas a aparecer disponible en esas fechas.')
+    else:
+        messages.error(request, 'No se pudo agregar ese período: revisá las fechas.')
+    return redirect('portal_disponibilidad')
+
+
+@psicologo_requerido
+@require_POST
+def excepcion_eliminar(request, psico, pk):
+    excepcion = get_dia_no_atiende_or_404(psico, pk)
+    excepcion.delete()
+    messages.success(request, 'Período eliminado.')
+    return redirect('portal_disponibilidad')
 
 
 @superuser_requerido

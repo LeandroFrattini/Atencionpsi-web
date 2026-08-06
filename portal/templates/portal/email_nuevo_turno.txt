@@ -1,0 +1,15 @@
+Hola {{ psicologo_nombre }},
+
+Tenés una nueva reserva a través de tu perfil de Atención Psi.
+
+{{ fecha_larga }} · {{ hora_desde }} a {{ hora_hasta }}hs
+{{ modalidad_label }}{% if es_virtual %} · el link de la videollamada se coordina con la paciente{% else %} · {{ direccion }}{% endif %}
+
+Paciente: {{ paciente_nombre }}
+Email: {{ paciente_email }}
+Teléfono: {{ paciente_telefono }}
+Fecha de nacimiento: {{ paciente_fecha_nacimiento }}
+
+Ya quedó cargado en tu agenda, no hace falta que hagas nada.
+
+Atención Psi · atencionpsi.com.ar

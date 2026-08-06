@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Turno confirmado | Atención Psi{% endblock %}
+{% block content %}
+<main class="reservar-main">
+    <div class="reservar-card reservar-card-confirmacion">
+        <h1>Listo</h1>
+        <p>{{ p.nombre }}</p>
+        <div class="reservar-toast{% if turno.modalidad == 'virtual' %} reservar-toast-virtual{% endif %}">
+            Reserva confirmada. Le avisamos a {{ p.nombre }} por mail que tenés un turno agendado.
+        </div>
+        <a href="{% url 'perfil_psicologo' p.slug %}" class="perfil-volver-link">← Volver al perfil</a>
+    </div>
+</main>
+{% endblock %}

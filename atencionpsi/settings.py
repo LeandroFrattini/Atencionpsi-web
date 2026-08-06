@@ -155,6 +155,21 @@ if 'RENDER' in os.environ:
     else:
         DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
+# MAIL (Brevo SMTP -- avisos de turnos nuevos a los profesionales)
+# En local (sin RENDER) se imprime en la consola en vez de mandarse de
+# verdad, mismo criterio que ya se usa para DATABASES/media más arriba.
+if 'RENDER' in os.environ:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('BREVO_SMTP_LOGIN', '')
+EMAIL_HOST_PASSWORD = os.environ.get('BREVO_SMTP_KEY', '')
+DEFAULT_FROM_EMAIL = 'Atención Psi <turnos@atencionpsi.com.ar>'
+TURNOS_BCC_EMAIL = 'atencionpsi.ar@gmail.com'
+
 # EXTRAS
 WHITENOISE_MANIFEST_STRICT = False
 LANGUAGE_CODE = 'es-ar'

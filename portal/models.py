@@ -62,6 +62,14 @@ class Turno(models.Model):
         ('cancelado', 'Cancelado'),
         ('ausente', 'Ausente'),
     ]
+    MODALIDAD_CHOICES = [
+        ('presencial', 'Presencial'),
+        ('virtual', 'Virtual'),
+    ]
+    ORIGEN_CHOICES = [
+        ('manual', 'Cargado por el profesional'),
+        ('publico', 'Reservado por el paciente'),
+    ]
 
     psicologo = models.ForeignKey(
         'profesionales.Psicologo', on_delete=models.CASCADE, related_name='turnos'
@@ -69,6 +77,11 @@ class Turno(models.Model):
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='turnos')
     fecha_hora = models.DateTimeField()
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='agendado')
+    modalidad = models.CharField(max_length=20, choices=MODALIDAD_CHOICES, default='presencial')
+    origen = models.CharField(
+        max_length=20, choices=ORIGEN_CHOICES, default='manual',
+        help_text='"Reservado por el paciente" es lo que dispara el mail de aviso al profesional.'
+    )
     pagado = models.BooleanField(default=False, verbose_name='Pagado')
     reagendado = models.BooleanField(
         default=False, help_text='Se marca solo cuando se cambia la fecha/hora original.'
@@ -84,3 +97,56 @@ class Turno(models.Model):
 
     def __str__(self):
         return f'{self.paciente} - {self.fecha_hora:%d/%m/%Y %H:%M}'
+
+
+class DisponibilidadSemanal(models.Model):
+    """
+    Plantilla de disponibilidad de un psicólogo, por día de la semana --
+    se define una sola vez y se repite sola todas las semanas (no hay que
+    volver a cargarla). El turnero público parte cada bloque en turnos de
+    `Psicologo.duracion_turno_min` para ofrecerlos como horarios reservables.
+    """
+    DIA_CHOICES = [
+        (0, 'Lunes'), (1, 'Martes'), (2, 'Miércoles'),
+        (3, 'Jueves'), (4, 'Viernes'), (5, 'Sábado'),
+    ]
+    MODALIDAD_CHOICES = Turno.MODALIDAD_CHOICES
+
+    psicologo = models.ForeignKey(
+        'profesionales.Psicologo', on_delete=models.CASCADE, related_name='disponibilidad_semanal'
+    )
+    dia_semana = models.PositiveSmallIntegerField(choices=DIA_CHOICES, verbose_name='Día de la semana')
+    hora_desde = models.TimeField(verbose_name='Desde')
+    hora_hasta = models.TimeField(verbose_name='Hasta')
+    modalidad = models.CharField(max_length=20, choices=MODALIDAD_CHOICES)
+
+    class Meta:
+        verbose_name = 'Bloque de disponibilidad semanal'
+        verbose_name_plural = 'Disponibilidad semanal'
+        ordering = ['dia_semana', 'hora_desde']
+
+    def __str__(self):
+        return f'{self.psicologo} · {self.get_dia_semana_display()} {self.hora_desde:%H:%M}-{self.hora_hasta:%H:%M}'
+
+
+class DiaNoAtiende(models.Model):
+    """
+    Período en el que un psicólogo no atiende (vacaciones, licencia, etc.).
+    Tiene prioridad sobre la disponibilidad semanal: mientras una fecha caiga
+    en alguno de estos rangos, el turnero público no ofrece nada ese día,
+    sin importar lo que diga la plantilla.
+    """
+    psicologo = models.ForeignKey(
+        'profesionales.Psicologo', on_delete=models.CASCADE, related_name='dias_no_atiende'
+    )
+    fecha_desde = models.DateField(verbose_name='Desde')
+    fecha_hasta = models.DateField(verbose_name='Hasta')
+    motivo = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        verbose_name = 'Día que no atiende'
+        verbose_name_plural = 'Días que no atiende'
+        ordering = ['fecha_desde']
+
+    def __str__(self):
+        return f'{self.psicologo} · {self.fecha_desde:%d/%m/%Y} — {self.fecha_hasta:%d/%m/%Y}'
