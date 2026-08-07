@@ -173,6 +173,22 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* Contador de pacientes (solo en el panel general): va afuera del span
+   que trunca el nombre, para que un nombre largo no se lo tape con el
+   "..." -- el nombre se puede achicar, el número siempre queda visible. */
+.portal-persona-nombre-fila {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+}
+.portal-persona-nombre-fila .portal-persona-nombre { min-width: 0; }
+.portal-persona-contador {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #999;
+}
 .portal-persona-sub { display: block; font-size: 0.82rem; color: #888; margin-top: 2px; }
 .portal-persona-card-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .portal-persona-chevron { width: 18px; height: 18px; color: #ccc; flex-shrink: 0; }

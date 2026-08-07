@@ -336,6 +336,25 @@ class PortalAdminDashboardTests(TestCase):
         self.assertNotContains(resp, 'Atendidos')
         self.assertNotContains(resp, 'Sin cobrar')
 
+    def test_panel_general_muestra_cantidad_de_pacientes_por_psicologo(self):
+        """
+        Al lado del nombre de cada profesional, la dueña ve entre paréntesis
+        cuántos pacientes tiene cargados -- solo en este panel, no en el
+        buscador ni en la vista propia del profesional.
+        """
+        Paciente.objects.create(psicologo=self.psico, nombre='P', apellido='A')
+        Paciente.objects.create(psicologo=self.psico, nombre='Q', apellido='B')
+        psico_sin_pacientes = Psicologo.objects.create(nombre='Psicólogo Sin Pacientes', whatsapp='9999999999')
+
+        resp = self.client_super.get(reverse('portal_admin_dashboard'))
+        self.assertEqual(resp.status_code, 200)
+
+        por_pk = {p.pk: p.cantidad_pacientes for p in resp.context['con_agenda'] + resp.context['sin_agenda']}
+        self.assertEqual(por_pk[self.psico.pk], 2)
+        self.assertEqual(por_pk[psico_sin_pacientes.pk], 0)
+        self.assertContains(resp, '(2)')
+        self.assertContains(resp, '(0)')
+
     def test_psicologo_normal_no_puede_entrar_al_panel_general(self):
         resp = self.client_psico.get(reverse('portal_admin_dashboard'), follow=True)
         self.assertTemplateNotUsed(resp, 'portal/admin_dashboard.html')

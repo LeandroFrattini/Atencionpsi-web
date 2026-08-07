@@ -1,6 +1,9 @@
 <div class="portal-persona-card portal-persona-card-estatica portal-persona-card-admin{% if not p.activo %} portal-persona-card-inactiva{% endif %}">
     <div class="portal-persona-card-info">
-        <span class="portal-persona-nombre">{{ p.nombre }}</span>
+        <span class="portal-persona-nombre-fila">
+            <span class="portal-persona-nombre">{{ p.nombre }}</span>
+            <span class="portal-persona-contador" title="Pacientes cargados">({{ p.cantidad_pacientes }})</span>
+        </span>
         <span class="portal-persona-sub">
             {% if p.activo %}Visible en el buscador{% else %}Dado de baja — oculto del buscador{% endif %}
             · {% if p.usuario_id %}Tiene acceso a la agenda{% else %}Sin acceso a la agenda{% endif %}

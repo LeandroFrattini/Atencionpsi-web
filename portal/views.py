@@ -451,7 +451,13 @@ def admin_dashboard(request):
     cada psicólogo con sus pacientes, no algo que la dueña del sitio
     tenga que ver agregado.
     """
-    psicologos = Psicologo.objects.all().order_by('-activo', 'nombre')
+    # annotate en vez de p.pacientes.count() por cada uno: una sola consulta
+    # para todos en vez de N+1.
+    psicologos = (
+        Psicologo.objects.all()
+        .annotate(cantidad_pacientes=Count('pacientes', distinct=True))
+        .order_by('-activo', 'nombre')
+    )
     total_psicologos = len(psicologos)
     con_agenda = [p for p in psicologos if p.usuario_id]
     sin_agenda = [p for p in psicologos if not p.usuario_id]
