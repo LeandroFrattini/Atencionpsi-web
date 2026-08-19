@@ -1,20 +1,19 @@
 {% load static %}
 <div class="card-destacado">
     <div class="card-destacado-foto-frame">
-        {% if p.foto %}
-            <img src="{{ p.foto.url }}" alt="{{ p.nombre }}, psicólogo/a en Atención Psi">
-        {% else %}
-            <img src="{% static 'img/default.png' %}" alt="{{ p.nombre }}">
-        {% endif %}
-    </div>
-
-    <div class="nombre-verificado-row">
-        <h3 class="card-destacado-nombre">{{ p.nombre }}</h3>
-        <span class="badge-verificado" title="Profesional verificado por Atención Psi">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
-            Verificado
+        <div class="card-destacado-foto-clip">
+            {% if p.foto %}
+                <img src="{{ p.foto.url }}" alt="{{ p.nombre }}, psicólogo/a en Atención Psi">
+            {% else %}
+                <img src="{% static 'img/default.png' %}" alt="{{ p.nombre }}">
+            {% endif %}
+        </div>
+        <span class="badge-verificado-bubble" title="Profesional verificado por Atención Psi">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg>
         </span>
     </div>
+
+    <h3 class="card-destacado-nombre">{{ p.nombre }}</h3>
 
     {% if p.ciudades.all %}
         <p class="info-line"><svg class="icon-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg> {% for c in p.ciudades.all %}{{ c.nombre }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>

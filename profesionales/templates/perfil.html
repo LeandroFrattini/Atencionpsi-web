@@ -42,21 +42,20 @@
 
         <!-- COLUMNA IZQUIERDA -->
         <div class="perfil-col-izq">
-            <div class="perfil-foto-wrapper">
-                {% if p.foto %}
-                    <img src="{{ p.foto.url }}" alt="{{ p.nombre }}" class="perfil-foto">
-                {% else %}
-                    <img src="{% static 'img/default.png' %}" alt="{{ p.nombre }}" class="perfil-foto">
-                {% endif %}
-            </div>
-
-            <div class="nombre-verificado-row">
-                <h1 class="perfil-nombre">{{ p.nombre }}</h1>
-                <span class="badge-verificado" title="Profesional verificado por Atención Psi">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
-                    Verificado
+            <div class="perfil-foto-frame">
+                <div class="perfil-foto-clip">
+                    {% if p.foto %}
+                        <img src="{{ p.foto.url }}" alt="{{ p.nombre }}">
+                    {% else %}
+                        <img src="{% static 'img/default.png' %}" alt="{{ p.nombre }}">
+                    {% endif %}
+                </div>
+                <span class="badge-verificado-bubble" title="Profesional verificado por Atención Psi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M20 6 9 17l-5-5"/></svg>
                 </span>
             </div>
+
+            <h1 class="perfil-nombre">{{ p.nombre }}</h1>
 
             {% if p.orientacion %}
                 <p class="perfil-orientacion">{{ p.orientacion }}</p>

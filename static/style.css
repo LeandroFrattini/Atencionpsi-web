@@ -55,7 +55,7 @@ nav {
     display: flex;
     align-items: center;
     flex: 1;
-    gap: 24px;
+    gap: 48px;
 }
 
 .nav-links {
@@ -297,45 +297,6 @@ nav {
     background-color: #d89694;
     transform: scale(1.05);
 }
-.card {
-    background: #fff;
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.card:hover {
-    transform: translateY(-10px);
-}
-
-.card-img-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 15px;
-}
-
-.avatar-ring {
-    width: 126px;
-    height: 126px;
-    border-radius: 50%;
-    padding: 3px;
-    background: linear-gradient(135deg, #7da87b, #e9a8a6);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.06);
-}
-
-.avatar-ring img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    display: block;
-    border: 3px solid #fff;
-}
-
 .icon-inline {
     vertical-align: -2px;
     color: #7da87b;
@@ -528,7 +489,7 @@ footer {
    así que el menú se esconde detrás del botón de hamburguesa en un rango
    más amplio de lo habitual -- header liviano de una sola fila, y el menú
    se abre solo cuando alguien lo pide. */
-@media (max-width: 1279px) {
+@media (max-width: 1349px) {
     .nav-container {
         flex-wrap: nowrap;
         padding: 4px 0;
@@ -586,25 +547,10 @@ footer {
 
 /* --- 4. BUSCADOR: TARJETAS Y ALINEACIÓN --- */
 
-/* Solo las tarjetas que están dentro del contenedor de resultados */
-.results-container .card { 
-    background: white; 
-    border-radius: 25px; 
-    padding: 30px 25px; 
-    box-shadow: 0 8px 25px rgba(0,0,0,0.05); 
-    display: flex; 
-    flex-direction: column; 
-    height: 100%; /* Mismo alto para todas en la fila */
-    text-align: center;
-}
-
-/* Solo el info de las tarjetas del buscador crece para empujar botones */
-.results-container .card-info {
-    flex-grow: 1; 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
+/* Las tarjetas del buscador usan el mismo componente .card-destacado que la
+   home (ver _card_destacado.html) -- mismo alto en toda la fila. */
+.results-container .card-destacado {
+    height: 100%;
 }
 
 /* Contenedor de burbujas en el buscador */
@@ -1691,17 +1637,30 @@ main.buscador-main {
     gap: 12px;
 }
 
-.perfil-foto-wrapper {
+.perfil-foto-frame {
+    position: relative;
+    width: 200px;
+    aspect-ratio: 1 / 1;
+    border-radius: 36px;
     margin-bottom: 5px;
+    background: linear-gradient(135deg, #7da87b, #e9a8a6);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
-.perfil-foto {
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
+.perfil-foto-clip {
+    position: absolute;
+    inset: 5px;
+    border-radius: 32px;
+    overflow: hidden;
+}
+
+.perfil-foto-clip img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    border: 4px solid #faf0ee;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    display: block;
 }
 
 .perfil-nombre {
@@ -2224,23 +2183,62 @@ main.buscador-main {
     transform: translateY(-8px);
 }
 
+/* Cuadro de foto a proporción 1:1 fija, sea cual sea la orientación de la
+   foto original. La imagen va con position:absolute adentro de un clip
+   aparte -- si en cambio el <img> mide height:100% dentro de un padre con
+   aspect-ratio, algunos navegadores dejan que la proporción NATURAL de la
+   imagen "empuje" la altura del padre (se ve clarísimo con fotos verticales:
+   la tarjeta queda más alta que las demás). Sacando el <img> del flujo con
+   position:absolute, el tamaño del cuadro depende solo de aspect-ratio,
+   nunca de la foto. */
 .card-destacado-foto-frame {
+    position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
     border-radius: 32px;
-    padding: 5px;
     margin-bottom: 18px;
     background: linear-gradient(135deg, #7da87b, #e9a8a6);
     box-shadow: 0 5px 15px rgba(0,0,0,0.06);
 }
 
-.card-destacado-foto-frame img {
+.card-destacado-foto-clip {
+    position: absolute;
+    inset: 5px;
+    border-radius: 28px;
+    overflow: hidden;
+}
+
+.card-destacado-foto-clip img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    border-radius: 28px;
     object-fit: cover;
     display: block;
-    border: 4px solid #fff;
+}
+
+/* Burbuja de verificado sobre la esquina de la foto, en vez de un pill al
+   lado del nombre -- verde bien suave para que no compita con la foto. */
+.badge-verificado-bubble {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #8fbfa0;
+    border: 3px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.badge-verificado-bubble svg {
+    width: 13px;
+    height: 13px;
+    color: #fff;
+    flex-shrink: 0;
 }
 
 .card-destacado-nombre {
@@ -2254,36 +2252,6 @@ main.buscador-main {
 
 @media (max-width: 600px) {
     .destacados-subtitulo { margin-top: -10px; }
-}
-
-/* =============================================
-   BADGE "VERIFICADO" (card destacada, buscador, perfil)
-   ============================================= */
-.nombre-verificado-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.badge-verificado {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #eaf5ea;
-    color: #3f6647;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 4px 10px 4px 8px;
-    border-radius: 20px;
-    white-space: nowrap;
-}
-
-.badge-verificado svg {
-    width: 11px;
-    height: 11px;
-    flex-shrink: 0;
 }
 
 /* =============================================
