@@ -24,7 +24,30 @@ def inicio(request):
     return render(request, 'index.html', {
         'total_profesionales': total_profesionales,
         'total_ciudades': total_ciudades,
+        'profesionales_home': _seis_para_home(),
     })
+
+
+def _seis_para_home():
+    """
+    Siempre 6 profesionales para la home, siempre en orden aleatorio.
+    Los marcados como destacado entran primero (si hay más de 6 destacados,
+    se eligen 6 al azar entre ellos); el resto de los lugares se completa
+    al azar con el resto de los profesionales activos.
+    """
+    activos = list(Psicologo.objects.filter(activo=True))
+    destacados = [p for p in activos if p.destacado]
+    random.shuffle(destacados)
+    elegidos = destacados[:6]
+
+    if len(elegidos) < 6:
+        ids_usados = {p.id for p in elegidos}
+        resto = [p for p in activos if p.id not in ids_usados]
+        random.shuffle(resto)
+        elegidos += resto[:6 - len(elegidos)]
+
+    random.shuffle(elegidos)
+    return elegidos
 
 
 # --- VISTA DEL BUSCADOR ---
@@ -246,3 +269,7 @@ def sobre_nosotros(request):
 
 def faq(request):
     return render(request, 'faq.html')
+
+
+def formacion(request):
+    return render(request, 'formacion.html')

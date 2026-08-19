@@ -29,50 +29,77 @@ nav {
     box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
 }
 
-.nav-container { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    max-width: 1200px; 
-    margin: 0 auto; 
+.nav-container {
+    display: flex;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 24px;
 }
 
-.logo { 
-    text-decoration: none; 
-    font-weight: 700; 
-    font-size: 1.5rem; 
+.logo {
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.5rem;
+    flex-shrink: 0;
 }
 
-.logo-verde { color: #7FA88D; } 
+.logo-verde { color: #7FA88D; }
 .logo-rosa { color: #D79A9F; }
 
-.nav-links { 
-    display: flex; 
-    list-style: none; 
-    gap: 20px; 
-    align-items: center; 
+/* Agrupa links + botones y los pega al logo -- solo los botones se separan
+   del todo hacia el borde derecho (margin-left:auto en .nav-actions), en
+   vez de dejar todo el bloque flotando lejos del logo con un vacío enorme
+   en el medio. */
+.nav-menu {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 24px;
 }
 
-.nav-links a { 
-    text-decoration: none; 
-    color: #444; 
-    font-weight: 600; 
-    transition: 0.3s; 
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 18px;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #444;
+    font-weight: 600;
+    transition: 0.3s;
+    white-space: nowrap;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.nav-actions a {
+    text-decoration: none;
 }
 
 /* Estilo especial para el botón de la Navbar */
-.nav-links a.btn-unete-nav { 
-    background-color: #e9a8a6 !important; 
-    color: white !important; 
-    padding: 10px 22px; 
-    border-radius: 50px; 
-    font-weight: 700; 
+.nav-actions a.btn-unete-nav {
+    background-color: #e9a8a6 !important;
+    color: white !important;
+    padding: 9px 18px;
+    border-radius: 50px;
+    font-weight: 700;
     display: inline-block;
+    white-space: nowrap;
     transition: all 0.3s ease !important;
 }
 
 /* EFECTO HOVER: Rosa -> Verde */
-.nav-links a.btn-unete-nav:hover {
+.nav-actions a.btn-unete-nav:hover {
     background-color: #7da87b !important;
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(125, 168, 123, 0.3);
@@ -81,18 +108,19 @@ nav {
 /* Botón del portal de profesionales: borde verde, más discreto que el CTA
    rosa de "Únete al Equipo" -- es para quien ya es parte del equipo y
    quiere entrar a su agenda, no una invitación a sumarse. */
-.nav-links a.btn-portal-nav {
+.nav-actions a.btn-portal-nav {
     background-color: transparent !important;
     color: #4a7c59 !important;
     border: 2px solid #7da87b;
-    padding: 8px 20px;
+    padding: 7px 17px;
     border-radius: 50px;
     font-weight: 700;
     display: inline-block;
+    white-space: nowrap;
     transition: all 0.3s ease !important;
 }
 
-.nav-links a.btn-portal-nav:hover {
+.nav-actions a.btn-portal-nav:hover {
     background-color: #7da87b !important;
     color: white !important;
     transform: scale(1.05);
@@ -466,44 +494,93 @@ footer {
     font-size: 0.9rem;
 }
 
-/* Celulares y Tablets */
-@media (max-width: 768px) {
-    /* Hacemos que los elementos se apilen verticalmente */
+/* Botón hamburguesa: oculto en desktop, el menú de siempre se ve entero */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 34px;
+    height: 34px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.nav-toggle span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #4a7c59;
+    border-radius: 2px;
+    transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.nav-toggle.nav-toggle-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-toggle.nav-toggle-open span:nth-child(2) { opacity: 0; }
+.nav-toggle.nav-toggle-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Celulares, tablets y laptops chicas: con 5 links + 2 botones no entra
+   todo cómodo en una sola fila hasta bien pasado el ancho "mobile" típico,
+   así que el menú se esconde detrás del botón de hamburguesa en un rango
+   más amplio de lo habitual -- header liviano de una sola fila, y el menú
+   se abre solo cuando alguien lo pide. */
+@media (max-width: 1279px) {
     .nav-container {
-        flex-direction: column; 
-        padding: 15px 0;
-        gap: 15px;
+        flex-wrap: nowrap;
+        padding: 4px 0;
     }
 
-    /* Centramos el logo para que respire */
     .logo {
-        margin-bottom: 5px;
-        font-size: 1.4rem;
+        font-size: 1.3rem;
     }
 
-    /* Los links del medio con menos espacio para que no desborden */
-    .nav-links {
-        gap: 15px;
+    .nav-toggle {
+        display: flex;
+    }
+
+    .nav-menu {
+        display: none;
         width: 100%;
-        justify-content: center;
-        flex-wrap: wrap; /* Si son muchos, bajan a otra línea solo ellos */
+        flex-basis: 100%;
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+        padding: 22px 0 6px;
+    }
+
+    .nav-menu.nav-menu-open {
+        display: flex;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
     }
 
     .nav-links a {
+        font-size: 0.98rem;
+    }
+
+    .nav-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin-left: 0;
+    }
+
+    .nav-actions a.btn-unete-nav {
+        padding: 10px 24px;
         font-size: 0.9rem;
     }
 
-    /* El botón rosa lo hacemos un poquito más chico y centrado */
-    .nav-links a.btn-unete-nav {
-        padding: 8px 18px;
-        font-size: 0.85rem;
-        margin-top: 5px;
-    }
-
-    .nav-links a.btn-portal-nav {
-        padding: 7px 16px;
-        font-size: 0.85rem;
-        margin-top: 5px;
+    .nav-actions a.btn-portal-nav {
+        padding: 9px 22px;
+        font-size: 0.9rem;
     }
 }
 
@@ -2104,4 +2181,190 @@ main.buscador-main {
 @media (max-width: 480px) {
     .reservar-form-row { flex-direction: column; gap: 0; }
     .reservar-card { padding: 20px 16px; }
+}
+
+/* =============================================
+   HOME - PROFESIONALES DESTACADOS (tarjetas grandes)
+   ============================================= */
+.destacados-section {
+    max-width: 1200px;
+    margin: 30px auto 70px;
+    padding: 0 20px;
+    text-align: center;
+}
+
+.destacados-subtitulo {
+    color: #777;
+    margin-top: -30px;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.destacados-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-top: 40px;
+    text-align: left;
+}
+
+.card-destacado {
+    background: #fff;
+    border-radius: 26px;
+    padding: 22px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.card-destacado:hover {
+    transform: translateY(-8px);
+}
+
+.card-destacado-foto-frame {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 32px;
+    padding: 5px;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, #7da87b, #e9a8a6);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.06);
+}
+
+.card-destacado-foto-frame img {
+    width: 100%;
+    height: 100%;
+    border-radius: 28px;
+    object-fit: cover;
+    display: block;
+    border: 4px solid #fff;
+}
+
+.card-destacado-nombre {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+}
+
+.destacados-cta {
+    margin-top: 46px;
+}
+
+@media (max-width: 600px) {
+    .destacados-subtitulo { margin-top: -10px; }
+}
+
+/* =============================================
+   BADGE "VERIFICADO" (card destacada, buscador, perfil)
+   ============================================= */
+.nombre-verificado-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.badge-verificado {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #eaf5ea;
+    color: #3f6647;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px 4px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.badge-verificado svg {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+}
+
+/* =============================================
+   FOOTER
+   ============================================= */
+footer.site-footer-nueva {
+    background: #1f2e26;
+    color: #cddcd2;
+    margin-top: auto;
+    padding: 60px 5% 0;
+}
+
+.site-footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: space-between;
+    padding-bottom: 40px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    text-align: left;
+}
+
+.site-footer-brand {
+    max-width: 320px;
+}
+
+.site-footer-brand .logo {
+    font-size: 1.4rem;
+}
+
+.site-footer-brand p {
+    margin-top: 14px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #9fb3a7;
+}
+
+.site-footer-cols {
+    display: flex;
+    gap: 60px;
+    flex-wrap: wrap;
+}
+
+.site-footer-col h4 {
+    color: #fff;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    font-weight: 700;
+}
+
+.site-footer-col a {
+    display: block;
+    color: #9fb3a7;
+    text-decoration: none;
+    font-size: 0.92rem;
+    margin-bottom: 10px;
+    transition: color 0.2s ease;
+}
+
+.site-footer-col a:hover {
+    color: #e9a8a6;
+}
+
+.site-footer-bottom {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 22px 0;
+    text-align: center;
+    font-size: 0.82rem;
+    color: #7d9186;
+}
+
+@media (max-width: 640px) {
+    footer.site-footer-nueva { padding-top: 44px; }
+    .site-footer-inner { flex-direction: column; gap: 32px; text-align: center; }
+    .site-footer-brand { max-width: none; }
+    .site-footer-brand p { margin-left: auto; margin-right: auto; }
+    .site-footer-cols { justify-content: center; gap: 40px; }
+    .site-footer-col { text-align: center; }
 }

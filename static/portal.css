@@ -189,6 +189,15 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
     font-weight: 600;
     color: #999;
 }
+.portal-persona-destacado-badge {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #a3791f;
+    background: #fbf1da;
+    border-radius: 20px;
+    padding: 2px 9px;
+}
 .portal-persona-sub { display: block; font-size: 0.82rem; color: #888; margin-top: 2px; }
 .portal-persona-card-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .portal-persona-chevron { width: 18px; height: 18px; color: #ccc; flex-shrink: 0; }

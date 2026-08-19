@@ -113,7 +113,13 @@
                 </div>
 
                 <div class="card-info">
-                    <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
+                    <div class="nombre-verificado-row">
+                        <h3 style="margin: 10px 0;">{{ p.nombre }}</h3>
+                        <span class="badge-verificado" title="Profesional verificado por Atención Psi">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+                            Verificado
+                        </span>
+                    </div>
                     {% if p.ciudades.all %}
                         <p class="info-line"><svg class="icon-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg> {% for c in p.ciudades.all %}{{ c.nombre }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
                     {% endif %}

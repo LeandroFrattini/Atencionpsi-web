@@ -6,6 +6,66 @@
 {% block og_title %}Preguntas Frecuentes | Atención Psi{% endblock %}
 {% block canonical %}/preguntas-frecuentes/{% endblock %}
 {% block og_url %}/preguntas-frecuentes/{% endblock %}
+{% block json_ld %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "¿Cómo encuentro al profesional indicado para mí?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Usá el buscador y filtrá por modalidad (online o presencial), a quién va dirigido (adultos, adolescentes, niños, parejas) y zona. Cada perfil tiene la orientación terapéutica y una descripción del profesional para que puedas elegir con más información." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Cómo me contacto con el profesional?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Cada perfil tiene un botón de WhatsApp que te lleva directo a una conversación con el profesional. No hay intermediarios: hablás directamente con él o ella para coordinar el primer turno." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Atención Psi cobra algo al paciente?",
+            "acceptedAnswer": { "@type": "Answer", "text": "No. El servicio es completamente gratuito para quienes buscan atención. El costo de la consulta lo fija cada profesional y lo acordás directamente con él o ella." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Los profesionales están verificados?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sí. Todos los profesionales de la red son Licenciados en Psicología. Nos aseguramos de que cada perfil corresponda a un profesional habilitado antes de publicarlo." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Puedo atenderme si estoy fuera de Argentina?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sí. Varios profesionales de la red atienden de forma online, por lo que podés acceder desde cualquier lugar del mundo donde hables español." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Atención Psi es un canal de derivación?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sí. Funcionamos como un canal de visibilidad y derivación. Las consultas que lleguen dependen de factores como tu zona, horarios y especialidad, pero trabajamos activamente para que el flujo sea constante." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Puedo manejar mis honorarios?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sí, totalmente. Los honorarios los fijás vos y los comunicás directamente al paciente. Atención Psi no interviene en ese acuerdo ni cobra comisión por consulta." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Tiene algún costo sumarse como profesional?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sí, es un servicio por suscripción mensual. El valor se informa al momento del contacto. Se puede cancelar en cualquier momento sin cargos adicionales." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Qué pasa si un profesional quiere darse de baja?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Puede cancelar su suscripción en cualquier momento del mes, escribiendo por WhatsApp al staff de Atención Psi." }
+        },
+        {
+            "@type": "Question",
+            "name": "¿Los profesionales pueden estar en otras plataformas a la vez?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Sí, no se pide exclusividad. Atención Psi es un canal más para potenciar la presencia digital del profesional, compatible con cualquier otra plataforma o medio que use." }
+        }
+    ]
+}
+</script>
+{% endblock %}
 
 {% block content %}
 

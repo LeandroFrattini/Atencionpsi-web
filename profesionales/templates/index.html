@@ -59,6 +59,20 @@
     </div>
 </section>
 
+<!-- PROFESIONALES DESTACADOS -->
+{% if profesionales_home %}
+<section class="destacados-section">
+    <h2 class="home-section-title">Profesionales <span>destacados</span></h2>
+    <p class="destacados-subtitulo">Una muestra de los +{{ total_profesionales }} psicólogos verificados en la red.</p>
+    <div class="destacados-grid">
+        {% for p in profesionales_home %}
+            {% include '_card_destacado.html' %}
+        {% endfor %}
+    </div>
+    <a href="{% url 'buscador' %}" class="btn-hero destacados-cta">Ver los {{ total_profesionales }} psicólogos →</a>
+</section>
+{% endif %}
+
 <!-- CÓMO FUNCIONA -->
 <section class="home-como-funciona">
     <h2 class="home-section-title">¿Cómo funciona?</h2>

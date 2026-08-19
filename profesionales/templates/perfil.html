@@ -1,14 +1,34 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ p.nombre }} | Atención Psi{% endblock %}
-{% block meta_description %}Conocé el perfil de {{ p.nombre }}, psicólogo/a en Atención Psi. {{ p.orientacion }}. {% if p.ciudad %}Atención en {{ p.ciudad }}.{% endif %}{% endblock %}
+{% block title %}{{ p.nombre }} | Psicólogo/a en Argentina | Atención Psi{% endblock %}
+{% block meta_description %}Conocé el perfil de {{ p.nombre }}, psicólogo/a en Atención Psi. {{ p.orientacion }}.{% if p.ciudades.all %} Atención en {% for c in p.ciudades.all %}{{ c.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}.{% endif %} Contacto directo por WhatsApp.{% endblock %}
 {% block og_title %}{{ p.nombre }} | Atención Psi{% endblock %}
-{% block og_description %}{{ p.orientacion }}{% if p.ciudad %} · {{ p.ciudad }}{% endif %}. Contacto directo por WhatsApp.{% endblock %}
+{% block og_description %}{{ p.orientacion }}{% if p.ciudades.all %} · {% for c in p.ciudades.all %}{{ c.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}. Contacto directo por WhatsApp.{% endblock %}
 {% block og_type %}profile{% endblock %}
 {% block og_url %}/psicologo/{{ p.slug }}/{% endblock %}
 {% block canonical %}/psicologo/{{ p.slug }}/{% endblock %}
 {% block og_image %}{% if p.foto %}{{ p.foto.url }}{% else %}https://atencionpsi.com.ar{% static 'img/og-default.png' %}{% endif %}{% endblock %}
+{% block json_ld %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "{{ p.nombre|escapejs }}",
+    "url": "https://atencionpsi.com.ar/psicologo/{{ p.slug }}/",
+    "image": "{% if p.foto %}{{ p.foto.url|escapejs }}{% else %}https://atencionpsi.com.ar{% static 'img/og-default.png' %}{% endif %}",
+    "description": "{% if p.orientacion %}{{ p.orientacion|escapejs }}{% else %}Psicólogo/a en Atención Psi{% endif %}",
+    "areaServed": [
+        {% if p.ciudades.all %}
+            {% for c in p.ciudades.all %}{ "@type": "City", "name": "{{ c.nombre|escapejs }}" }{% if not forloop.last %},{% endif %}{% endfor %}
+        {% else %}
+            { "@type": "Country", "name": "Argentina" }
+        {% endif %}
+    ],
+    "provider": { "@id": "https://atencionpsi.com.ar/#organization" }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <main class="perfil-main">
@@ -30,7 +50,13 @@
                 {% endif %}
             </div>
 
-            <h1 class="perfil-nombre">{{ p.nombre }}</h1>
+            <div class="nombre-verificado-row">
+                <h1 class="perfil-nombre">{{ p.nombre }}</h1>
+                <span class="badge-verificado" title="Profesional verificado por Atención Psi">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>
+                    Verificado
+                </span>
+            </div>
 
             {% if p.orientacion %}
                 <p class="perfil-orientacion">{{ p.orientacion }}</p>

@@ -516,6 +516,19 @@ def psicologo_toggle_activo(request, pk):
 
 
 @superuser_requerido
+@require_POST
+def psicologo_toggle_destacado(request, pk):
+    psico = get_object_or_404(Psicologo, pk=pk)
+    psico.destacado = not psico.destacado
+    psico.save(update_fields=['destacado'])
+    if psico.destacado:
+        messages.success(request, f'{psico.nombre} ahora entra en el sorteo de "Profesionales destacados" de la home.')
+    else:
+        messages.warning(request, f'{psico.nombre} ya no está entre los destacados.')
+    return redirect('portal_admin_dashboard')
+
+
+@superuser_requerido
 def psicologo_crear_acceso(request, pk):
     """
     Mismo formulario y misma lógica que la acción del admin de Django

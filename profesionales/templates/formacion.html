@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Formación | Atención Psi{% endblock %}
+{% block meta_description %}Próximamente: formación y capacitación para profesionales de la salud mental en Atención Psi.{% endblock %}
+{% block og_title %}Formación | Atención Psi{% endblock %}
+{% block canonical %}/formacion/{% endblock %}
+{% block og_url %}/formacion/{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, follow">{% endblock %}
+
+{% block content %}
+
+<section class="faq-hero">
+    <div class="faq-hero-inner">
+        <span class="unete-hero-badge">Muy pronto</span>
+        <h1>Formación</h1>
+        <p>Estamos preparando esta sección. Pronto vas a encontrar acá cursos, talleres y capacitaciones para profesionales de la salud mental.</p>
+        <a href="{% url 'inicio' %}" class="btn-hero" style="margin-top: 30px;">Volver al inicio</a>
+    </div>
+</section>
+
+{% endblock %}

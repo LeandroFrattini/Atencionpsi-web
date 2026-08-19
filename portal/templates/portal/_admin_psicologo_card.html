@@ -3,6 +3,7 @@
         <span class="portal-persona-nombre-fila">
             <span class="portal-persona-nombre">{{ p.nombre }}</span>
             <span class="portal-persona-contador" title="Pacientes cargados">({{ p.cantidad_pacientes }})</span>
+            {% if p.destacado %}<span class="portal-persona-destacado-badge" title="Destacado en la home">★ Destacado</span>{% endif %}
         </span>
         <span class="portal-persona-sub">
             {% if p.activo %}Visible en el buscador{% else %}Dado de baja — oculto del buscador{% endif %}
@@ -32,5 +33,14 @@
         {% else %}
             <a href="{% url 'portal_psicologo_crear_acceso' p.pk %}" class="portal-toggle-btn portal-toggle-btn-neutro">Dar de alta agenda</a>
         {% endif %}
+
+        <form method="post" action="{% url 'portal_psicologo_toggle_destacado' p.pk %}" class="portal-inline-form">
+            {% csrf_token %}
+            {% if p.destacado %}
+                <button type="submit" class="portal-toggle-btn portal-toggle-btn-neutro">★ Quitar de destacados</button>
+            {% else %}
+                <button type="submit" class="portal-toggle-btn portal-toggle-btn-neutro">☆ Destacar en la home</button>
+            {% endif %}
+        </form>
     </div>
 </div>
