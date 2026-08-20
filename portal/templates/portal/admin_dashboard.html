@@ -140,10 +140,10 @@
     </div>
 </div>
 
-{% if movimientos %}
-<h3 class="portal-subtitle portal-subtitle-chica">Últimos movimientos</h3>
+{% if pagina_movimientos %}
+<h3 class="portal-subtitle portal-subtitle-chica" id="movimientos">Movimientos ({{ pagina_movimientos.paginator.count }})</h3>
 <div class="portal-lista-cards">
-    {% for mov in movimientos %}
+    {% for mov in pagina_movimientos %}
     <div class="portal-mov-card">
         <div class="portal-mov-info">
             {% if mov.tipo == 'pago' %}
@@ -168,5 +168,6 @@
     </div>
     {% endfor %}
 </div>
+{% include 'portal/_paginacion.html' with page_obj=pagina_movimientos param='p_mov' extra=querystring_mov anchor='movimientos' %}
 {% endif %}
 {% endblock %}

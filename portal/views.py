@@ -502,22 +502,35 @@ def admin_dashboard(request):
         'ingresos_hoy': ingresos_hoy,
     }
 
+    financiero = _resumen_financiero(request)
+
+    # Cada lista paginada por separado (profesionales sin agenda, con agenda,
+    # y movimientos de plata) necesita, en sus propios links de paginación,
+    # acordarse en qué página estaban LAS OTRAS DOS -- si no, cambiar de
+    # hoja en una te manda a la página 1 de las demás.
+    paginas = {'p_sin': pagina_sin.number, 'p_con': pagina_con.number, 'p_mov': financiero['pagina_movimientos'].number}
+
+    def otras_paginas(propio):
+        return ''.join(f'&{k}={v}' for k, v in paginas.items() if k != propio and v != 1)
+
     return render(request, 'portal/admin_dashboard.html', {
         'stats': stats,
         'pagina_con': pagina_con,
         'pagina_sin': pagina_sin,
-        # Se agregan a los links de paginación de CADA lista, para no
-        # perder la página en la que estabas en la otra al cambiar de hoja.
-        'querystring_con': f'&p_con={pagina_con.number}' if pagina_con.number != 1 else '',
-        'querystring_sin': f'&p_sin={pagina_sin.number}' if pagina_sin.number != 1 else '',
+        'querystring_con': otras_paginas('p_con'),
+        'querystring_sin': otras_paginas('p_sin'),
+        'querystring_mov': otras_paginas('p_mov'),
         'total_activos': sum(1 for p in psicologos if p.activo),
         'total_psicologos': total_psicologos,
         'ultimos_7_dias': ultimos_7_dias,
-        **_resumen_financiero(),
+        **financiero,
     })
 
 
-def _resumen_financiero():
+MOVIMIENTOS_POR_PAGINA = 20
+
+
+def _resumen_financiero(request):
     """
     Ingresos (pagos cargados a mano) vs egresos, mes a mes (últimos 6 meses)
     y total acumulado. Todo esto es información privada de la dueña del
@@ -567,21 +580,23 @@ def _resumen_financiero():
     total_egresos = Gasto.objects.aggregate(t=Sum('monto'))['t'] or 0
 
     # Pagos y gastos mezclados en una sola lista cronológica, en vez de dos
-    # listas separadas -- así "últimos movimientos" se lee en el orden real
-    # en que pasaron.
+    # listas separadas -- así "movimientos" se lee en el orden real en que
+    # pasaron. Se trae todo el historial (no solo los últimos) y se pagina,
+    # para poder ir para atrás en el tiempo en vez de perder de vista lo viejo.
     movimientos = sorted(
-        [{'tipo': 'pago', 'obj': p} for p in Pago.objects.select_related('psicologo')[:15]]
-        + [{'tipo': 'gasto', 'obj': g} for g in Gasto.objects.all()[:15]],
+        [{'tipo': 'pago', 'obj': p} for p in Pago.objects.select_related('psicologo')]
+        + [{'tipo': 'gasto', 'obj': g} for g in Gasto.objects.all()],
         key=lambda m: (m['obj'].fecha, m['obj'].creado_en),
         reverse=True,
-    )[:15]
+    )
+    pagina_movimientos = Paginator(movimientos, MOVIMIENTOS_POR_PAGINA).get_page(request.GET.get('p_mov'))
 
     return {
         'resumen_meses': resumen_meses,
         'total_ingresos': total_ingresos,
         'total_egresos': total_egresos,
         'ganancia_total': total_ingresos - total_egresos,
-        'movimientos': movimientos,
+        'pagina_movimientos': pagina_movimientos,
         'pago_form': PagoForm(),
         'gasto_form': GastoForm(),
     }
