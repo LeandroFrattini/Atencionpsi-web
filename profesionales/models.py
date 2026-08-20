@@ -135,6 +135,34 @@ class Psicologo(models.Model):
         help_text='Se muestra en la reserva y en el mail de aviso cuando el turno es presencial.'
     )
 
+    # --- Datos comerciales: privados, solo se ven en este admin de Django.
+    # No se muestran en el portal del profesional ni en ningún lado del sitio público. ---
+    PLAN_CHOICES = [
+        ('avanzado', 'Avanzado'),
+        ('premium', 'Premium'),
+        ('master', 'Master'),
+    ]
+    TIPO_PAGO_CHOICES = [
+        ('transferencia', 'Transferencia'),
+        ('suscripcion', 'Suscripción'),
+    ]
+    fecha_alta = models.DateField(
+        null=True, blank=True,
+        verbose_name='Fecha de alta',
+    )
+    plan = models.CharField(
+        max_length=20, choices=PLAN_CHOICES, blank=True,
+        verbose_name='Plan',
+    )
+    monto_pagado = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        verbose_name='Monto pagado',
+    )
+    tipo_pago = models.CharField(
+        max_length=20, choices=TIPO_PAGO_CHOICES, blank=True,
+        verbose_name='Transferencia o suscripción',
+    )
+
     def whatsapp_limpio(self):
         """Retorna el número de WhatsApp en formato internacional sin símbolos."""
         numero = re.sub(r'[^\d]', '', self.whatsapp)

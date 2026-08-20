@@ -61,14 +61,18 @@ class PsicologoAdminForm(forms.ModelForm):
 @admin.register(Psicologo)
 class PsicologoAdmin(admin.ModelAdmin):
     form = PsicologoAdminForm
-    list_display = ('nombre', 'ciudades_display', 'activo', 'destacado', 'clicks_totales')
-    list_filter = ('activo', 'destacado', 'ciudades', 'modalidades', 'destinatarios', 'orientaciones')
+    list_display = ('nombre', 'ciudades_display', 'plan', 'activo', 'destacado', 'clicks_totales')
+    list_filter = ('plan', 'activo', 'destacado', 'ciudades', 'modalidades', 'destinatarios', 'orientaciones')
     search_fields = ('nombre', 'orientacion', 'ciudades__nombre')
     prepopulated_fields = {'slug': ('nombre',)}
     filter_horizontal = ('modalidades', 'destinatarios', 'orientaciones', 'obras_sociales', 'ciudades')
     fieldsets = (
         ('Datos personales', {
             'fields': ('nombre', 'slug', 'foto', 'descripcion')
+        }),
+        ('Datos comerciales (privado -- solo vos lo ves acá)', {
+            'fields': ('fecha_alta', 'plan', 'monto_pagado', 'tipo_pago'),
+            'description': 'Información interna de facturación. No se muestra en el portal del profesional ni en ningún lado del sitio público.'
         }),
         ('Atención', {
             'fields': ('orientacion', 'orientaciones', 'ciudades', 'modalidades', 'destinatarios')
