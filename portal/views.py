@@ -5,7 +5,8 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -17,9 +18,9 @@ from .decorators import psicologo_requerido, superuser_requerido
 from .disponibilidad import fechas_horizonte, slot_disponible, slots_para_fecha
 from .forms import (
     DiaNoAtiendeForm, DisponibilidadBloqueForm, DisponibilidadSettingsForm,
-    PacienteForm, ReservaPublicaForm, TurnoForm,
+    GastoForm, PacienteForm, PagoForm, ReservaPublicaForm, TurnoForm,
 )
-from .models import DiaNoAtiende, DisponibilidadSemanal, IngresoPortal, Paciente, Turno
+from .models import DiaNoAtiende, DisponibilidadSemanal, Gasto, IngresoPortal, Pago, Paciente, Turno
 from .notificaciones import enviar_aviso_nuevo_turno
 from .scoping import (
     get_bloque_disponibilidad_or_404, get_dia_no_atiende_or_404,
@@ -499,7 +500,120 @@ def admin_dashboard(request):
         'total_activos': sum(1 for p in psicologos if p.activo),
         'total_psicologos': total_psicologos,
         'ultimos_7_dias': ultimos_7_dias,
+        **_resumen_financiero(),
     })
+
+
+def _resumen_financiero():
+    """
+    Ingresos (pagos cargados a mano) vs egresos, mes a mes (últimos 6 meses)
+    y total acumulado. Todo esto es información privada de la dueña del
+    sitio -- no se muestra en ningún otro lado.
+    """
+    hoy = timezone.localdate()
+    meses = []
+    y, m = hoy.year, hoy.month
+    for _ in range(6):
+        meses.append((y, m))
+        m -= 1
+        if m == 0:
+            m, y = 12, y - 1
+    meses.reverse()
+    primer_mes = datetime.date(meses[0][0], meses[0][1], 1)
+
+    pagos_por_mes = {
+        (fila['mes'].year, fila['mes'].month): fila['total']
+        for fila in (
+            Pago.objects.filter(fecha__gte=primer_mes)
+            .annotate(mes=TruncMonth('fecha')).values('mes')
+            .annotate(total=Sum('monto'))
+        )
+    }
+    gastos_por_mes = {
+        (fila['mes'].year, fila['mes'].month): fila['total']
+        for fila in (
+            Gasto.objects.filter(fecha__gte=primer_mes)
+            .annotate(mes=TruncMonth('fecha')).values('mes')
+            .annotate(total=Sum('monto'))
+        )
+    }
+
+    resumen_meses = []
+    for anio, mes in meses:
+        ingresos = pagos_por_mes.get((anio, mes)) or 0
+        egresos = gastos_por_mes.get((anio, mes)) or 0
+        resumen_meses.append({
+            'nombre': f'{NOMBRES_MES[mes - 1].capitalize()} {anio}',
+            'ingresos': ingresos,
+            'egresos': egresos,
+            'ganancia': ingresos - egresos,
+            'es_mes_actual': (anio, mes) == (hoy.year, hoy.month),
+        })
+
+    total_ingresos = Pago.objects.aggregate(t=Sum('monto'))['t'] or 0
+    total_egresos = Gasto.objects.aggregate(t=Sum('monto'))['t'] or 0
+
+    # Pagos y gastos mezclados en una sola lista cronológica, en vez de dos
+    # listas separadas -- así "últimos movimientos" se lee en el orden real
+    # en que pasaron.
+    movimientos = sorted(
+        [{'tipo': 'pago', 'obj': p} for p in Pago.objects.select_related('psicologo')[:15]]
+        + [{'tipo': 'gasto', 'obj': g} for g in Gasto.objects.all()[:15]],
+        key=lambda m: (m['obj'].fecha, m['obj'].creado_en),
+        reverse=True,
+    )[:15]
+
+    return {
+        'resumen_meses': resumen_meses,
+        'total_ingresos': total_ingresos,
+        'total_egresos': total_egresos,
+        'ganancia_total': total_ingresos - total_egresos,
+        'movimientos': movimientos,
+        'pago_form': PagoForm(),
+        'gasto_form': GastoForm(),
+    }
+
+
+@superuser_requerido
+@require_POST
+def pago_nuevo(request):
+    form = PagoForm(request.POST)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Pago cargado.')
+    else:
+        messages.error(request, 'Revisá los datos del pago: ' + '; '.join(form.errors))
+    return redirect('portal_admin_dashboard')
+
+
+@superuser_requerido
+@require_POST
+def pago_eliminar(request, pk):
+    pago = get_object_or_404(Pago, pk=pk)
+    pago.delete()
+    messages.success(request, 'Pago eliminado.')
+    return redirect('portal_admin_dashboard')
+
+
+@superuser_requerido
+@require_POST
+def gasto_nuevo(request):
+    form = GastoForm(request.POST)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Gasto cargado.')
+    else:
+        messages.error(request, 'Revisá los datos del gasto: ' + '; '.join(form.errors))
+    return redirect('portal_admin_dashboard')
+
+
+@superuser_requerido
+@require_POST
+def gasto_eliminar(request, pk):
+    gasto = get_object_or_404(Gasto, pk=pk)
+    gasto.delete()
+    messages.success(request, 'Gasto eliminado.')
+    return redirect('portal_admin_dashboard')
 
 
 @superuser_requerido

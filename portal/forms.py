@@ -2,7 +2,32 @@ from django import forms
 
 from profesionales.models import Psicologo
 
-from .models import DiaNoAtiende, DisponibilidadSemanal, Paciente, Turno
+from .models import DiaNoAtiende, DisponibilidadSemanal, Gasto, Pago, Paciente, Turno
+
+
+class PagoForm(forms.ModelForm):
+    class Meta:
+        model = Pago
+        fields = ['psicologo', 'fecha', 'monto', 'concepto']
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+            'concepto': forms.TextInput(attrs={'placeholder': 'Ej: Alta, mensualidad agosto'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['psicologo'].queryset = Psicologo.objects.order_by('nombre')
+        self.fields['psicologo'].required = False
+
+
+class GastoForm(forms.ModelForm):
+    class Meta:
+        model = Gasto
+        fields = ['fecha', 'monto', 'concepto']
+        widgets = {
+            'fecha': forms.DateInput(attrs={'type': 'date'}),
+            'concepto': forms.TextInput(attrs={'placeholder': 'Ej: Hosting, publicidad'}),
+        }
 
 
 class PacienteForm(forms.ModelForm):

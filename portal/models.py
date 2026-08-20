@@ -1,4 +1,50 @@
 from django.db import models
+from django.utils import timezone
+
+
+class Pago(models.Model):
+    """
+    Pago recibido de un profesional (alta o mensualidad) -- carga manual
+    de la dueña del sitio, día a día, a medida que le van pagando. Privado:
+    solo se ve en el Panel general, nunca en el portal de los profesionales
+    ni en el sitio público.
+    """
+    psicologo = models.ForeignKey(
+        'profesionales.Psicologo', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='pagos_recibidos',
+    )
+    fecha = models.DateField(default=timezone.localdate, verbose_name='Fecha')
+    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto')
+    concepto = models.CharField(
+        max_length=200, blank=True, verbose_name='Concepto',
+        help_text='Ej: Alta, mensualidad agosto',
+    )
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Pago recibido'
+        verbose_name_plural = 'Pagos recibidos'
+        ordering = ['-fecha', '-creado_en']
+
+    def __str__(self):
+        quien = self.psicologo.nombre if self.psicologo else 'General'
+        return f'{self.fecha} · {quien} · ${self.monto}'
+
+
+class Gasto(models.Model):
+    """Egreso del negocio -- carga manual de la dueña del sitio. Privado."""
+    fecha = models.DateField(default=timezone.localdate, verbose_name='Fecha')
+    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto')
+    concepto = models.CharField(max_length=200, blank=True, verbose_name='Concepto')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Gasto'
+        verbose_name_plural = 'Gastos'
+        ordering = ['-fecha', '-creado_en']
+
+    def __str__(self):
+        return f'{self.fecha} · ${self.monto} · {self.concepto}'
 
 
 class IngresoPortal(models.Model):
