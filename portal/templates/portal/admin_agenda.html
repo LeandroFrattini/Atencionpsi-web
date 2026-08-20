@@ -1,0 +1,60 @@
+{% extends 'portal/base_portal.html' %}
+{% block title %}Agenda | Portal Atención Psi{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>Agenda</h1>
+</div>
+
+<div class="portal-stats-row">
+    <div class="portal-stat-tile portal-stat-ok">
+        <span class="portal-stat-num">{{ stats.total_pacientes }}</span>
+        <span class="portal-stat-label">Pacientes cargados</span>
+    </div>
+    <div class="portal-stat-tile portal-stat-ok">
+        <span class="portal-stat-num">{{ stats.total_con_agenda }}</span>
+        <span class="portal-stat-label">Con agenda activa</span>
+    </div>
+    <div class="portal-stat-tile{% if stats.ingresos_hoy == 0 %} portal-stat-warn{% else %} portal-stat-ok{% endif %}">
+        <span class="portal-stat-num">{{ stats.ingresos_hoy }}</span>
+        <span class="portal-stat-label">Entraron hoy</span>
+    </div>
+</div>
+<p class="portal-stats-sub">Estadísticas generales de toda la red</p>
+
+<h2 class="portal-subtitle">¿Se está usando la agenda?</h2>
+<div class="portal-mini-semana">
+    {% for dia in ultimos_7_dias %}
+    <div class="portal-mini-dia{% if dia.es_hoy %} portal-mini-dia-hoy{% endif %}{% if dia.cantidad == 0 %} portal-mini-dia-vacio{% endif %}">
+        <span class="portal-mini-dia-nombre">{{ dia.nombre_dia }}</span>
+        <span class="portal-mini-dia-num">{{ dia.cantidad }}</span>
+    </div>
+    {% endfor %}
+</div>
+<p class="portal-stats-sub">Profesionales distintos que entraron cada día, últimos 7 días</p>
+
+<h2 class="portal-subtitle">Profesionales ({{ total_activos }} de {{ total_psicologos }} visibles en el buscador)</h2>
+
+{% if pagina_sin %}
+    <h3 class="portal-subtitle portal-subtitle-chica" id="sin-agenda">Sin agenda ({{ pagina_sin.paginator.count }}) — para dar de alta</h3>
+    <div class="portal-lista-cards">
+        {% for p in pagina_sin %}
+            {% include 'portal/_admin_psicologo_card.html' %}
+        {% endfor %}
+    </div>
+    {% include 'portal/_paginacion.html' with page_obj=pagina_sin param='p_sin' extra=querystring_con anchor='sin-agenda' %}
+{% endif %}
+
+{% if pagina_con %}
+    <h3 class="portal-subtitle portal-subtitle-chica" id="con-agenda">Con agenda activa ({{ pagina_con.paginator.count }})</h3>
+    <div class="portal-lista-cards">
+        {% for p in pagina_con %}
+            {% include 'portal/_admin_psicologo_card.html' %}
+        {% endfor %}
+    </div>
+    {% include 'portal/_paginacion.html' with page_obj=pagina_con param='p_con' extra=querystring_sin anchor='con-agenda' %}
+{% endif %}
+
+{% if not pagina_sin and not pagina_con %}
+    <p class="portal-empty">Todavía no hay profesionales cargados.</p>
+{% endif %}
+{% endblock %}

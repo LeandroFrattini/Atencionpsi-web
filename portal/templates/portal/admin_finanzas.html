@@ -1,0 +1,118 @@
+{% extends 'portal/base_portal.html' %}
+{% block title %}Finanzas | Portal Atención Psi{% endblock %}
+{% block content %}
+<div class="portal-header">
+    <h1>Finanzas <span class="portal-subtitle-privado">privado, solo vos lo ves</span></h1>
+</div>
+
+<div class="portal-stats-row">
+    <div class="portal-stat-tile portal-stat-ok">
+        <span class="portal-stat-num">${{ total_ingresos }}</span>
+        <span class="portal-stat-label">Ingresos totales</span>
+    </div>
+    <div class="portal-stat-tile portal-stat-bad">
+        <span class="portal-stat-num">${{ total_egresos }}</span>
+        <span class="portal-stat-label">Egresos totales</span>
+    </div>
+    <div class="portal-stat-tile portal-stat-ok">
+        <span class="portal-stat-num">${{ ganancia_total }}</span>
+        <span class="portal-stat-label">Ganancia neta</span>
+    </div>
+</div>
+<p class="portal-stats-sub">Acumulado histórico</p>
+
+<h3 class="portal-subtitle portal-subtitle-chica">Mes a mes</h3>
+<div class="portal-lista-cards">
+    {% for m in resumen_meses %}
+    <div class="portal-mes-card{% if m.es_mes_actual %} portal-mes-card-actual{% endif %}">
+        <span class="portal-mes-nombre">{{ m.nombre }}{% if m.es_mes_actual %} <span class="portal-mes-actual-tag">actual</span>{% endif %}</span>
+        <div class="portal-mes-montos">
+            <span class="portal-mes-monto portal-mes-ingreso">+${{ m.ingresos }}</span>
+            <span class="portal-mes-monto portal-mes-egreso">-${{ m.egresos }}</span>
+            <span class="portal-mes-monto portal-mes-ganancia">${{ m.ganancia }}</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="portal-finanzas-forms">
+    <div class="portal-card">
+        <h3 class="portal-subtitle-chica portal-finanzas-form-titulo">+ Cargar pago recibido</h3>
+        <form method="post" action="{% url 'portal_pago_nuevo' %}">
+            {% csrf_token %}
+            <div class="portal-form-grid">
+                <div class="portal-field">
+                    <label for="{{ pago_form.psicologo.id_for_label }}">Profesional</label>
+                    {{ pago_form.psicologo }}
+                </div>
+                <div class="portal-field">
+                    <label for="{{ pago_form.fecha.id_for_label }}">Fecha</label>
+                    {{ pago_form.fecha }}
+                </div>
+                <div class="portal-field">
+                    <label for="{{ pago_form.monto.id_for_label }}">Monto</label>
+                    {{ pago_form.monto }}
+                </div>
+                <div class="portal-field">
+                    <label for="{{ pago_form.concepto.id_for_label }}">Concepto</label>
+                    {{ pago_form.concepto }}
+                </div>
+            </div>
+            <button type="submit" class="portal-btn portal-btn-primary">Agregar pago</button>
+        </form>
+    </div>
+
+    <div class="portal-card">
+        <h3 class="portal-subtitle-chica portal-finanzas-form-titulo">+ Cargar gasto</h3>
+        <form method="post" action="{% url 'portal_gasto_nuevo' %}">
+            {% csrf_token %}
+            <div class="portal-form-grid">
+                <div class="portal-field">
+                    <label for="{{ gasto_form.fecha.id_for_label }}">Fecha</label>
+                    {{ gasto_form.fecha }}
+                </div>
+                <div class="portal-field">
+                    <label for="{{ gasto_form.monto.id_for_label }}">Monto</label>
+                    {{ gasto_form.monto }}
+                </div>
+                <div class="portal-field portal-field-ancho">
+                    <label for="{{ gasto_form.concepto.id_for_label }}">Concepto</label>
+                    {{ gasto_form.concepto }}
+                </div>
+            </div>
+            <button type="submit" class="portal-btn portal-btn-primary">Agregar gasto</button>
+        </form>
+    </div>
+</div>
+
+{% if pagina_movimientos %}
+<h3 class="portal-subtitle portal-subtitle-chica" id="movimientos">Movimientos ({{ pagina_movimientos.paginator.count }})</h3>
+<div class="portal-lista-cards">
+    {% for mov in pagina_movimientos %}
+    <div class="portal-mov-card">
+        <div class="portal-mov-info">
+            {% if mov.tipo == 'pago' %}
+                <span class="portal-mov-monto portal-mov-ingreso">+${{ mov.obj.monto }}</span>
+                <span class="portal-mov-detalle">{{ mov.obj.fecha|date:"d/m/Y" }} · {% if mov.obj.psicologo %}{{ mov.obj.psicologo.nombre }}{% else %}General{% endif %}{% if mov.obj.concepto %} · {{ mov.obj.concepto }}{% endif %}</span>
+            {% else %}
+                <span class="portal-mov-monto portal-mov-egreso">−${{ mov.obj.monto }}</span>
+                <span class="portal-mov-detalle">{{ mov.obj.fecha|date:"d/m/Y" }}{% if mov.obj.concepto %} · {{ mov.obj.concepto }}{% endif %}</span>
+            {% endif %}
+        </div>
+        {% if mov.tipo == 'pago' %}
+            <form method="post" action="{% url 'portal_pago_eliminar' mov.obj.pk %}" onsubmit="return confirm('¿Eliminar este pago?');">
+                {% csrf_token %}
+                <button type="submit" class="portal-mov-eliminar" aria-label="Eliminar pago">&times;</button>
+            </form>
+        {% else %}
+            <form method="post" action="{% url 'portal_gasto_eliminar' mov.obj.pk %}" onsubmit="return confirm('¿Eliminar este gasto?');">
+                {% csrf_token %}
+                <button type="submit" class="portal-mov-eliminar" aria-label="Eliminar gasto">&times;</button>
+            </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% include 'portal/_paginacion.html' with page_obj=pagina_movimientos param='p_mov' extra='' anchor='movimientos' %}
+{% endif %}
+{% endblock %}

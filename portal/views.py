@@ -444,11 +444,19 @@ def excepcion_eliminar(request, psico, pk):
 @superuser_requerido
 def admin_dashboard(request):
     """
-    Panel general para la cuenta de la dueña del sitio (superuser sin
-    Psicologo asociado): estadísticas GENERALES nada más (cantidad de
-    pacientes cargados en toda la red, cantidad de profesionales con
-    agenda activa) y la lista completa para dar de alta/baja quién
-    aparece en el buscador público.
+    Pantalla de entrada para la cuenta de la dueña del sitio: un saludo y
+    dos botones -- Agenda (altas/bajas/destacados de profesionales) y
+    Finanzas -- cada una en su propia página.
+    """
+    return render(request, 'portal/admin_dashboard.html')
+
+
+@superuser_requerido
+def admin_agenda(request):
+    """
+    Gestión de profesionales para la dueña del sitio: estadísticas de uso
+    de la agenda en toda la red y la lista completa para dar de alta/baja
+    quién aparece en el buscador público.
 
     A propósito NO se muestran acá los datos de turnos por profesional
     (atendidos/cancelados/sin cobrar) -- eso es información privada de
@@ -502,29 +510,24 @@ def admin_dashboard(request):
         'ingresos_hoy': ingresos_hoy,
     }
 
-    financiero = _resumen_financiero(request)
-
-    # Cada lista paginada por separado (profesionales sin agenda, con agenda,
-    # y movimientos de plata) necesita, en sus propios links de paginación,
-    # acordarse en qué página estaban LAS OTRAS DOS -- si no, cambiar de
-    # hoja en una te manda a la página 1 de las demás.
-    paginas = {'p_sin': pagina_sin.number, 'p_con': pagina_con.number, 'p_mov': financiero['pagina_movimientos'].number}
-
-    def otras_paginas(propio):
-        return ''.join(f'&{k}={v}' for k, v in paginas.items() if k != propio and v != 1)
-
-    return render(request, 'portal/admin_dashboard.html', {
+    return render(request, 'portal/admin_agenda.html', {
         'stats': stats,
         'pagina_con': pagina_con,
         'pagina_sin': pagina_sin,
-        'querystring_con': otras_paginas('p_con'),
-        'querystring_sin': otras_paginas('p_sin'),
-        'querystring_mov': otras_paginas('p_mov'),
+        # Se agregan a los links de paginación de cada lista, para no
+        # perder la página en la que estabas en la otra al cambiar de hoja.
+        'querystring_con': f'&p_con={pagina_con.number}' if pagina_con.number != 1 else '',
+        'querystring_sin': f'&p_sin={pagina_sin.number}' if pagina_sin.number != 1 else '',
         'total_activos': sum(1 for p in psicologos if p.activo),
         'total_psicologos': total_psicologos,
         'ultimos_7_dias': ultimos_7_dias,
-        **financiero,
     })
+
+
+@superuser_requerido
+def admin_finanzas(request):
+    """Ingresos, egresos y ganancia neta -- página aparte de Agenda."""
+    return render(request, 'portal/admin_finanzas.html', _resumen_financiero(request))
 
 
 MOVIMIENTOS_POR_PAGINA = 20
@@ -611,7 +614,7 @@ def pago_nuevo(request):
         messages.success(request, 'Pago cargado.')
     else:
         messages.error(request, 'Revisá los datos del pago: ' + '; '.join(form.errors))
-    return redirect('portal_admin_dashboard')
+    return redirect('portal_admin_finanzas')
 
 
 @superuser_requerido
@@ -620,7 +623,7 @@ def pago_eliminar(request, pk):
     pago = get_object_or_404(Pago, pk=pk)
     pago.delete()
     messages.success(request, 'Pago eliminado.')
-    return redirect('portal_admin_dashboard')
+    return redirect('portal_admin_finanzas')
 
 
 @superuser_requerido
@@ -632,7 +635,7 @@ def gasto_nuevo(request):
         messages.success(request, 'Gasto cargado.')
     else:
         messages.error(request, 'Revisá los datos del gasto: ' + '; '.join(form.errors))
-    return redirect('portal_admin_dashboard')
+    return redirect('portal_admin_finanzas')
 
 
 @superuser_requerido
@@ -641,7 +644,7 @@ def gasto_eliminar(request, pk):
     gasto = get_object_or_404(Gasto, pk=pk)
     gasto.delete()
     messages.success(request, 'Gasto eliminado.')
-    return redirect('portal_admin_dashboard')
+    return redirect('portal_admin_finanzas')
 
 
 @superuser_requerido
@@ -654,7 +657,7 @@ def psicologo_toggle_activo(request, pk):
         messages.success(request, f'{psico.nombre} vuelve a aparecer en el buscador.')
     else:
         messages.warning(request, f'{psico.nombre} dado de baja: ya no aparece en el buscador.')
-    return redirect('portal_admin_dashboard')
+    return redirect('portal_admin_agenda')
 
 
 @superuser_requerido
@@ -667,7 +670,7 @@ def psicologo_toggle_destacado(request, pk):
         messages.success(request, f'{psico.nombre} ahora entra en el sorteo de "Profesionales destacados" de la home.')
     else:
         messages.warning(request, f'{psico.nombre} ya no está entre los destacados.')
-    return redirect('portal_admin_dashboard')
+    return redirect('portal_admin_agenda')
 
 
 @superuser_requerido
@@ -712,7 +715,7 @@ def psicologo_crear_acceso(request, pk):
                     f'Acceso creado para {psico.nombre}. Usuario: {email} — contraseña inicial: {password_inicial}. '
                     f'Pasale estos datos; en el primer ingreso va a tener que cambiarla.',
                 )
-                return redirect('portal_admin_dashboard')
+                return redirect('portal_admin_agenda')
     else:
         form = CrearAccesoPortalForm(initial={'password_inicial': psico.whatsapp_limpio()})
 
@@ -726,7 +729,7 @@ def psicologo_blanquear_password(request, pk):
     psico = get_object_or_404(Psicologo, pk=pk)
     if not psico.usuario_id:
         messages.error(request, f'{psico.nombre} todavía no tiene acceso al portal creado.')
-        return redirect('portal_admin_dashboard')
+        return redirect('portal_admin_agenda')
 
     nueva_password = psico.whatsapp_limpio()
     psico.usuario.set_password(nueva_password)
@@ -738,4 +741,4 @@ def psicologo_blanquear_password(request, pk):
         f'Contraseña de {psico.nombre} reseteada a su WhatsApp ({nueva_password}). '
         f'Va a tener que cambiarla en el próximo ingreso.',
     )
-    return redirect('portal_admin_dashboard')
+    return redirect('portal_admin_agenda')

@@ -944,6 +944,56 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 }
 .portal-mov-eliminar:hover { color: #a13d3d; opacity: 1; }
 
+/* ── HUB (pantalla de entrada del panel general) ── */
+.portal-hub {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 0;
+}
+.portal-hub-saludo {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 2rem;
+    color: #222;
+    margin-bottom: 6px;
+}
+.portal-hub-pregunta { color: #888; font-size: 1rem; margin-bottom: 36px; }
+
+.portal-hub-botones {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 620px;
+}
+.portal-hub-boton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 260px;
+    padding: 34px 24px;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.portal-hub-boton:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(0,0,0,0.1); }
+.portal-hub-boton-icono {
+    display: flex; align-items: center; justify-content: center;
+    width: 54px; height: 54px; border-radius: 50%; margin-bottom: 10px;
+}
+.portal-hub-boton-icono svg { width: 26px; height: 26px; }
+.portal-hub-boton-agenda .portal-hub-boton-icono { background: #eaf5ea; color: #4a7c59; }
+.portal-hub-boton-finanzas .portal-hub-boton-icono { background: #fbf1da; color: #a3791f; }
+.portal-hub-boton-titulo { font-size: 1.15rem; font-weight: 700; color: #222; }
+.portal-hub-boton-sub { font-size: 0.85rem; color: #888; line-height: 1.4; }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 700px) {
     .portal-form-grid, .portal-detail-grid { grid-template-columns: 1fr; }
@@ -955,6 +1005,8 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 
     .portal-finanzas-forms { grid-template-columns: 1fr; }
     .portal-mes-card { flex-direction: column; align-items: flex-start; }
+
+    .portal-hub-boton { width: 100%; }
 
     .portal-paginacion { flex-wrap: wrap; gap: 10px; }
 

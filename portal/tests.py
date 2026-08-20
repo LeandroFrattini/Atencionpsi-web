@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from profesionales.models import Psicologo
-from portal.models import Paciente, Turno
+from portal.models import Gasto, Pago, Paciente, Turno
 
 
 class PortalScopingTests(TestCase):
@@ -326,7 +326,7 @@ class PortalAdminDashboardTests(TestCase):
 
         psico_sin_agenda = Psicologo.objects.create(nombre='Psicólogo Sin Agenda', whatsapp='9999999999')
 
-        resp = self.client_super.get(reverse('portal_admin_dashboard'))
+        resp = self.client_super.get(reverse('portal_admin_agenda'))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['stats']['total_pacientes'], 2)
         self.assertEqual(resp.context['stats']['total_con_agenda'], 1)  # solo self.psico tiene usuario
@@ -346,10 +346,13 @@ class PortalAdminDashboardTests(TestCase):
         Paciente.objects.create(psicologo=self.psico, nombre='Q', apellido='B')
         psico_sin_pacientes = Psicologo.objects.create(nombre='Psicólogo Sin Pacientes', whatsapp='9999999999')
 
-        resp = self.client_super.get(reverse('portal_admin_dashboard'))
+        resp = self.client_super.get(reverse('portal_admin_agenda'))
         self.assertEqual(resp.status_code, 200)
 
-        por_pk = {p.pk: p.cantidad_pacientes for p in resp.context['con_agenda'] + resp.context['sin_agenda']}
+        por_pk = {
+            p.pk: p.cantidad_pacientes
+            for p in list(resp.context['pagina_con']) + list(resp.context['pagina_sin'])
+        }
         self.assertEqual(por_pk[self.psico.pk], 2)
         self.assertEqual(por_pk[psico_sin_pacientes.pk], 0)
         self.assertContains(resp, '(2)')
@@ -358,6 +361,13 @@ class PortalAdminDashboardTests(TestCase):
     def test_psicologo_normal_no_puede_entrar_al_panel_general(self):
         resp = self.client_psico.get(reverse('portal_admin_dashboard'), follow=True)
         self.assertTemplateNotUsed(resp, 'portal/admin_dashboard.html')
+
+        # El panel general está en tres páginas separadas (bienvenida, agenda
+        # y finanzas) -- un psicólogo común no puede entrar a ninguna.
+        resp = self.client_psico.get(reverse('portal_admin_agenda'), follow=True)
+        self.assertTemplateNotUsed(resp, 'portal/admin_agenda.html')
+        resp = self.client_psico.get(reverse('portal_admin_finanzas'), follow=True)
+        self.assertTemplateNotUsed(resp, 'portal/admin_finanzas.html')
 
     def test_superuser_puede_dar_de_baja_y_alta(self):
         self.assertTrue(self.psico.activo)
@@ -429,6 +439,19 @@ class PortalAdminDashboardTests(TestCase):
         resp = self.client_super.post(url)
         self.assertEqual(resp.status_code, 302)
 
+    def test_finanzas_es_pagina_aparte_y_solo_la_ve_el_superuser(self):
+        Pago.objects.create(psicologo=self.psico, fecha=timezone.localdate(), monto=1000)
+        Gasto.objects.create(fecha=timezone.localdate(), monto=300)
+
+        resp = self.client_psico.get(reverse('portal_admin_finanzas'), follow=True)
+        self.assertTemplateNotUsed(resp, 'portal/admin_finanzas.html')
+
+        resp = self.client_super.get(reverse('portal_admin_finanzas'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['total_ingresos'], 1000)
+        self.assertEqual(resp.context['total_egresos'], 300)
+        self.assertEqual(resp.context['ganancia_total'], 700)
+
 
 class IngresoPortalTests(TestCase):
     """El login de un profesional al portal queda registrado (uno por día);
@@ -475,7 +498,7 @@ class IngresoPortalTests(TestCase):
 
         self.client.force_login(self.user_psico)
 
-        resp = client_super.get(reverse('portal_admin_dashboard'))
+        resp = client_super.get(reverse('portal_admin_agenda'))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.context['stats']['ingresos_hoy'], 1)
 
