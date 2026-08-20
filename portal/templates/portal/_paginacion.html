@@ -1,0 +1,15 @@
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="portal-paginacion">
+    {% if page_obj.has_previous %}
+        <a href="?{{ param }}={{ page_obj.previous_page_number }}{{ extra }}#{{ anchor }}" class="portal-paginacion-btn">← Anterior</a>
+    {% else %}
+        <span class="portal-paginacion-btn portal-paginacion-btn-disabled">← Anterior</span>
+    {% endif %}
+    <span class="portal-paginacion-info">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?{{ param }}={{ page_obj.next_page_number }}{{ extra }}#{{ anchor }}" class="portal-paginacion-btn">Siguiente →</a>
+    {% else %}
+        <span class="portal-paginacion-btn portal-paginacion-btn-disabled">Siguiente →</span>
+    {% endif %}
+</div>
+{% endif %}

@@ -287,6 +287,20 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 .portal-estado-ausente { background: #f6f0e3; color: #8a6d2f; }
 
 .portal-empty { color: #888; padding: 20px 0; }
+
+/* ── PAGINACIÓN ── */
+.portal-paginacion {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    margin: 16px 0 30px;
+}
+.portal-paginacion-btn {
+    display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;
+    text-decoration: none; color: #4a7c59; background: #eaf5ea; transition: background 0.15s ease;
+}
+.portal-paginacion-btn:hover { background: #cfe0ce; }
+.portal-paginacion-btn-disabled { color: #ccc; background: #f5f5f5; pointer-events: none; }
+.portal-paginacion-info { font-size: 0.82rem; color: #888; font-weight: 600; }
+
 .portal-back { margin-top: 25px; }
 .portal-back a { color: #888; text-decoration: none; font-weight: 600; font-size: 0.92rem; }
 .portal-back a:hover { color: #4a7c59; }
@@ -941,6 +955,8 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 
     .portal-finanzas-forms { grid-template-columns: 1fr; }
     .portal-mes-card { flex-direction: column; align-items: flex-start; }
+
+    .portal-paginacion { flex-wrap: wrap; gap: 10px; }
 
     /* El modal se comporta como una hoja que sube desde abajo: más fácil
        de alcanzar con el pulgar en un celular que un cuadro centrado. */

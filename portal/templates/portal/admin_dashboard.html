@@ -34,25 +34,27 @@
 
 <h2 class="portal-subtitle">Profesionales ({{ total_activos }} de {{ total_psicologos }} visibles en el buscador)</h2>
 
-{% if sin_agenda %}
-    <h3 class="portal-subtitle portal-subtitle-chica">Sin agenda ({{ sin_agenda|length }}) — para dar de alta</h3>
+{% if pagina_sin %}
+    <h3 class="portal-subtitle portal-subtitle-chica" id="sin-agenda">Sin agenda ({{ pagina_sin.paginator.count }}) — para dar de alta</h3>
     <div class="portal-lista-cards">
-        {% for p in sin_agenda %}
+        {% for p in pagina_sin %}
             {% include 'portal/_admin_psicologo_card.html' %}
         {% endfor %}
     </div>
+    {% include 'portal/_paginacion.html' with page_obj=pagina_sin param='p_sin' extra=querystring_con anchor='sin-agenda' %}
 {% endif %}
 
-{% if con_agenda %}
-    <h3 class="portal-subtitle portal-subtitle-chica">Con agenda activa ({{ con_agenda|length }})</h3>
+{% if pagina_con %}
+    <h3 class="portal-subtitle portal-subtitle-chica" id="con-agenda">Con agenda activa ({{ pagina_con.paginator.count }})</h3>
     <div class="portal-lista-cards">
-        {% for p in con_agenda %}
+        {% for p in pagina_con %}
             {% include 'portal/_admin_psicologo_card.html' %}
         {% endfor %}
     </div>
+    {% include 'portal/_paginacion.html' with page_obj=pagina_con param='p_con' extra=querystring_sin anchor='con-agenda' %}
 {% endif %}
 
-{% if not sin_agenda and not con_agenda %}
+{% if not pagina_sin and not pagina_con %}
     <p class="portal-empty">Todavía no hay profesionales cargados.</p>
 {% endif %}
 

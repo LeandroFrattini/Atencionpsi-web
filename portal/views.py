@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect, render
@@ -39,6 +40,8 @@ HORA_INICIO_DEFECTO = 6
 HORA_FIN_DEFECTO = 24
 DURACION_TURNO_MIN = 50
 MINUTOS_SNAP = 15
+
+PROFESIONALES_POR_PAGINA = 20
 
 
 @psicologo_requerido(permitir_cambio_pendiente=True)
@@ -463,6 +466,12 @@ def admin_dashboard(request):
     con_agenda = [p for p in psicologos if p.usuario_id]
     sin_agenda = [p for p in psicologos if not p.usuario_id]
 
+    # Paginadas por separado (con su propio parámetro en la URL) para que
+    # con 100+ profesionales el panel no sea un scroll infinito, y para que
+    # cambiar de página en una lista no te saque de donde estabas en la otra.
+    pagina_sin = Paginator(sin_agenda, PROFESIONALES_POR_PAGINA).get_page(request.GET.get('p_sin'))
+    pagina_con = Paginator(con_agenda, PROFESIONALES_POR_PAGINA).get_page(request.GET.get('p_con'))
+
     hoy = timezone.localdate()
     ingresos_hoy = IngresoPortal.objects.filter(fecha=hoy).count()
 
@@ -495,8 +504,12 @@ def admin_dashboard(request):
 
     return render(request, 'portal/admin_dashboard.html', {
         'stats': stats,
-        'con_agenda': con_agenda,
-        'sin_agenda': sin_agenda,
+        'pagina_con': pagina_con,
+        'pagina_sin': pagina_sin,
+        # Se agregan a los links de paginación de CADA lista, para no
+        # perder la página en la que estabas en la otra al cambiar de hoja.
+        'querystring_con': f'&p_con={pagina_con.number}' if pagina_con.number != 1 else '',
+        'querystring_sin': f'&p_sin={pagina_sin.number}' if pagina_sin.number != 1 else '',
         'total_activos': sum(1 for p in psicologos if p.activo),
         'total_psicologos': total_psicologos,
         'ultimos_7_dias': ultimos_7_dias,
