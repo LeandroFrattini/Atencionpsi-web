@@ -4,22 +4,45 @@ from django.utils import timezone
 
 class Pago(models.Model):
     """
-    Pago recibido de un profesional (alta o mensualidad) -- carga manual
-    de la dueña del sitio, día a día, a medida que le van pagando. Privado:
-    solo se ve en el Panel general, nunca en el portal de los profesionales
-    ni en el sitio público.
+    Pago recibido de un profesional (alta o mensualidad). Puede cargarse a
+    mano (como siempre) o traerse solo desde Mercado Pago -- ver
+    profesionales/mercadopago.py y el comando sincronizar_pagos_mercadopago.
+    Privado: solo se ve en el Panel general, nunca en el portal de los
+    profesionales ni en el sitio público.
     """
+    ORIGEN_CHOICES = [
+        ('manual', 'Cargado a mano'),
+        ('transferencia', 'Transferencia (Mercado Pago)'),
+        ('suscripcion', 'Suscripción (Mercado Pago)'),
+    ]
+
     psicologo = models.ForeignKey(
         'profesionales.Psicologo', on_delete=models.SET_NULL,
         null=True, blank=True, related_name='pagos_recibidos',
     )
     fecha = models.DateField(default=timezone.localdate, verbose_name='Fecha')
-    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto')
+    monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto neto recibido')
     concepto = models.CharField(
         max_length=200, blank=True, verbose_name='Concepto',
         help_text='Ej: Alta, mensualidad agosto',
     )
     creado_en = models.DateTimeField(auto_now_add=True)
+
+    # Campos que solo se completan cuando el pago vino de la sincronización
+    # con Mercado Pago -- en un pago cargado a mano quedan vacíos.
+    origen = models.CharField(max_length=20, choices=ORIGEN_CHOICES, default='manual')
+    mp_payment_id = models.CharField(
+        'ID de pago en Mercado Pago', max_length=40, blank=True, unique=True, null=True,
+        help_text='Evita importar el mismo pago dos veces',
+    )
+    monto_bruto = models.DecimalField(
+        'Monto bruto (antes de la comisión de MP)', max_digits=10, decimal_places=2,
+        null=True, blank=True,
+    )
+    pagador_nombre = models.CharField(
+        'Nombre del pagador en Mercado Pago', max_length=150, blank=True,
+        help_text='Tal cual lo reporta MP -- útil para asignar el pago a mano si no coincide con nadie cargado',
+    )
 
     class Meta:
         verbose_name = 'Pago recibido'
@@ -27,7 +50,7 @@ class Pago(models.Model):
         ordering = ['-fecha', '-creado_en']
 
     def __str__(self):
-        quien = self.psicologo.nombre if self.psicologo else 'General'
+        quien = self.psicologo.nombre if self.psicologo else (self.pagador_nombre or 'Sin asignar')
         return f'{self.fecha} · {quien} · ${self.monto}'
 
 

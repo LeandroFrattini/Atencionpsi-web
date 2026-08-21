@@ -602,6 +602,7 @@ def _resumen_financiero(request):
         'pagina_movimientos': pagina_movimientos,
         'pago_form': PagoForm(),
         'gasto_form': GastoForm(),
+        'psicologos_para_asignar': Psicologo.objects.filter(activo=True).order_by('nombre'),
     }
 
 
@@ -623,6 +624,20 @@ def pago_eliminar(request, pk):
     pago = get_object_or_404(Pago, pk=pk)
     pago.delete()
     messages.success(request, 'Pago eliminado.')
+    return redirect('portal_admin_finanzas')
+
+
+@superuser_requerido
+@require_POST
+def pago_asignar(request, pk):
+    """Le pone un profesional a un pago que llegó sincronizado desde
+    Mercado Pago sin que el nombre del pagador matcheara con nadie."""
+    pago = get_object_or_404(Pago, pk=pk)
+    psicologo_id = request.POST.get('psicologo')
+    if psicologo_id:
+        pago.psicologo = get_object_or_404(Psicologo, pk=psicologo_id)
+        pago.save(update_fields=['psicologo'])
+        messages.success(request, f'Pago asignado a {pago.psicologo.nombre}.')
     return redirect('portal_admin_finanzas')
 
 

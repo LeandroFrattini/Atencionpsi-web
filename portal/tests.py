@@ -1,11 +1,14 @@
 import datetime
+from unittest import mock
 
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from profesionales.models import Psicologo
+from portal.mercadopago_client import normalizar_pago, sugerir_psicologo
 from portal.models import Gasto, Pago, Paciente, Turno
 
 
@@ -549,3 +552,137 @@ class LoginCaseInsensitiveEndToEndTests(TestCase):
             'password': 'ClaveIncorrecta',
         })
         self.assertEqual(resp.status_code, 200)  # vuelve al form, no te deja entrar
+
+
+class NormalizarPagoMercadoPagoTests(TestCase):
+    """normalizar_pago() es una función pura -- se testea con diccionarios
+    armados a mano, imitando la forma real de la API, sin llamarla."""
+
+    def test_transferencia_no_tiene_comision(self):
+        crudo = {
+            'id': 111, 'status': 'approved', 'transaction_amount': 20000,
+            'operation_type': 'money_transfer', 'payment_type_id': 'account_money',
+            'transaction_details': {}, 'payer': {'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'date_approved': '2026-08-19T22:12:00.000-03:00', 'description': None,
+        }
+        datos = normalizar_pago(crudo)
+        self.assertEqual(datos['origen'], 'transferencia')
+        self.assertEqual(datos['monto'], 20000)
+        self.assertEqual(datos['monto_bruto'], 20000)
+        self.assertEqual(datos['pagador_nombre'], 'Juliana Nuñez Laya')
+        self.assertEqual(datos['mp_payment_id'], '111')
+
+    def test_suscripcion_descuenta_comision(self):
+        crudo = {
+            'id': 222, 'status': 'approved', 'transaction_amount': 20000,
+            'preapproval_id': 'abc123', 'payment_type_id': 'credit_card',
+            'transaction_details': {'net_received_amount': 17900},
+            'payer': {'email': 'psico@example.com'},
+            'date_approved': '2026-08-19T21:36:00.000-03:00', 'description': None,
+        }
+        datos = normalizar_pago(crudo)
+        self.assertEqual(datos['origen'], 'suscripcion')
+        self.assertEqual(datos['monto'], 17900)
+        self.assertEqual(datos['monto_bruto'], 20000)
+
+    def test_pago_rechazado_se_descarta(self):
+        crudo = {'id': 333, 'status': 'rejected', 'transaction_amount': 20000}
+        self.assertIsNone(normalizar_pago(crudo))
+
+    def test_egreso_monto_no_positivo_se_descarta(self):
+        crudo = {'id': 444, 'status': 'approved', 'transaction_amount': -113305}
+        self.assertIsNone(normalizar_pago(crudo))
+
+    def test_sugerir_psicologo_matchea_por_nombre(self):
+        psico = Psicologo.objects.create(nombre='Lic. Juliana Nuñez Laya', whatsapp='111')
+        sugerido = sugerir_psicologo('Juliana Nuñez Laya', [psico])
+        self.assertEqual(sugerido, psico)
+
+    def test_sugerir_psicologo_sin_match_devuelve_none(self):
+        psico = Psicologo.objects.create(nombre='Lic. Otra Persona', whatsapp='222')
+        self.assertIsNone(sugerir_psicologo('Nombre Que No Coincide', [psico]))
+
+
+class SincronizarPagosMercadoPagoCommandTests(TestCase):
+    def setUp(self):
+        self.psico = Psicologo.objects.create(nombre='Lic. Juliana Nuñez Laya', whatsapp='111', activo=True)
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_dry_run_no_guarda_nada(self, mock_buscar):
+        mock_buscar.return_value = [{
+            'id': 555, 'status': 'approved', 'transaction_amount': 20000,
+            'operation_type': 'money_transfer', 'transaction_details': {},
+            'payer': {'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'date_approved': '2026-08-19T22:12:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago')
+        self.assertEqual(Pago.objects.count(), 0)
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_apply_crea_el_pago_y_sugiere_psicologo_por_nombre(self, mock_buscar):
+        mock_buscar.return_value = [{
+            'id': 555, 'status': 'approved', 'transaction_amount': 20000,
+            'operation_type': 'money_transfer', 'transaction_details': {},
+            'payer': {'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'date_approved': '2026-08-19T22:12:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        pago = Pago.objects.get(mp_payment_id='555')
+        self.assertEqual(pago.psicologo, self.psico)
+        self.assertEqual(pago.monto, 20000)
+        self.assertEqual(pago.origen, 'transferencia')
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_no_importa_el_mismo_pago_dos_veces(self, mock_buscar):
+        mock_buscar.return_value = [{
+            'id': 555, 'status': 'approved', 'transaction_amount': 20000,
+            'operation_type': 'money_transfer', 'transaction_details': {},
+            'payer': {'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'date_approved': '2026-08-19T22:12:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        self.assertEqual(Pago.objects.filter(mp_payment_id='555').count(), 1)
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_pago_sin_match_queda_sin_asignar(self, mock_buscar):
+        mock_buscar.return_value = [{
+            'id': 666, 'status': 'approved', 'transaction_amount': 15000,
+            'preapproval_id': 'xyz', 'transaction_details': {'net_received_amount': 13500},
+            'payer': {'email': 'desconocido@example.com'},
+            'date_approved': '2026-08-19T09:55:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        pago = Pago.objects.get(mp_payment_id='666')
+        self.assertIsNone(pago.psicologo)
+        self.assertEqual(pago.origen, 'suscripcion')
+        self.assertEqual(pago.monto, 13500)
+
+
+class PagoAsignarViewTests(TestCase):
+    def setUp(self):
+        self.superuser = User.objects.create_superuser('duena', 'duena@example.com', 'ClaveDuenaSegura2026')
+        self.psico = Psicologo.objects.create(nombre='Lic. Test', whatsapp='111', activo=True)
+        self.pago = Pago.objects.create(
+            monto=20000, origen='transferencia', mp_payment_id='777', pagador_nombre='Alguien',
+        )
+        self.client_super = Client()
+        self.client_super.force_login(self.superuser)
+
+    def test_asignar_psicologo_a_pago_sin_asignar(self):
+        resp = self.client_super.post(reverse('portal_pago_asignar', args=[self.pago.pk]), {
+            'psicologo': self.psico.pk,
+        })
+        self.assertRedirects(resp, reverse('portal_admin_finanzas'))
+        self.pago.refresh_from_db()
+        self.assertEqual(self.pago.psicologo, self.psico)
+
+    def test_psicologo_normal_no_puede_asignar(self):
+        user_psico = User.objects.create_user('psico_normal', password='ClaveDePrueba123')
+        Psicologo.objects.create(nombre='Otro', whatsapp='222', usuario=user_psico)
+        client = Client()
+        client.force_login(user_psico)
+        resp = client.post(reverse('portal_pago_asignar', args=[self.pago.pk]), {'psicologo': self.psico.pk})
+        self.assertEqual(resp.status_code, 302)
+        self.pago.refresh_from_db()
+        self.assertIsNone(self.pago.psicologo)

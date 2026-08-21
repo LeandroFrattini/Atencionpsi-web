@@ -944,6 +944,22 @@ h1, h2 { font-family: 'Playfair Display', Georgia, serif; }
 }
 .portal-mov-eliminar:hover { color: #a13d3d; opacity: 1; }
 
+.portal-mov-card-col { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.portal-mov-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.portal-mov-fila-mp { justify-content: flex-start; gap: 14px; flex-wrap: wrap; padding-left: 2px; }
+.portal-mov-sin-asignar { color: #c1467a; font-weight: 600; }
+.portal-mov-origen {
+    font-size: 0.76rem; color: #999; background: #f5f2ee;
+    padding: 3px 10px; border-radius: 999px; flex-shrink: 0;
+}
+.portal-mov-asignar-form { display: flex; align-items: center; gap: 6px; }
+.portal-mov-asignar-form select { font-size: 0.82rem; padding: 4px 8px; border-radius: 6px; border: 1px solid #ddd; font-family: inherit; }
+.portal-mov-asignar-btn {
+    font-size: 0.78rem; font-weight: 600; padding: 5px 12px; border-radius: 6px;
+    border: none; background: #4a7c59; color: #fff; cursor: pointer;
+}
+.portal-mov-asignar-btn:hover { background: #3a6347; }
+
 /* ── HUB (pantalla de entrada del panel general) ── */
 .portal-hub {
     min-height: 60vh;

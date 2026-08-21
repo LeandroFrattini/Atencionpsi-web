@@ -7,15 +7,15 @@
 
 <div class="portal-stats-row">
     <div class="portal-stat-tile portal-stat-ok">
-        <span class="portal-stat-num">${{ total_ingresos }}</span>
+        <span class="portal-stat-num">${{ total_ingresos|floatformat:2 }}</span>
         <span class="portal-stat-label">Ingresos totales</span>
     </div>
     <div class="portal-stat-tile portal-stat-bad">
-        <span class="portal-stat-num">${{ total_egresos }}</span>
+        <span class="portal-stat-num">${{ total_egresos|floatformat:2 }}</span>
         <span class="portal-stat-label">Egresos totales</span>
     </div>
     <div class="portal-stat-tile portal-stat-ok">
-        <span class="portal-stat-num">${{ ganancia_total }}</span>
+        <span class="portal-stat-num">${{ ganancia_total|floatformat:2 }}</span>
         <span class="portal-stat-label">Ganancia neta</span>
     </div>
 </div>
@@ -27,9 +27,9 @@
     <div class="portal-mes-card{% if m.es_mes_actual %} portal-mes-card-actual{% endif %}">
         <span class="portal-mes-nombre">{{ m.nombre }}{% if m.es_mes_actual %} <span class="portal-mes-actual-tag">actual</span>{% endif %}</span>
         <div class="portal-mes-montos">
-            <span class="portal-mes-monto portal-mes-ingreso">+${{ m.ingresos }}</span>
-            <span class="portal-mes-monto portal-mes-egreso">-${{ m.egresos }}</span>
-            <span class="portal-mes-monto portal-mes-ganancia">${{ m.ganancia }}</span>
+            <span class="portal-mes-monto portal-mes-ingreso">+${{ m.ingresos|floatformat:2 }}</span>
+            <span class="portal-mes-monto portal-mes-egreso">-${{ m.egresos|floatformat:2 }}</span>
+            <span class="portal-mes-monto portal-mes-ganancia">${{ m.ganancia|floatformat:2 }}</span>
         </div>
     </div>
     {% endfor %}
@@ -89,13 +89,20 @@
 <h3 class="portal-subtitle portal-subtitle-chica" id="movimientos">Movimientos ({{ pagina_movimientos.paginator.count }})</h3>
 <div class="portal-lista-cards">
     {% for mov in pagina_movimientos %}
-    <div class="portal-mov-card">
+    <div class="portal-mov-card portal-mov-card-col">
+        <div class="portal-mov-fila">
         <div class="portal-mov-info">
             {% if mov.tipo == 'pago' %}
-                <span class="portal-mov-monto portal-mov-ingreso">+${{ mov.obj.monto }}</span>
-                <span class="portal-mov-detalle">{{ mov.obj.fecha|date:"d/m/Y" }} · {% if mov.obj.psicologo %}{{ mov.obj.psicologo.nombre }}{% else %}General{% endif %}{% if mov.obj.concepto %} · {{ mov.obj.concepto }}{% endif %}</span>
+                <span class="portal-mov-monto portal-mov-ingreso">+${{ mov.obj.monto|floatformat:2 }}</span>
+                <span class="portal-mov-detalle">
+                    {{ mov.obj.fecha|date:"d/m/Y" }} ·
+                    {% if mov.obj.psicologo %}{{ mov.obj.psicologo.nombre }}
+                    {% elif mov.obj.origen != 'manual' %}<span class="portal-mov-sin-asignar">Sin asignar{% if mov.obj.pagador_nombre %} ({{ mov.obj.pagador_nombre }}){% endif %}</span>
+                    {% else %}General{% endif %}
+                    {% if mov.obj.concepto %} · {{ mov.obj.concepto }}{% endif %}
+                </span>
             {% else %}
-                <span class="portal-mov-monto portal-mov-egreso">−${{ mov.obj.monto }}</span>
+                <span class="portal-mov-monto portal-mov-egreso">−${{ mov.obj.monto|floatformat:2 }}</span>
                 <span class="portal-mov-detalle">{{ mov.obj.fecha|date:"d/m/Y" }}{% if mov.obj.concepto %} · {{ mov.obj.concepto }}{% endif %}</span>
             {% endif %}
         </div>
@@ -109,6 +116,24 @@
                 {% csrf_token %}
                 <button type="submit" class="portal-mov-eliminar" aria-label="Eliminar gasto">&times;</button>
             </form>
+        {% endif %}
+        </div>
+        {% if mov.tipo == 'pago' and mov.obj.origen != 'manual' %}
+            <div class="portal-mov-fila portal-mov-fila-mp">
+                <span class="portal-mov-origen">{{ mov.obj.get_origen_display }}{% if mov.obj.monto_bruto and mov.obj.monto_bruto != mov.obj.monto %} · bruto ${{ mov.obj.monto_bruto|floatformat:2 }}{% endif %}</span>
+                {% if not mov.obj.psicologo %}
+                    <form method="post" action="{% url 'portal_pago_asignar' mov.obj.pk %}" class="portal-mov-asignar-form">
+                        {% csrf_token %}
+                        <select name="psicologo" required>
+                            <option value="">Asignar a...</option>
+                            {% for p in psicologos_para_asignar %}
+                                <option value="{{ p.pk }}">{{ p.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="portal-mov-asignar-btn">Asignar</button>
+                    </form>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
     {% endfor %}
