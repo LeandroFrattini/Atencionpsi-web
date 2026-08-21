@@ -49,6 +49,14 @@ if 'RENDER' in os.environ:
     # Render termina TLS en su proxy y reenvía HTTP plano a gunicorn: sin esto,
     # SECURE_SSL_REDIRECT provoca un loop infinito de redirects en producción.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Sin esto, Django puede rechazar el POST del login con "Verificación CSRF
+    # fallida" detrás del proxy de Render si el Origin no matchea exactamente
+    # el host esperado.
+    CSRF_TRUSTED_ORIGINS = [
+        'https://atencionpsi.com.ar',
+        'https://www.atencionpsi.com.ar',
+        'https://atencionpsi-web.onrender.com',
+    ]
 
 # APLICACIONES
 INSTALLED_APPS = [
