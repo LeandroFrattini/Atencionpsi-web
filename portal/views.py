@@ -9,6 +9,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -606,6 +607,13 @@ def _resumen_financiero(request):
     }
 
 
+def _redirect_a_finanzas():
+    # Con #movimientos en vez de solo el nombre de la URL, el navegador
+    # vuelve a la lista de movimientos en vez de saltar arriba de todo --
+    # molesto si estás revisando/asignando varios pagos seguidos.
+    return redirect(reverse('portal_admin_finanzas') + '#movimientos')
+
+
 @superuser_requerido
 @require_POST
 def pago_nuevo(request):
@@ -615,7 +623,7 @@ def pago_nuevo(request):
         messages.success(request, 'Pago cargado.')
     else:
         messages.error(request, 'Revisá los datos del pago: ' + '; '.join(form.errors))
-    return redirect('portal_admin_finanzas')
+    return _redirect_a_finanzas()
 
 
 @superuser_requerido
@@ -624,7 +632,7 @@ def pago_eliminar(request, pk):
     pago = get_object_or_404(Pago, pk=pk)
     pago.delete()
     messages.success(request, 'Pago eliminado.')
-    return redirect('portal_admin_finanzas')
+    return _redirect_a_finanzas()
 
 
 @superuser_requerido
@@ -638,7 +646,7 @@ def pago_asignar(request, pk):
         pago.psicologo = get_object_or_404(Psicologo, pk=psicologo_id)
         pago.save(update_fields=['psicologo'])
         messages.success(request, f'Pago asignado a {pago.psicologo.nombre}.')
-    return redirect('portal_admin_finanzas')
+    return _redirect_a_finanzas()
 
 
 @superuser_requerido
@@ -650,7 +658,7 @@ def gasto_nuevo(request):
         messages.success(request, 'Gasto cargado.')
     else:
         messages.error(request, 'Revisá los datos del gasto: ' + '; '.join(form.errors))
-    return redirect('portal_admin_finanzas')
+    return _redirect_a_finanzas()
 
 
 @superuser_requerido
@@ -659,7 +667,7 @@ def gasto_eliminar(request, pk):
     gasto = get_object_or_404(Gasto, pk=pk)
     gasto.delete()
     messages.success(request, 'Gasto eliminado.')
-    return redirect('portal_admin_finanzas')
+    return _redirect_a_finanzas()
 
 
 @superuser_requerido

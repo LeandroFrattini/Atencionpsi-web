@@ -107,6 +107,33 @@ class PsicologoActivoTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
+class BuscadorPorNombreTests(TestCase):
+    def setUp(self):
+        Psicologo.objects.create(nombre='Lic. Oriana Casazza', whatsapp='2911111111', activo=True)
+        Psicologo.objects.create(nombre='Lic. Barbara Pereyra', whatsapp='2912222222', activo=True)
+        self.client = Client()
+
+    def test_busca_por_nombre_de_pila(self):
+        resp = self.client.get(reverse('buscador'), {'nombre': 'oriana'})
+        nombres = [p.nombre for p in resp.context['psicologos']]
+        self.assertIn('Lic. Oriana Casazza', nombres)
+        self.assertNotIn('Lic. Barbara Pereyra', nombres)
+
+    def test_busca_por_apellido_sin_importar_mayusculas(self):
+        resp = self.client.get(reverse('buscador'), {'nombre': 'PEREYRA'})
+        nombres = [p.nombre for p in resp.context['psicologos']]
+        self.assertIn('Lic. Barbara Pereyra', nombres)
+        self.assertNotIn('Lic. Oriana Casazza', nombres)
+
+    def test_sin_texto_muestra_todos(self):
+        resp = self.client.get(reverse('buscador'), {'nombre': ''})
+        self.assertEqual(len(resp.context['psicologos']), 2)
+
+    def test_texto_sin_coincidencias_no_rompe(self):
+        resp = self.client.get(reverse('buscador'), {'nombre': 'zzz-nadie-se-llama-asi'})
+        self.assertEqual(len(resp.context['psicologos']), 0)
+
+
 class OrientacionFiltroTests(TestCase):
     """El filtro de Orientación del buscador funciona sobre las categorías fijas (M2M),
     no sobre el texto libre que cada profesional escribe."""

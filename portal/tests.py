@@ -673,7 +673,7 @@ class PagoAsignarViewTests(TestCase):
         resp = self.client_super.post(reverse('portal_pago_asignar', args=[self.pago.pk]), {
             'psicologo': self.psico.pk,
         })
-        self.assertRedirects(resp, reverse('portal_admin_finanzas'))
+        self.assertRedirects(resp, reverse('portal_admin_finanzas') + '#movimientos')
         self.pago.refresh_from_db()
         self.assertEqual(self.pago.psicologo, self.psico)
 

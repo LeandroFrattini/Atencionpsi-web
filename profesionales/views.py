@@ -56,8 +56,15 @@ def buscador(request):
     dirigido_a_id = request.GET.get('dirigido_a')
     orientacion_id = request.GET.get('orientacion')
     ciudad = request.GET.get('ciudad')
+    nombre_q = request.GET.get('nombre', '').strip()
 
     queryset = Psicologo.objects.filter(activo=True)
+
+    if nombre_q:
+        # nombre guarda el nombre completo (ej: "Lic. Oriana Casazza") --
+        # no hay campo apellido separado, así que un texto libre alcanza
+        # para buscar por nombre o apellido igual.
+        queryset = queryset.filter(nombre__icontains=nombre_q)
 
     if modalidad_id:
         queryset = queryset.filter(modalidades__id=modalidad_id)
@@ -93,6 +100,7 @@ def buscador(request):
         'destinatarios_list': Publico.objects.all(),
         'orientaciones_list': Orientacion.objects.all(),
         'ciudades_padres': ciudades_padres,
+        'nombre_q': nombre_q,
     })
 
 

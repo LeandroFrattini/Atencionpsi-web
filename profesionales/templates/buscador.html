@@ -22,6 +22,11 @@
 <section class="buscador-filtros-section">
     <form method="GET" class="buscador-filtros-form">
         <div class="buscador-filtro-grupo">
+            <label class="buscador-filtro-label">Nombre o apellido</label>
+            <input type="text" name="nombre" class="buscador-select" placeholder="Ej: María, Pérez..." value="{{ nombre_q }}">
+        </div>
+
+        <div class="buscador-filtro-grupo">
             <label class="buscador-filtro-label">Modalidad</label>
             <select name="modalidad" class="buscador-select">
                 <option value="">Todas</option>
