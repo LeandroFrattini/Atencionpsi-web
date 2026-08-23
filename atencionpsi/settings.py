@@ -184,4 +184,8 @@ LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_TZ = True
+# Separador de miles en los montos ($158.070,64 en vez de $158070.64) --
+# usa el formato de es-ar (punto de miles, coma decimal) automáticamente
+# en cualquier lugar que ya use |floatformat, sin tocar los templates.
+USE_THOUSAND_SEPARATOR = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

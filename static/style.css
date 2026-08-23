@@ -491,7 +491,8 @@ footer {
    se abre solo cuando alguien lo pide. */
 @media (max-width: 1349px) {
     .nav-container {
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
+        justify-content: space-between;
         padding: 4px 0;
     }
 
