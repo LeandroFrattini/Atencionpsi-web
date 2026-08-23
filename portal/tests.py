@@ -563,10 +563,11 @@ class NormalizarPagoMercadoPagoTests(TestCase):
         crudo = {
             'id': 111, 'status': 'approved', 'transaction_amount': 20000,
             'operation_type': 'money_transfer', 'payment_type_id': 'account_money',
-            'transaction_details': {}, 'payer': {'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'transaction_details': {},
+            'payer': {'id': 294300556, 'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
             'date_approved': '2026-08-19T22:12:00.000-03:00', 'description': None,
         }
-        datos = normalizar_pago(crudo)
+        datos = normalizar_pago(crudo, mi_id=529282922)
         self.assertEqual(datos['origen'], 'transferencia')
         self.assertEqual(datos['monto'], 20000)
         self.assertEqual(datos['monto_bruto'], 20000)
@@ -578,10 +579,10 @@ class NormalizarPagoMercadoPagoTests(TestCase):
             'id': 222, 'status': 'approved', 'transaction_amount': 20000,
             'preapproval_id': 'abc123', 'payment_type_id': 'credit_card',
             'transaction_details': {'net_received_amount': 17900},
-            'payer': {'email': 'psico@example.com'},
+            'payer': {'id': 185261179, 'email': 'psico@example.com'},
             'date_approved': '2026-08-19T21:36:00.000-03:00', 'description': None,
         }
-        datos = normalizar_pago(crudo)
+        datos = normalizar_pago(crudo, mi_id=529282922)
         self.assertEqual(datos['origen'], 'suscripcion')
         self.assertEqual(datos['monto'], 17900)
         self.assertEqual(datos['monto_bruto'], 20000)
@@ -591,8 +592,40 @@ class NormalizarPagoMercadoPagoTests(TestCase):
         self.assertIsNone(normalizar_pago(crudo))
 
     def test_egreso_monto_no_positivo_se_descarta(self):
-        crudo = {'id': 444, 'status': 'approved', 'transaction_amount': -113305}
+        crudo = {'id': 444, 'status': 'approved', 'transaction_amount': -113305, 'payer': {'id': 1}}
         self.assertIsNone(normalizar_pago(crudo))
+
+    def test_transferencia_que_ella_envia_se_descarta(self):
+        # Caso real encontrado en su cuenta: una transferencia que ELLA
+        # manda no trae payer -- ni id ni nada, a diferencia de un cobro
+        # de verdad que siempre tiene quién lo pagó.
+        crudo = {
+            'id': 555, 'status': 'approved', 'transaction_amount': 100000,
+            'operation_type': 'money_transfer', 'collector_id': None,
+            'payer': None, 'description': 'Varios',
+        }
+        self.assertIsNone(normalizar_pago(crudo, mi_id=529282922))
+
+    def test_carga_a_su_propia_cuenta_se_descarta(self):
+        # Otro caso real: cargarse plata a sí misma desde el banco trae
+        # payer.id == su propio id -- tampoco es un ingreso.
+        crudo = {
+            'id': 666, 'status': 'approved', 'transaction_amount': 20000,
+            'operation_type': 'account_fund', 'collector_id': 529282922,
+            'payer': {'id': 529282922, 'email': 'leo.frattini@hotmail.com'},
+            'description': 'Bank Transfer',
+        }
+        self.assertIsNone(normalizar_pago(crudo, mi_id=529282922))
+
+    def test_sin_mi_id_disponible_igual_descarta_pago_sin_payer(self):
+        # Si no se pudo consultar mi_user_id (falla de red, por ejemplo),
+        # el chequeo de "es ella misma" no aplica, pero el de "no tiene
+        # payer" sigue funcionando -- ese caso no depende de mi_id.
+        crudo = {
+            'id': 777, 'status': 'approved', 'transaction_amount': 100000,
+            'payer': None,
+        }
+        self.assertIsNone(normalizar_pago(crudo, mi_id=None))
 
     def test_sugerir_psicologo_matchea_por_nombre(self):
         psico = Psicologo.objects.create(nombre='Lic. Juliana Nuñez Laya', whatsapp='111')
@@ -613,7 +646,7 @@ class SincronizarPagosMercadoPagoCommandTests(TestCase):
         mock_buscar.return_value = [{
             'id': 555, 'status': 'approved', 'transaction_amount': 20000,
             'operation_type': 'money_transfer', 'transaction_details': {},
-            'payer': {'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'payer': {'id': 294300556, 'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
             'date_approved': '2026-08-19T22:12:00.000-03:00',
         }]
         call_command('sincronizar_pagos_mercadopago')
@@ -624,7 +657,7 @@ class SincronizarPagosMercadoPagoCommandTests(TestCase):
         mock_buscar.return_value = [{
             'id': 555, 'status': 'approved', 'transaction_amount': 20000,
             'operation_type': 'money_transfer', 'transaction_details': {},
-            'payer': {'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'payer': {'id': 294300556, 'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
             'date_approved': '2026-08-19T22:12:00.000-03:00',
         }]
         call_command('sincronizar_pagos_mercadopago', '--apply')
@@ -638,7 +671,7 @@ class SincronizarPagosMercadoPagoCommandTests(TestCase):
         mock_buscar.return_value = [{
             'id': 555, 'status': 'approved', 'transaction_amount': 20000,
             'operation_type': 'money_transfer', 'transaction_details': {},
-            'payer': {'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'payer': {'id': 294300556, 'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
             'date_approved': '2026-08-19T22:12:00.000-03:00',
         }]
         call_command('sincronizar_pagos_mercadopago', '--apply')
@@ -650,7 +683,7 @@ class SincronizarPagosMercadoPagoCommandTests(TestCase):
         mock_buscar.return_value = [{
             'id': 666, 'status': 'approved', 'transaction_amount': 15000,
             'preapproval_id': 'xyz', 'transaction_details': {'net_received_amount': 13500},
-            'payer': {'email': 'desconocido@example.com'},
+            'payer': {'id': 999888777, 'email': 'desconocido@example.com'},
             'date_approved': '2026-08-19T09:55:00.000-03:00',
         }]
         call_command('sincronizar_pagos_mercadopago', '--apply')
@@ -721,7 +754,7 @@ class PagoSincronizarMercadoPagoViewTests(TestCase):
         mock_buscar.return_value = [{
             'id': 888, 'status': 'approved', 'transaction_amount': 20000,
             'operation_type': 'money_transfer', 'transaction_details': {},
-            'payer': {'first_name': 'Alguien', 'last_name': 'Test'},
+            'payer': {'id': 111222333, 'first_name': 'Alguien', 'last_name': 'Test'},
             'date_approved': timezone.localdate().isoformat() + 'T10:00:00.000-03:00',
         }]
         resp = self.client_super.post(reverse('portal_pago_sincronizar_mercadopago'))

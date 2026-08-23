@@ -21,6 +21,29 @@ def _token():
     return os.environ.get('MERCADOPAGO_ACCESS_TOKEN', '')
 
 
+def mi_user_id():
+    """
+    ID de cuenta de MP de la dueña. Se usa para distinguir plata que le
+    entra de plata que ella misma mueve (una transferencia que manda, o
+    una carga a su propia cuenta) -- ver normalizar_pago(). Devuelve None
+    si no se pudo consultar (sin token, o falla de red); en ese caso
+    normalizar_pago() sigue funcionando, solo que sin ese chequeo extra.
+    """
+    token = _token()
+    if not token:
+        return None
+    try:
+        resp = requests.get(
+            f'{API_BASE}/users/me',
+            headers={'Authorization': f'Bearer {token}'},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        return resp.json().get('id')
+    except requests.RequestException:
+        return None
+
+
 def _a_decimal(valor):
     """
     La API manda los montos como float (ej: 31154.659999999998). Convertir
@@ -63,13 +86,24 @@ def buscar_pagos(desde, hasta, limit=50, offset=0):
     return resp.json().get('results', [])
 
 
-def normalizar_pago(pago_mp):
+def normalizar_pago(pago_mp, mi_id=None):
     """
     Convierte un resultado crudo de la API a los campos de portal.models.Pago.
-    Devuelve None si no corresponde importarlo (no aprobado, o es un egreso
-    como una transferencia que la dueña mandó afuera, no que recibió).
+    Devuelve None si no corresponde importarlo: no aprobado, o es plata que
+    la dueña movió ella misma (una transferencia que mandó afuera, o una
+    carga a su propia cuenta) en vez de un cobro real.
+
+    Confirmado con datos reales de la cuenta: un cobro de verdad siempre
+    tiene quién lo pagó (payer.id) y esa persona no es la dueña. Una
+    transferencia que ella manda no trae payer.id, y una carga a su propia
+    cuenta trae payer.id == su propio id -- ninguno de los dos es un
+    ingreso, así que ambos se descartan acá.
     """
     if pago_mp.get('status') != 'approved':
+        return None
+
+    payer_id = (pago_mp.get('payer') or {}).get('id')
+    if not payer_id or (mi_id and payer_id == mi_id):
         return None
 
     monto_bruto = pago_mp.get('transaction_amount') or 0
@@ -154,10 +188,11 @@ def importar_pagos_nuevos(dias):
         .values_list('mp_payment_id', flat=True)
     )
     psicologos_activos = list(Psicologo.objects.filter(activo=True))
+    mi_id = mi_user_id()
 
     creados = []
     for crudo in resultados:
-        datos = normalizar_pago(crudo)
+        datos = normalizar_pago(crudo, mi_id=mi_id)
         if not datos or datos['mp_payment_id'] in ya_importados:
             continue
         sugerido = sugerir_psicologo(datos['pagador_nombre'], psicologos_activos)

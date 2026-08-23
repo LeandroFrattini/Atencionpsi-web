@@ -42,6 +42,7 @@ class Command(BaseCommand):
             .values_list('mp_payment_id', flat=True)
         )
         psicologos_activos = list(Psicologo.objects.filter(activo=True))
+        mi_id = mercadopago_client.mi_user_id()
 
         self.stdout.write(self.style.MIGRATE_HEADING(
             f'Pagos aprobados en Mercado Pago entre {desde} y {hasta}'
@@ -49,7 +50,7 @@ class Command(BaseCommand):
 
         nuevos = 0
         for crudo in resultados:
-            datos = mercadopago_client.normalizar_pago(crudo)
+            datos = mercadopago_client.normalizar_pago(crudo, mi_id=mi_id)
             if not datos or datos['mp_payment_id'] in ya_importados:
                 continue
 
