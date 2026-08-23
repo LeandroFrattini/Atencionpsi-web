@@ -103,7 +103,11 @@ def normalizar_pago(pago_mp, mi_id=None):
         return None
 
     payer_id = (pago_mp.get('payer') or {}).get('id')
-    if not payer_id or (mi_id and payer_id == mi_id):
+    # La API a veces manda el id como texto ("529282922") y otras como
+    # número (529282922) según el tipo de movimiento -- comparar tal cual
+    # sin pasar por str() hace que la comparación falle en silencio y deje
+    # pasar plata que la dueña se transfirió a sí misma.
+    if not payer_id or (mi_id and str(payer_id) == str(mi_id)):
         return None
 
     monto_bruto = pago_mp.get('transaction_amount') or 0

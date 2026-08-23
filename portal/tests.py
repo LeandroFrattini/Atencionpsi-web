@@ -608,14 +608,26 @@ class NormalizarPagoMercadoPagoTests(TestCase):
 
     def test_carga_a_su_propia_cuenta_se_descarta(self):
         # Otro caso real: cargarse plata a sí misma desde el banco trae
-        # payer.id == su propio id -- tampoco es un ingreso.
+        # payer.id == su propio id -- tampoco es un ingreso. OJO acá con
+        # el tipo de dato: la API real manda este payer.id como *texto*
+        # ("529282922"), no como número -- ese mismatch de tipos fue
+        # justo el bug que dejaba pasar este caso (2026-08-23).
         crudo = {
             'id': 666, 'status': 'approved', 'transaction_amount': 20000,
             'operation_type': 'account_fund', 'collector_id': 529282922,
-            'payer': {'id': 529282922, 'email': 'leo.frattini@hotmail.com'},
+            'payer': {'id': '529282922', 'email': 'leo.frattini@hotmail.com'},
             'description': 'Bank Transfer',
         }
         self.assertIsNone(normalizar_pago(crudo, mi_id=529282922))
+
+    def test_carga_a_su_propia_cuenta_se_descarta_aunque_mi_id_sea_texto(self):
+        # Y por las dudas al revés también: si mi_user_id() devolviera el
+        # id como texto y el del pago viniera numérico.
+        crudo = {
+            'id': 667, 'status': 'approved', 'transaction_amount': 20000,
+            'payer': {'id': 529282922, 'email': 'leo.frattini@hotmail.com'},
+        }
+        self.assertIsNone(normalizar_pago(crudo, mi_id='529282922'))
 
     def test_sin_mi_id_disponible_igual_descarta_pago_sin_payer(self):
         # Si no se pudo consultar mi_user_id (falla de red, por ejemplo),
