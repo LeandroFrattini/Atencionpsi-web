@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from profesionales.models import Psicologo
+from portal import mercadopago_client
 from portal.mercadopago_client import normalizar_pago, sugerir_psicologo
 from portal.models import Gasto, Pago, Paciente, Turno
 
@@ -686,3 +687,51 @@ class PagoAsignarViewTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.pago.refresh_from_db()
         self.assertIsNone(self.pago.psicologo)
+
+
+class DiasDesdeUltimoPagoTests(TestCase):
+    def test_sin_pagos_de_mp_usa_el_default(self):
+        self.assertEqual(mercadopago_client.dias_desde_ultimo_pago(default=30), 30)
+
+    def test_con_pago_reciente_calcula_la_diferencia_mas_un_dia(self):
+        hace_3_dias = timezone.localdate() - datetime.timedelta(days=3)
+        Pago.objects.create(monto=100, mp_payment_id='1', fecha=hace_3_dias)
+        self.assertEqual(mercadopago_client.dias_desde_ultimo_pago(), 4)
+
+    def test_pago_manual_sin_mp_payment_id_no_cuenta(self):
+        # Un pago cargado a mano no tiene mp_payment_id -- no debería
+        # usarse como referencia para calcular el hueco a traer.
+        Pago.objects.create(monto=100, fecha=timezone.localdate() - datetime.timedelta(days=1))
+        self.assertEqual(mercadopago_client.dias_desde_ultimo_pago(default=30), 30)
+
+    def test_nunca_supera_el_tope(self):
+        hace_mucho = timezone.localdate() - datetime.timedelta(days=400)
+        Pago.objects.create(monto=100, mp_payment_id='1', fecha=hace_mucho)
+        self.assertEqual(mercadopago_client.dias_desde_ultimo_pago(tope=90), 90)
+
+
+class PagoSincronizarMercadoPagoViewTests(TestCase):
+    def setUp(self):
+        self.superuser = User.objects.create_superuser('duena2', 'duena2@example.com', 'ClaveDuenaSegura2026')
+        self.client_super = Client()
+        self.client_super.force_login(self.superuser)
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_boton_importa_pagos_nuevos(self, mock_buscar):
+        mock_buscar.return_value = [{
+            'id': 888, 'status': 'approved', 'transaction_amount': 20000,
+            'operation_type': 'money_transfer', 'transaction_details': {},
+            'payer': {'first_name': 'Alguien', 'last_name': 'Test'},
+            'date_approved': timezone.localdate().isoformat() + 'T10:00:00.000-03:00',
+        }]
+        resp = self.client_super.post(reverse('portal_pago_sincronizar_mercadopago'))
+        self.assertRedirects(resp, reverse('portal_admin_finanzas') + '#movimientos')
+        self.assertTrue(Pago.objects.filter(mp_payment_id='888').exists())
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_sin_token_muestra_error_y_no_rompe(self, mock_buscar):
+        mock_buscar.side_effect = RuntimeError('Falta la variable de entorno MERCADOPAGO_ACCESS_TOKEN')
+        resp = self.client_super.post(reverse('portal_pago_sincronizar_mercadopago'), follow=True)
+        self.assertEqual(resp.status_code, 200)
+        mensajes = [str(m) for m in resp.context['messages']]
+        self.assertTrue(any('MERCADOPAGO_ACCESS_TOKEN' in m for m in mensajes))

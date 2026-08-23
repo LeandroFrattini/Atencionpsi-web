@@ -21,6 +21,7 @@ urlpatterns = [
     path('admin/pago/nuevo/', views.pago_nuevo, name='portal_pago_nuevo'),
     path('admin/pago/<int:pk>/eliminar/', views.pago_eliminar, name='portal_pago_eliminar'),
     path('admin/pago/<int:pk>/asignar/', views.pago_asignar, name='portal_pago_asignar'),
+    path('admin/pago/sincronizar-mercadopago/', views.pago_sincronizar_mercadopago, name='portal_pago_sincronizar_mercadopago'),
     path('admin/gasto/nuevo/', views.gasto_nuevo, name='portal_gasto_nuevo'),
     path('admin/gasto/<int:pk>/eliminar/', views.gasto_eliminar, name='portal_gasto_eliminar'),
 

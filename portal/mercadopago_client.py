@@ -114,6 +114,58 @@ def normalizar_pago(pago_mp):
     }
 
 
+def dias_desde_ultimo_pago(default=30, tope=90):
+    """
+    Cuántos días para atrás hay que mirar para no dejar huecos: desde la
+    fecha del último pago que ya se importó de MP, con un día de margen.
+    Si nunca se importó ninguno, usa `default`. Nunca más de `tope` para
+    no traer sin querer un historial gigante la primera vez que se usa
+    después de mucho tiempo sin correrlo.
+    """
+    from portal.models import Pago
+
+    ultimo = (
+        Pago.objects.exclude(mp_payment_id='').exclude(mp_payment_id__isnull=True)
+        .order_by('-fecha').first()
+    )
+    if not ultimo:
+        return default
+    dias = (timezone.localdate() - ultimo.fecha).days + 1
+    return max(1, min(dias, tope))
+
+
+def importar_pagos_nuevos(dias):
+    """
+    Trae los pagos aprobados de los últimos `dias` días y crea los Pago que
+    falten -- nunca duplica (se identifican por mp_payment_id). A diferencia
+    del comando de management, esto siempre guarda (no tiene dry-run): lo
+    usa el botón "Actualizar" del Panel de Finanzas, pensado para un click
+    directo. Devuelve la lista de Pago recién creados.
+    """
+    from portal.models import Pago
+    from profesionales.models import Psicologo
+
+    hasta = timezone.localdate()
+    desde = hasta - datetime.timedelta(days=dias)
+    resultados = buscar_pagos(desde, hasta)
+
+    ya_importados = set(
+        Pago.objects.exclude(mp_payment_id='').exclude(mp_payment_id__isnull=True)
+        .values_list('mp_payment_id', flat=True)
+    )
+    psicologos_activos = list(Psicologo.objects.filter(activo=True))
+
+    creados = []
+    for crudo in resultados:
+        datos = normalizar_pago(crudo)
+        if not datos or datos['mp_payment_id'] in ya_importados:
+            continue
+        sugerido = sugerir_psicologo(datos['pagador_nombre'], psicologos_activos)
+        creados.append(Pago.objects.create(psicologo=sugerido, **datos))
+        ya_importados.add(datos['mp_payment_id'])
+    return creados
+
+
 def sugerir_psicologo(pagador_nombre, psicologos_activos):
     """
     Intento simple de adivinar a qué profesional corresponde un pago, por

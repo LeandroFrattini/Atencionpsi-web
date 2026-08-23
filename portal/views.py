@@ -16,6 +16,7 @@ from django.views.decorators.http import require_POST
 from profesionales.admin import CrearAccesoPortalForm
 from profesionales.models import Psicologo
 
+from . import mercadopago_client
 from .decorators import psicologo_requerido, superuser_requerido
 from .disponibilidad import fechas_horizonte, slot_disponible, slots_para_fecha
 from .forms import (
@@ -646,6 +647,29 @@ def pago_asignar(request, pk):
         pago.psicologo = get_object_or_404(Psicologo, pk=psicologo_id)
         pago.save(update_fields=['psicologo'])
         messages.success(request, f'Pago asignado a {pago.psicologo.nombre}.')
+    return _redirect_a_finanzas()
+
+
+@superuser_requerido
+@require_POST
+def pago_sincronizar_mercadopago(request):
+    """
+    Botón "Actualizar" del Panel de Finanzas: trae los pagos nuevos desde
+    el último que ya se importó (o los últimos 30 días si nunca se corrió),
+    para no depender de acordarse de correr el comando a mano.
+    """
+    dias = mercadopago_client.dias_desde_ultimo_pago()
+    try:
+        creados = mercadopago_client.importar_pagos_nuevos(dias)
+    except RuntimeError as error:
+        messages.error(request, str(error))
+    except Exception as error:
+        messages.error(request, f'No se pudo consultar Mercado Pago: {error}')
+    else:
+        if creados:
+            messages.success(request, f'Se importaron {len(creados)} pago(s) nuevo(s) de Mercado Pago.')
+        else:
+            messages.success(request, 'Ya estabas al día -- no había pagos nuevos en Mercado Pago.')
     return _redirect_a_finanzas()
 
 
