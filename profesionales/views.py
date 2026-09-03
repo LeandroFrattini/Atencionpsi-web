@@ -1,4 +1,5 @@
 import datetime
+import logging
 import random
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
@@ -13,6 +14,8 @@ from portal.disponibilidad import fecha_larga, fechas_horizonte, slot_disponible
 from portal.forms import ReservaPublicaForm
 from portal.models import Paciente, Turno
 from portal.notificaciones import enviar_aviso_nuevo_turno
+
+logger = logging.getLogger(__name__)
 
 
 # --- VISTA DE INICIO ---
@@ -206,7 +209,18 @@ def reservar_confirmar(request, slug):
                 psicologo=psicologo, paciente=paciente, fecha_hora=fecha_hora,
                 modalidad=modalidad, origen='publico',
             )
-        enviar_aviso_nuevo_turno(turno)
+        # El turno ya quedó guardado (arriba, en su propia transacción) --
+        # si el mail de aviso falla (Brevo caído, red, lo que sea), eso NO
+        # tiene que tirar abajo la confirmación: el paciente ya reservó de
+        # verdad y tiene que ver la pantalla de éxito igual. Se loguea el
+        # error para poder darse cuenta y, si hace falta, avisar a mano.
+        try:
+            enviar_aviso_nuevo_turno(turno)
+        except Exception:
+            logger.exception(
+                'No se pudo enviar el mail de aviso del turno %s (psicólogo %s, paciente %s)',
+                turno.pk, psicologo.nombre, paciente.pk,
+            )
         return render(request, 'reserva_confirmada.html', {'p': psicologo, 'turno': turno})
 
     elegido = {
