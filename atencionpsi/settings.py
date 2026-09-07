@@ -163,6 +163,17 @@ if 'RENDER' in os.environ:
         AWS_S3_CUSTOM_DOMAIN = f'{SUBDOMAIN}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}'
     else:
         DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+else:
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+# Nunca se habían definido -- sin esto, Django usa el default global ('' para
+# los dos), así que FileSystemStorage termina guardando archivos sueltos en
+# la raíz del proyecto y ImageField.url arma URLs sin el prefijo /media/, que
+# es justo lo que espera la ruta de atencionpsi/urls.py de más abajo. Para
+# Render con S3/Supabase esto no cambia nada (esa storage arma sus propias
+# URLs y no usa MEDIA_ROOT), solo importa para FileSystemStorage.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # MAIL (Brevo SMTP -- avisos de turnos nuevos a los profesionales)
 # En local (sin RENDER) se imprime en la consola en vez de mandarse de

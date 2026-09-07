@@ -8,9 +8,35 @@
 <section class="faq-hero">
     <div class="faq-hero-inner">
         <h1>{{ curso.nombre }}</h1>
-        <p>{{ curso.fecha|date:"l d/m/Y"|capfirst }} &middot; {{ curso.hora|time:"H:i" }} hs &middot; Dictado por {{ curso.presentador }}{% if curso.presentador_detalle %} <span class="curso-presentador-detalle">({{ curso.presentador_detalle }})</span>{% endif %}</p>
+        <p>
+            {{ curso.fecha|date:"l d/m/Y"|capfirst }} &middot; {{ curso.hora|time:"H:i" }} hs &middot; Dictado por
+            {% if curso.presentador_bio %}
+                <button type="button" class="curso-presentador-link" data-abrir-modal="presentador-bio">{{ curso.presentador }}</button>
+            {% else %}
+                {{ curso.presentador }}
+            {% endif %}
+            {% if curso.presentador_detalle %} <span class="curso-presentador-detalle">({{ curso.presentador_detalle }})</span>{% endif %}
+        </p>
     </div>
 </section>
+
+{% if curso.presentador_bio %}
+<div class="curso-modal-overlay" id="presentador-bio" hidden>
+    <div class="curso-modal" role="dialog" aria-modal="true" aria-labelledby="presentador-bio-titulo">
+        <button type="button" class="curso-modal-cerrar" data-cerrar-modal aria-label="Cerrar">&times;</button>
+        <div class="curso-modal-header">
+            {% if curso.presentador_foto %}
+                <img src="{{ curso.presentador_foto.url }}" alt="Foto de {{ curso.presentador }}" class="curso-modal-foto">
+            {% endif %}
+            <div>
+                <h2 id="presentador-bio-titulo">{{ curso.presentador }}</h2>
+                {% if curso.presentador_detalle %}<p class="curso-modal-subtitulo">{{ curso.presentador_detalle }}</p>{% endif %}
+            </div>
+        </div>
+        <p class="curso-modal-bio">{{ curso.presentador_bio|linebreaksbr }}</p>
+    </div>
+</div>
+{% endif %}
 
 <section class="curso-body">
     {% if messages %}
@@ -32,11 +58,12 @@
             <div class="curso-opcion">
                 <p class="curso-opcion-etiqueta">Red Consulta</p>
                 <p class="curso-opcion-precio">${{ curso.precio_red_consulta }}</p>
-                <p class="curso-opcion-desc">Si ya sos parte de la red, iniciá sesión y te llevamos directo al pago con tus datos.</p>
+                <p class="curso-opcion-desc">Si ya sos parte de Atención Psi, iniciá sesión y te llevamos directo al pago con tus datos.</p>
                 <form method="post" action="{% url 'cursos_inscripcion_red_consulta' curso.slug %}">
                     {% csrf_token %}
-                    <button type="submit" class="btn-hero curso-btn-secundario">Soy de la Red Consulta</button>
+                    <button type="submit" class="btn-hero curso-btn-secundario">Pertenezco a Atención Psi</button>
                 </form>
+                <p class="curso-opcion-nota">¿Todavía no tenés cuenta? <a href="https://wa.me/5492915379798?text=Hola%21%20Quiero%20sumarme%20a%20Atenci%C3%B3n%20Psi" target="_blank" rel="noopener">Escribinos por WhatsApp</a></p>
             </div>
 
             <div class="curso-opcion">
@@ -59,4 +86,29 @@
         {% if curso.cupos_disponibles %}<p class="curso-cupos-aviso">Quedan {{ curso.cupos_disponibles }} cupos.</p>{% endif %}
     {% endif %}
 </section>
+
+{% if curso.presentador_bio %}
+<script>
+(function () {
+    var overlay = document.getElementById('presentador-bio');
+    if (!overlay) return;
+
+    function abrir() { overlay.hidden = false; document.body.style.overflow = 'hidden'; }
+    function cerrar() { overlay.hidden = true; document.body.style.overflow = ''; }
+
+    document.querySelectorAll('[data-abrir-modal="presentador-bio"]').forEach(function (btn) {
+        btn.addEventListener('click', abrir);
+    });
+    overlay.querySelectorAll('[data-cerrar-modal]').forEach(function (btn) {
+        btn.addEventListener('click', cerrar);
+    });
+    overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) cerrar();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !overlay.hidden) cerrar();
+    });
+})();
+</script>
+{% endif %}
 {% endblock %}

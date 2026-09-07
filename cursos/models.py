@@ -14,6 +14,13 @@ class Curso(models.Model):
         max_length=150, blank=True,
         help_text='Ej: "Esp. en Psicología Clínica · UBA"'
     )
+    presentador_bio = models.TextField(
+        blank=True,
+        help_text='Bio corta con formación/experiencia del presentador -- se muestra '
+                   'en un popup al hacer click en su nombre, para darle credibilidad. '
+                   'Vacío = el nombre no es clickeable.'
+    )
+    presentador_foto = models.ImageField(upload_to='cursos/presentadores/', null=True, blank=True)
     fecha = models.DateField()
     hora = models.TimeField()
     precio_red_consulta = models.DecimalField('Precio Red Consulta', max_digits=10, decimal_places=2)

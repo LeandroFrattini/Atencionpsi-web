@@ -2365,6 +2365,47 @@ footer.site-footer-nueva {
 /* --- FORMACIÓN: página de un curso --- */
 .curso-body { max-width: 720px; margin: 0 auto; padding: 50px 20px 80px; }
 .curso-presentador-detalle { color: #999; font-size: 0.95rem; }
+
+.curso-presentador-link {
+    background: none; border: none; padding: 0; margin: 0; cursor: pointer;
+    font: inherit; color: #4a7c59; font-weight: 600;
+    text-decoration: underline dotted; text-underline-offset: 3px;
+}
+.curso-presentador-link:hover { color: #3d6849; }
+
+.curso-modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(30, 26, 22, 0.55);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    animation: curso-modal-fade 0.2s ease;
+}
+.curso-modal {
+    background: #fff; border-radius: 20px; max-width: 460px; width: 100%;
+    padding: 40px 36px; position: relative; max-height: 85vh; overflow-y: auto;
+    animation: curso-modal-pop 0.2s ease;
+}
+.curso-modal-header { display: flex; align-items: center; gap: 18px; margin-bottom: 24px; }
+.curso-modal-foto {
+    width: 76px; height: 76px; border-radius: 50%; object-fit: cover;
+    flex-shrink: 0; border: 3px solid #f3e7e4;
+}
+.curso-modal h2 { font-size: 1.25rem; color: #222; margin-bottom: 4px; line-height: 1.3; }
+.curso-modal-subtitulo { color: #4a7c59; font-weight: 600; font-size: 0.88rem; }
+.curso-modal-bio { color: #555; font-size: 0.95rem; line-height: 1.75; }
+.curso-modal-cerrar {
+    position: absolute; top: 18px; right: 18px; width: 32px; height: 32px;
+    border-radius: 50%; border: none; background: #f3e7e4; color: #666;
+    font-size: 1.3rem; line-height: 1; cursor: pointer;
+}
+.curso-modal-cerrar:hover { background: #e9a8a6; color: #fff; }
+
+@media (max-width: 500px) {
+    .curso-modal { padding: 32px 24px; }
+    .curso-modal-header { flex-direction: column; text-align: center; gap: 12px; }
+}
+
+@keyframes curso-modal-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes curso-modal-pop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
 .curso-descripcion { font-size: 1rem; line-height: 1.7; color: #444; margin-bottom: 40px; white-space: pre-line; }
 .curso-inscripcion-titulo { font-size: 1.4rem; color: #222; margin-bottom: 20px; text-align: center; }
 .curso-agotado { text-align: center; color: #a13d3d; font-weight: 600; padding: 24px 0; }
@@ -2377,6 +2418,8 @@ footer.site-footer-nueva {
 .curso-opcion-etiqueta { font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #4a7c59; margin-bottom: 8px; }
 .curso-opcion-precio { font-size: 2rem; font-weight: 700; color: #222; margin-bottom: 10px; }
 .curso-opcion-desc { font-size: 0.88rem; color: #777; line-height: 1.5; margin-bottom: 20px; }
+.curso-opcion-nota { font-size: 0.8rem; color: #999; margin-top: 12px; }
+.curso-opcion-nota a { color: #4a7c59; font-weight: 600; }
 .curso-opcion form { width: 100%; }
 .curso-btn-secundario { background-color: #4a7c59 !important; }
 .curso-btn-secundario:hover { background-color: #3d6849 !important; }

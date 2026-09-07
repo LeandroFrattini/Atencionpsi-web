@@ -170,11 +170,14 @@ class CursoModelTests(TestCase):
 
 class FormacionListadoTests(TestCase):
     def test_lista_solo_cursos_activos_y_futuros(self):
-        _crear_curso(slug='vigente', nombre='Curso Vigente', fecha=datetime.date(2099, 1, 1), activo=True)
+        # No asumir un total exacto de cursos: las migraciones de datos (ej.
+        # el Taller de Historia Clínica, 0002_taller_historia_clinica) ya
+        # siembran contenido real también en la base de test.
+        vigente = _crear_curso(slug='vigente', nombre='Curso Vigente', fecha=datetime.date(2099, 1, 1), activo=True)
         _crear_curso(slug='inactivo', nombre='Curso Inactivo', fecha=datetime.date(2099, 1, 1), activo=False)
         _crear_curso(slug='vencido', nombre='Curso Vencido', fecha=datetime.date(2000, 1, 1), activo=True)
         resp = self.client.get(reverse('formacion'))
         self.assertContains(resp, 'Curso Vigente')
         self.assertNotContains(resp, 'Curso Inactivo')
         self.assertNotContains(resp, 'Curso Vencido')
-        self.assertEqual(resp.context['cursos_activos'].count(), 1)
+        self.assertIn(vigente, resp.context['cursos_activos'])
