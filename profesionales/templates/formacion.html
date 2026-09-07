@@ -2,21 +2,41 @@
 {% load static %}
 
 {% block title %}Formación | Atención Psi{% endblock %}
-{% block meta_description %}Próximamente: formación y capacitación para profesionales de la salud mental en Atención Psi.{% endblock %}
+{% block meta_description %}Cursos y talleres clínicos para profesionales de la salud mental, dictados por especialistas con experiencia real en la práctica.{% endblock %}
 {% block og_title %}Formación | Atención Psi{% endblock %}
 {% block canonical %}/formacion/{% endblock %}
 {% block og_url %}/formacion/{% endblock %}
-{% block extra_head %}<meta name="robots" content="noindex, follow">{% endblock %}
 
 {% block content %}
 
 <section class="faq-hero">
     <div class="faq-hero-inner">
-        <span class="unete-hero-badge">Muy pronto</span>
         <h1>Formación</h1>
-        <p>Estamos preparando esta sección. Pronto vas a encontrar acá cursos, talleres y capacitaciones para profesionales de la salud mental.</p>
-        <a href="{% url 'inicio' %}" class="btn-hero" style="margin-top: 30px;">Volver al inicio</a>
+        <p>Cursos y talleres clínicos, pensados desde la experiencia real de consultorio -- no solo teoría.</p>
     </div>
+</section>
+
+<section class="formacion-lista">
+    {% for curso in cursos_activos %}
+        <a href="{% url 'cursos_detalle' curso.slug %}" class="formacion-card">
+            <div class="formacion-card-fecha">
+                <span class="formacion-card-dia">{{ curso.fecha|date:"d" }}</span>
+                <span class="formacion-card-mes">{{ curso.fecha|date:"M"|upper }}</span>
+            </div>
+            <div class="formacion-card-info">
+                <h2>{{ curso.nombre }}</h2>
+                <p class="formacion-card-meta">{{ curso.fecha|date:"d/m/Y" }} &middot; {{ curso.hora|time:"H:i" }} hs &middot; {{ curso.presentador }}</p>
+                {% if curso.descripcion %}<p class="formacion-card-desc">{{ curso.descripcion|truncatewords:28 }}</p>{% endif %}
+                {% if curso.agotado %}
+                    <span class="formacion-card-badge formacion-card-badge-agotado">Cupos agotados</span>
+                {% elif curso.cupos_disponibles %}
+                    <span class="formacion-card-badge">{{ curso.cupos_disponibles }} cupos disponibles</span>
+                {% endif %}
+            </div>
+        </a>
+    {% empty %}
+        <p class="formacion-vacio">Estamos preparando nuevos cursos y talleres. Volvé pronto.</p>
+    {% endfor %}
 </section>
 
 {% endblock %}

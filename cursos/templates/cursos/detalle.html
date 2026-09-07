@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ curso.nombre }} | Formación | Atención Psi{% endblock %}
+{% block meta_description %}{{ curso.nombre }} con {{ curso.presentador }} -- {{ curso.fecha|date:"d/m/Y" }}. Inscribite online.{% endblock %}
+{% block canonical %}/formacion/{{ curso.slug }}/{% endblock %}
+
+{% block content %}
+<section class="faq-hero">
+    <div class="faq-hero-inner">
+        <h1>{{ curso.nombre }}</h1>
+        <p>{{ curso.fecha|date:"l d/m/Y"|capfirst }} &middot; {{ curso.hora|time:"H:i" }} hs &middot; Dictado por {{ curso.presentador }}{% if curso.presentador_detalle %} <span class="curso-presentador-detalle">({{ curso.presentador_detalle }})</span>{% endif %}</p>
+    </div>
+</section>
+
+<section class="curso-body">
+    {% if messages %}
+        <ul class="reservar-messages">
+            {% for message in messages %}<li class="reservar-message reservar-message-{{ message.tags }}">{{ message }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if curso.descripcion %}
+        <div class="curso-descripcion">{{ curso.descripcion|linebreaksbr }}</div>
+    {% endif %}
+
+    {% if curso.agotado %}
+        <p class="curso-agotado">Los cupos para este curso ya se agotaron.</p>
+    {% else %}
+        <h2 class="curso-inscripcion-titulo">Elegí cómo inscribirte</h2>
+        <div class="curso-opciones">
+
+            <div class="curso-opcion">
+                <p class="curso-opcion-etiqueta">Red Consulta</p>
+                <p class="curso-opcion-precio">${{ curso.precio_red_consulta }}</p>
+                <p class="curso-opcion-desc">Si ya sos parte de la red, iniciá sesión y te llevamos directo al pago con tus datos.</p>
+                <form method="post" action="{% url 'cursos_inscripcion_red_consulta' curso.slug %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-hero curso-btn-secundario">Soy de la Red Consulta</button>
+                </form>
+            </div>
+
+            <div class="curso-opcion">
+                <p class="curso-opcion-etiqueta">Público general</p>
+                <p class="curso-opcion-precio">${{ curso.precio_publico }}</p>
+                <form method="post" action="{% url 'cursos_inscripcion_publica' curso.slug %}" class="curso-form">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="curso-form-field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}<p class="curso-form-error">{{ field.errors.0 }}</p>{% endif %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn-hero">Inscribirme y pagar</button>
+                </form>
+            </div>
+
+        </div>
+        {% if curso.cupos_disponibles %}<p class="curso-cupos-aviso">Quedan {{ curso.cupos_disponibles }} cupos.</p>{% endif %}
+    {% endif %}
+</section>
+{% endblock %}

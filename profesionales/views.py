@@ -280,4 +280,6 @@ def faq(request):
 
 
 def formacion(request):
-    return render(request, 'formacion.html')
+    from cursos.models import Curso
+    cursos_activos = Curso.objects.filter(activo=True, fecha__gte=timezone.localdate())
+    return render(request, 'formacion.html', {'cursos_activos': cursos_activos})

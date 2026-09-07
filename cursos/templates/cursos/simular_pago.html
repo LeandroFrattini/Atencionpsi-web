@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Simular pago (dev) | Atención Psi{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block content %}
+<section class="curso-body">
+    <div class="curso-dev-box">
+        <p><strong>Modo desarrollo:</strong> acá en producción se redirige al checkout real de Mercado Pago.</p>
+        <p>Inscripción: {{ inscripcion.nombre }} &middot; {{ inscripcion.curso.nombre }} &middot; ${{ inscripcion.monto }}</p>
+        <form method="post" action="{% url 'cursos_simular_pago' inscripcion.pk %}">
+            {% csrf_token %}
+            <button type="submit" name="accion" value="aprobar" class="btn-hero">Simular pago aprobado</button>
+            <button type="submit" name="accion" value="rechazar" class="btn-hero curso-btn-secundario">Simular pago rechazado</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

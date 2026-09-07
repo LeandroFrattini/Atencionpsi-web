@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Confirmar inscripción | {{ curso.nombre }} | Atención Psi{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, follow">{% endblock %}
+{% block content %}
+<section class="faq-hero">
+    <div class="faq-hero-inner">
+        <h1>Confirmar inscripción</h1>
+        <p>{{ curso.nombre }} &middot; {{ curso.fecha|date:"d/m/Y" }} &middot; {{ curso.hora|time:"H:i" }} hs</p>
+    </div>
+</section>
+<section class="curso-body">
+    <p class="curso-confirmar-texto">
+        Hola {{ psico.nombre }}, vas a inscribirte con el precio de Red Consulta:
+        <strong>${{ curso.precio_red_consulta }}</strong>.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn-hero">Ir a pagar</button>
+    </form>
+</section>
+{% endblock %}

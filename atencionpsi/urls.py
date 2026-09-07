@@ -26,6 +26,7 @@ urlpatterns = [
     path('sobre-nosotros/', views.sobre_nosotros, name='sobre_nosotros'),  # guion, no underscore
     path('preguntas-frecuentes/', views.faq, name='faq'),
     path('formacion/', views.formacion, name='formacion'),
+    path('formacion/', include('cursos.urls')),
 
     # Redirect WhatsApp (fallback por compatibilidad, ya no cuenta clicks)
     path('wa/<slug:slug>/', views.wa_redirect, name='wa_redirect'),

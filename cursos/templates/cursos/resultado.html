@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Inscripción | {{ inscripcion.curso.nombre }} | Atención Psi{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block content %}
+<section class="faq-hero">
+    <div class="faq-hero-inner">
+        {% if inscripcion.estado == 'aprobado' %}
+            <h1>¡Listo, {{ inscripcion.nombre }}!</h1>
+            <p>Tu inscripción a <strong>{{ inscripcion.curso.nombre }}</strong> quedó confirmada. Te mandamos un mail con los detalles.</p>
+        {% elif inscripcion.estado == 'rechazado' %}
+            <h1>El pago no se pudo completar</h1>
+            <p>No te preocupes, no se te cobró nada. Podés volver a intentarlo cuando quieras.</p>
+            <a href="{% url 'cursos_detalle' inscripcion.curso.slug %}" class="btn-hero" style="margin-top:20px;">Volver a intentar</a>
+        {% else %}
+            <h1>Estamos confirmando tu pago</h1>
+            <p>Puede tardar unos minutos. Te vamos a avisar por mail apenas se acredite.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

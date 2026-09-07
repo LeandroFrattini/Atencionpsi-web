@@ -32,6 +32,7 @@ nav {
 .nav-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     max-width: 1200px;
     margin: 0 auto;
     gap: 24px;
@@ -47,15 +48,17 @@ nav {
 .logo-verde { color: #7FA88D; }
 .logo-rosa { color: #D79A9F; }
 
-/* Agrupa links + botones y los pega al logo -- solo los botones se separan
-   del todo hacia el borde derecho (margin-left:auto en .nav-actions), en
-   vez de dejar todo el bloque flotando lejos del logo con un vacío enorme
-   en el medio. */
+/* Logo pegado a la izquierda; links + botones agrupados como un solo bloque
+   pegado a la derecha (justify-content:space-between en .nav-container).
+   Antes .nav-menu tenía flex:1 y .nav-actions margin-left:auto, que
+   empujaba los botones al borde y dejaba un vacío enorme e injustificado
+   entre los links y los botones -- ahora el espacio "de más" queda todo
+   junto entre el logo y el bloque de la derecha, que es donde se lee como
+   diseño intencional en vez de un layout roto. */
 .nav-menu {
     display: flex;
     align-items: center;
-    flex: 1;
-    gap: 48px;
+    gap: 40px;
 }
 
 .nav-links {
@@ -79,7 +82,6 @@ nav {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: auto;
 }
 
 .nav-actions a {
@@ -532,7 +534,6 @@ footer {
         flex-direction: column;
         align-items: center;
         gap: 12px;
-        margin-left: 0;
     }
 
     .nav-actions a.btn-unete-nav {
@@ -2336,4 +2337,63 @@ footer.site-footer-nueva {
     .site-footer-brand p { margin-left: auto; margin-right: auto; }
     .site-footer-cols { justify-content: center; gap: 40px; }
     .site-footer-col { text-align: center; }
+}
+
+/* --- FORMACIÓN: listado de cursos --- */
+.formacion-lista { max-width: 900px; margin: 0 auto; padding: 50px 20px 80px; display: flex; flex-direction: column; gap: 18px; }
+.formacion-card {
+    display: flex; gap: 22px; align-items: flex-start;
+    background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 24px;
+    text-decoration: none; color: inherit; transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.formacion-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.formacion-card-fecha {
+    flex-shrink: 0; width: 70px; text-align: center; background: #f3e7e4; border-radius: 12px; padding: 12px 0;
+}
+.formacion-card-dia { display: block; font-size: 1.7rem; font-weight: 700; color: #4a7c59; line-height: 1; }
+.formacion-card-mes { display: block; font-size: 0.75rem; font-weight: 600; color: #888; letter-spacing: 1px; margin-top: 4px; }
+.formacion-card-info h2 { font-size: 1.25rem; color: #222; margin-bottom: 6px; }
+.formacion-card-meta { font-size: 0.9rem; color: #777; margin-bottom: 8px; }
+.formacion-card-desc { font-size: 0.92rem; color: #555; line-height: 1.5; margin-bottom: 10px; }
+.formacion-card-badge {
+    display: inline-block; background: #eaf5ea; color: #4a7c59; font-size: 0.78rem; font-weight: 600;
+    padding: 5px 12px; border-radius: 999px;
+}
+.formacion-card-badge-agotado { background: #fbeaea; color: #a13d3d; }
+.formacion-vacio { text-align: center; color: #888; padding: 40px 0; }
+
+/* --- FORMACIÓN: página de un curso --- */
+.curso-body { max-width: 720px; margin: 0 auto; padding: 50px 20px 80px; }
+.curso-presentador-detalle { color: #999; font-size: 0.95rem; }
+.curso-descripcion { font-size: 1rem; line-height: 1.7; color: #444; margin-bottom: 40px; white-space: pre-line; }
+.curso-inscripcion-titulo { font-size: 1.4rem; color: #222; margin-bottom: 20px; text-align: center; }
+.curso-agotado { text-align: center; color: #a13d3d; font-weight: 600; padding: 24px 0; }
+
+.curso-opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.curso-opcion {
+    background: #fff; border: 1px solid #eee; border-radius: 16px; padding: 28px 24px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.curso-opcion-etiqueta { font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #4a7c59; margin-bottom: 8px; }
+.curso-opcion-precio { font-size: 2rem; font-weight: 700; color: #222; margin-bottom: 10px; }
+.curso-opcion-desc { font-size: 0.88rem; color: #777; line-height: 1.5; margin-bottom: 20px; }
+.curso-opcion form { width: 100%; }
+.curso-btn-secundario { background-color: #4a7c59 !important; }
+.curso-btn-secundario:hover { background-color: #3d6849 !important; }
+
+.curso-form { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+.curso-form-field label { display: block; font-size: 0.85rem; font-weight: 600; color: #444; margin-bottom: 4px; }
+.curso-form-field input {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; font-family: inherit;
+}
+.curso-form-error { color: #a13d3d; font-size: 0.82rem; margin-top: 4px; }
+.curso-cupos-aviso { text-align: center; color: #888; font-size: 0.88rem; margin-top: 18px; }
+.curso-confirmar-texto { font-size: 1.05rem; text-align: center; margin-bottom: 24px; }
+.curso-dev-box { background: #fdf3e0; border-radius: 12px; padding: 20px 24px; text-align: center; }
+.curso-dev-box form { display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+    .curso-opciones { grid-template-columns: 1fr; }
+    .formacion-card { flex-direction: column; align-items: flex-start; }
+    .formacion-card-fecha { width: auto; padding: 6px 14px; }
 }
