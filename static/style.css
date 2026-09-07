@@ -2374,11 +2374,17 @@ footer.site-footer-nueva {
 .curso-presentador-link:hover { color: #3d6849; }
 
 .curso-modal-overlay {
+    /* display:flex acá (sin condición) le ganaba al [hidden] del navegador
+       -- el modal quedaba SIEMPRE visible sin importar el atributo, así que
+       aparecía solo al cargar la página y "cerrar" no hacía nada visible
+       (el atributo cambiaba, pero el display seguía fijo en flex). Por eso
+       display se define en :not([hidden]) más abajo, no acá. */
     position: fixed; inset: 0; z-index: 1000;
     background: rgba(30, 26, 22, 0.55);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
+    align-items: center; justify-content: center; padding: 20px;
     animation: curso-modal-fade 0.2s ease;
 }
+.curso-modal-overlay:not([hidden]) { display: flex; }
 .curso-modal {
     background: #fff; border-radius: 20px; max-width: 460px; width: 100%;
     padding: 40px 36px; position: relative; max-height: 85vh; overflow-y: auto;
