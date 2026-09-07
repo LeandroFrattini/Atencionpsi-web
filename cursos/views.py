@@ -103,7 +103,12 @@ def simular_pago(request, pk):
     inscripcion = get_object_or_404(InscripcionCurso, pk=pk)
     aprobar = request.POST.get('accion') == 'aprobar'
     if aprobar:
-        _confirmar_inscripcion(inscripcion, mp_payment_id='SIMULADO-DEV')
+        # Con un valor fijo, la segunda simulación de pago (para cualquier
+        # inscripción) pisaba el unique=True de mp_payment_id y tiraba un
+        # IntegrityError -- solo pasa en DEBUG, nunca en producción (esta
+        # vista ni siquiera existe ahí), pero rompía las pruebas manuales
+        # locales apenas se simulaba un segundo pago.
+        _confirmar_inscripcion(inscripcion, mp_payment_id=f'SIMULADO-DEV-{inscripcion.pk}')
     else:
         inscripcion.estado = 'rechazado'
         inscripcion.save(update_fields=['estado'])

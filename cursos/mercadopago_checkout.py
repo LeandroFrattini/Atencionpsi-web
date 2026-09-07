@@ -7,6 +7,7 @@ el historial).
 import os
 
 import requests
+from django.urls import reverse
 
 API_BASE = 'https://api.mercadopago.com'
 
@@ -28,6 +29,13 @@ def crear_preferencia(inscripcion, request):
         )
 
     base_url = f'{request.scheme}://{request.get_host()}'
+    # Armadas con reverse() (no a mano) para que nunca queden desincronizadas
+    # del mount real de cursos.urls en atencionpsi/urls.py -- antes decían
+    # "/cursos/..." hardcodeado, pero la app está montada en "/formacion/",
+    # así que tanto la vuelta del pago como el webhook de Mercado Pago
+    # apuntaban a un 404 real y jamás confirmaban nada.
+    url_resultado = base_url + reverse('cursos_resultado', args=[inscripcion.pk])
+    url_webhook = base_url + reverse('cursos_webhook_mercadopago')
     body = {
         'items': [{
             'title': inscripcion.curso.nombre,
@@ -38,12 +46,12 @@ def crear_preferencia(inscripcion, request):
         'payer': {'name': inscripcion.nombre, 'email': inscripcion.email},
         'external_reference': str(inscripcion.pk),
         'back_urls': {
-            'success': f'{base_url}/cursos/inscripcion/{inscripcion.pk}/resultado/',
-            'pending': f'{base_url}/cursos/inscripcion/{inscripcion.pk}/resultado/',
-            'failure': f'{base_url}/cursos/inscripcion/{inscripcion.pk}/resultado/',
+            'success': url_resultado,
+            'pending': url_resultado,
+            'failure': url_resultado,
         },
         'auto_return': 'approved',
-        'notification_url': f'{base_url}/cursos/webhook/mercadopago/',
+        'notification_url': url_webhook,
     }
     resp = requests.post(
         f'{API_BASE}/checkout/preferences', json=body,
