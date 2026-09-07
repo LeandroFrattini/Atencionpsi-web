@@ -20,8 +20,8 @@ class PacienteAdmin(admin.ModelAdmin):
 
 @admin.register(Turno)
 class TurnoAdmin(admin.ModelAdmin):
-    list_display = ('paciente', 'psicologo', 'fecha_hora', 'estado', 'reagendado')
-    list_filter = ('estado', 'reagendado', 'psicologo')
+    list_display = ('paciente', 'psicologo', 'fecha_hora', 'estado', 'origen', 'creado_en', 'reagendado')
+    list_filter = ('origen', 'estado', 'reagendado', 'psicologo')
     search_fields = ('paciente__nombre', 'paciente__apellido', 'psicologo__nombre')
     autocomplete_fields = ('psicologo', 'paciente')
     date_hierarchy = 'fecha_hora'

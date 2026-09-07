@@ -82,6 +82,48 @@ class ObraSocial(models.Model):
     def __str__(self):
         return self.nombre
 
+
+def _foto_con_orientacion_correcta(foto_field):
+    """
+    Si la foto tiene tag EXIF de orientación (típico en fotos sacadas con
+    el celular en vertical), devuelve una versión nueva con los píxeles ya
+    rotados en el sentido correcto y ese tag eliminado -- así se ve bien en
+    cualquier visor, respete o no el EXIF. Si no tiene nada que corregir,
+    devuelve la foto tal cual (no se re-comprime sin necesidad).
+    """
+    from io import BytesIO
+    from PIL import Image, ImageOps
+    from django.core.files.base import ContentFile
+
+    foto_field.file.seek(0)
+    try:
+        imagen = Image.open(foto_field.file)
+        imagen.load()
+        orientacion = imagen.getexif().get(0x0112)  # tag EXIF de orientación
+    except Exception:
+        # Archivo corrupto o no reconocible como imagen -- lo dejamos pasar
+        # tal cual; que falle (o no) más adelante donde ya fallaba antes.
+        return foto_field
+    finally:
+        foto_field.file.seek(0)
+
+    if not orientacion or orientacion == 1:
+        return foto_field
+
+    formato = imagen.format or 'JPEG'
+    imagen = ImageOps.exif_transpose(imagen)
+    guardar_kwargs = {'format': formato}
+    if formato == 'JPEG':
+        if imagen.mode not in ('RGB', 'L'):
+            imagen = imagen.convert('RGB')
+        guardar_kwargs['quality'] = 90
+
+    buffer = BytesIO()
+    imagen.save(buffer, **guardar_kwargs)
+    buffer.seek(0)
+    return ContentFile(buffer.read(), name=foto_field.name)
+
+
 class Psicologo(models.Model):
     nombre = models.CharField(max_length=100)
     slug = models.SlugField(max_length=150, unique=True, blank=True, null=True)
@@ -173,6 +215,15 @@ class Psicologo(models.Model):
             self.slug = slugify(self.nombre)
         # Limpiar número de WhatsApp al guardar
         self.whatsapp = re.sub(r'[^\d]', '', self.whatsapp)
+        # Fotos sacadas con el celular en vertical suelen guardar los
+        # píxeles "acostados" y un tag EXIF que le dice al que la mira
+        # "rotala". La mayoría de los navegadores lo respetan, pero no
+        # todos (ni WhatsApp/redes al generar la vista previa) -- por eso
+        # se ve derecha en algunos lados y de costado en otros. Achatamos
+        # la rotación en los píxeles mismos al subir la foto, así se ve
+        # bien en cualquier lado sin depender de quién la mire.
+        if self.foto and not self.foto._committed:
+            self.foto = _foto_con_orientacion_correcta(self.foto)
         super().save(*args, **kwargs)
 
     def __str__(self):

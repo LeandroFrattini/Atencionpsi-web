@@ -5,6 +5,7 @@ que el profesional carga a mano en "Nuevo turno" no mandan nada (ver
 Turno.origen en portal/models.py).
 """
 import datetime
+import logging
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -12,6 +13,8 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from .disponibilidad import fecha_larga as _fecha_larga
+
+logger = logging.getLogger(__name__)
 
 
 def enviar_con_contexto(destinatario_email, contexto):
@@ -60,6 +63,10 @@ def enviar_aviso_nuevo_turno(turno):
     no tiene mail de acceso al portal, no hay a quién avisarle y no hace nada."""
     psico = turno.psicologo
     if not (psico.usuario_id and psico.usuario.email):
+        logger.warning(
+            'Turno %s reservado para %s, pero no tiene mail de acceso al portal cargado -- no se avisó a nadie.',
+            turno.pk, psico.nombre,
+        )
         return
 
     duracion = datetime.timedelta(minutes=psico.duracion_turno_min)
