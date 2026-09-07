@@ -2437,6 +2437,8 @@ footer.site-footer-nueva {
 }
 .curso-form-error { color: #a13d3d; font-size: 0.82rem; margin-top: 4px; }
 .curso-cupos-aviso { text-align: center; color: #888; font-size: 0.88rem; margin-top: 18px; }
+.curso-ayuda-pago { text-align: center; color: #777; font-size: 0.85rem; margin-top: 10px; }
+.curso-ayuda-pago a { color: #4a7c59; font-weight: 600; }
 .curso-confirmar-texto { font-size: 1.05rem; text-align: center; margin-bottom: 24px; }
 .curso-dev-box { background: #fdf3e0; border-radius: 12px; padding: 20px 24px; text-align: center; }
 .curso-dev-box form { display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
