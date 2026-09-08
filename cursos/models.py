@@ -21,6 +21,11 @@ class Curso(models.Model):
                    'Vacío = el nombre no es clickeable.'
     )
     presentador_foto = models.ImageField(upload_to='cursos/presentadores/', null=True, blank=True)
+    presentador_email = models.EmailField(
+        blank=True,
+        help_text='Si se completa, se le avisa por mail cada vez que alguien se '
+                   'inscribe y paga este curso. Vacío = no se le avisa a nadie.'
+    )
     fecha = models.DateField()
     hora = models.TimeField()
     precio_red_consulta = models.DecimalField('Precio Miembros Atención Psi', max_digits=10, decimal_places=2)

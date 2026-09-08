@@ -192,3 +192,16 @@ def _enviar_mails_confirmacion(inscripcion):
         from_email=None,
         recipient_list=[settings.TURNOS_BCC_EMAIL],
     )
+    if curso.presentador_email:
+        send_mail(
+            subject=f'Nueva persona anotada en "{curso.nombre}"',
+            message=(
+                f'Hola,\n\n'
+                f'{inscripcion.nombre} se acaba de anotar y pagar tu curso '
+                f'"{curso.nombre}" ({curso.fecha:%d/%m/%Y} a las {curso.hora:%H:%M} hs).\n\n'
+                f'Contacto: {inscripcion.email} / {inscripcion.whatsapp}\n\n'
+                'Cualquier consulta, respondé este mail.'
+            ),
+            from_email=None,
+            recipient_list=[curso.presentador_email],
+        )

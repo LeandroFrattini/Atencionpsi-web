@@ -101,6 +101,27 @@ class WebhookMercadoPagoTests(TestCase):
         self.assertEqual(len(mail.outbox), 2)  # confirmación a la/el inscripta/o + aviso interno
 
     @mock.patch('cursos.views.mercadopago_checkout.obtener_pago')
+    def test_pago_aprobado_con_presentador_email_le_avisa_tambien(self, mock_obtener_pago):
+        self.curso.presentador_email = 'presentadora@example.com'
+        self.curso.save(update_fields=['presentador_email'])
+        mock_obtener_pago.return_value = {
+            'id': 999, 'status': 'approved', 'external_reference': str(self.inscripcion.pk),
+        }
+        resp = self.client.post(reverse('cursos_webhook_mercadopago') + '?data.id=999')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(mail.outbox), 3)  # + el aviso a quien dicta el curso
+        self.assertEqual(mail.outbox[2].to, ['presentadora@example.com'])
+
+    @mock.patch('cursos.views.mercadopago_checkout.obtener_pago')
+    def test_pago_aprobado_sin_presentador_email_no_manda_tercer_mail(self, mock_obtener_pago):
+        # presentador_email vacío (default) -- no debe romper ni mandar nada de más.
+        mock_obtener_pago.return_value = {
+            'id': 999, 'status': 'approved', 'external_reference': str(self.inscripcion.pk),
+        }
+        self.client.post(reverse('cursos_webhook_mercadopago') + '?data.id=999')
+        self.assertEqual(len(mail.outbox), 2)
+
+    @mock.patch('cursos.views.mercadopago_checkout.obtener_pago')
     def test_pago_aprobado_dos_veces_no_duplica_el_mail(self, mock_obtener_pago):
         # Mercado Pago puede mandar la misma notificación más de una vez --
         # confirmar de nuevo algo que ya estaba aprobado no tiene que
