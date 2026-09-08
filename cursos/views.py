@@ -186,7 +186,7 @@ def _enviar_mails_confirmacion(inscripcion):
         message=(
             f'{inscripcion.nombre} ({inscripcion.email} / {inscripcion.whatsapp}) '
             f'se inscribió y pagó "{curso.nombre}" -- '
-            f"{'Red Consulta' if inscripcion.es_red_consulta else 'público general'}, "
+            f"{'Miembros Atención Psi' if inscripcion.es_red_consulta else 'público general'}, "
             f'${inscripcion.monto}.'
         ),
         from_email=None,

@@ -23,7 +23,7 @@ class Curso(models.Model):
     presentador_foto = models.ImageField(upload_to='cursos/presentadores/', null=True, blank=True)
     fecha = models.DateField()
     hora = models.TimeField()
-    precio_red_consulta = models.DecimalField('Precio Red Consulta', max_digits=10, decimal_places=2)
+    precio_red_consulta = models.DecimalField('Precio Miembros Atención Psi', max_digits=10, decimal_places=2)
     precio_publico = models.DecimalField('Precio público general', max_digits=10, decimal_places=2)
     cupo_maximo = models.PositiveIntegerField(
         null=True, blank=True,
