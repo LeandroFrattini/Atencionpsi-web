@@ -12,6 +12,7 @@
 
         <form method="post">
             {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
             <div class="portal-field">
                 <label for="id_username">Usuario</label>
                 {{ form.username }}
