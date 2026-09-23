@@ -40,6 +40,11 @@ BLANCO = (255, 255, 255)
 
 W, H = 1080, 1920
 
+# Post de feed (2026-09-22): 1080x1350, el 4:5 que recomienda Instagram para
+# feed (más superficie en el scroll que el clásico 1:1) -- coincide además
+# con la proporción del ejemplo que mandó la dueña.
+FEED_W, FEED_H = 1080, 1350
+
 
 # ── Fuentes (variable fonts locales, sin descargas externas) ───────────────
 _FONT_INSTANCES = {
@@ -200,6 +205,21 @@ BLOB_FONDO_3 = [
     (1005.0, 1832.5), (1029.6, 1830.7), (1054.6, 1827.3), (1080.0, 1822.0), (1080, 1920),
     (0, 1920),
 ]
+
+
+def _escalar_puntos(puntos, sx, sy):
+    return [(x * sx, y * sy) for x, y in puntos]
+
+
+# Mismas dos manchas de la historia (mancha 1 arriba a la izq. ya entra sin
+# tocar, mancha 2 abajo a la derecha se comprime en vertical para que quepa
+# en un lienzo mucho más bajo) -- la mancha 3 ("ola" del pie) se descarta
+# para el feed, pensada para un lienzo mucho más alto y sin lugar donde
+# lucir bien acá. Reescalar en vez de dibujar formas nuevas mantiene el
+# mismo trazado ya aprobado en el mockup HTML.
+_SY_FEED = FEED_H / H
+BLOB_FEED_1 = BLOB_FONDO_1
+BLOB_FEED_2 = _escalar_puntos(BLOB_FONDO_2, 1.0, _SY_FEED)
 
 
 def _forma_organica(canvas, puntos, color, alpha=255):
@@ -399,6 +419,20 @@ def _crop_cuadrado(img, lado, foco_vertical=0.12):
     return img.crop((left, top, left + lado, top + lado))
 
 
+def _crop_rectangulo(img, ancho, alto, foco_vertical=0.15):
+    """Mismo criterio que _crop_cuadrado (sesgado hacia arriba para no
+    perder la cara) pero a un rectángulo de proporción libre, para la
+    tarjeta de foto del post de feed."""
+    sw, sh = img.size
+    ratio = max(ancho / sw, alto / sh)
+    nw, nh = int(sw * ratio), int(sh * ratio)
+    img = img.resize((nw, nh), Image.Resampling.LANCZOS)
+    left = (nw - ancho) // 2
+    top = int((nh - alto) * foco_vertical)
+    top = max(0, min(nh - alto, top))
+    return img.crop((left, top, left + ancho, top + alto))
+
+
 def _abrir_foto(foto_field):
     if not foto_field:
         return None
@@ -463,6 +497,60 @@ def _medallion(canvas, cx, cy, diametro, foto_field):
 
         d = ImageDraw.Draw(canvas)
         _icono_persona_placeholder(d, cx, cy, interior_r * 0.62, VERDE_OSCURO)
+
+
+def _tarjeta_foto(canvas, x, y, ancho, alto, foto_field, radio=32):
+    """Tarjeta de foto rectangular con esquinas redondeadas, marco en
+    degradé verde-rosa (mismo criterio que el aro del medallón de la
+    historia) y sombra propia -- para el post de feed, donde la dueña pidió
+    una foto rectangular en vez de circular (2026-09-22)."""
+    borde = 10
+    marco = _gradiente_lineal(ancho, alto, VERDE, ROSA, angulo=145)
+    mask_marco = Image.new('L', (ancho, alto), 0)
+    md = ImageDraw.Draw(mask_marco)
+    md.rounded_rectangle([0, 0, ancho, alto], radius=radio, fill=255)
+    md.rounded_rectangle([borde, borde, ancho - borde, alto - borde], radius=max(4, radio - borde), fill=0)
+    marco.putalpha(mask_marco)
+
+    sombra, pad, offset = _sombra_para((ancho, alto), radio, alpha=45, blur=24, offset=(0, 14))
+    canvas.paste(sombra, (x - pad + offset[0], y - pad + offset[1]), sombra)
+
+    interior_w, interior_h = ancho - borde * 2, alto - borde * 2
+    ix, iy = x + borde, y + borde
+    radio_int = max(4, radio - borde)
+
+    interior = _gradiente_lineal(interior_w, interior_h, BLANCO, BLUSH, angulo=160)
+    mask_int = Image.new('L', (interior_w, interior_h), 0)
+    ImageDraw.Draw(mask_int).rounded_rectangle([0, 0, interior_w, interior_h], radius=radio_int, fill=255)
+
+    canvas.paste(marco, (x, y), marco)
+
+    data = _abrir_foto(foto_field)
+    if data:
+        try:
+            foto = Image.open(data).convert('RGB')
+            foto = _crop_rectangulo(foto, interior_w, interior_h)
+            foto.putalpha(mask_int)
+            canvas.paste(foto, (ix, iy), foto)
+            return
+        except Exception:
+            data = None
+    if not data:
+        interior.putalpha(mask_int)
+        canvas.paste(interior, (ix, iy), interior)
+
+        lado = min(interior_w, interior_h) * 0.5
+        capa_forma = Image.new('RGBA', (interior_w, interior_h), (0, 0, 0, 0))
+        cfx, cfy = interior_w / 2, interior_h / 2
+        ImageDraw.Draw(capa_forma).polygon(
+            [(cfx, cfy - lado / 2), (cfx + lado / 2, cfy), (cfx, cfy + lado / 2), (cfx - lado / 2, cfy)],
+            fill=ROSA + (55,),
+        )
+        capa_forma.putalpha(ImageChops.multiply(capa_forma.split()[3], mask_int))
+        canvas.paste(capa_forma, (ix, iy), capa_forma)
+
+        d = ImageDraw.Draw(canvas)
+        _icono_persona_placeholder(d, ix + interior_w // 2, iy + interior_h // 2, min(interior_w, interior_h) * 0.28, VERDE_OSCURO)
 
 
 # ── Generador principal ─────────────────────────────────────────────────
@@ -649,6 +737,147 @@ def generar_imagen_story(psicologo, telefono_manual=None):
         for linea in lineas:
             capa_linea = _texto_italica(linea, f_franja, TINTA)
             canvas.paste(capa_linea, ((W - capa_linea.size[0]) // 2, fy), capa_linea)
+            fy += alto_linea
+
+    return canvas
+
+
+# ── Generador de post de feed (2026-09-22) ────────────────────────────────
+def generar_imagen_feed(psicologo):
+    """
+    Post de feed (1080x1350) con UN profesional. A diferencia de la
+    historia, no lleva el logo de "Atención Psi" ni la burbuja de
+    Instagram -- se postea directo en la cuenta, así que ya se sabe de
+    quién es (pedido explícito de la dueña) -- pero sí una burbuja con la
+    web al final (2026-09-22: para llenar el aire que quedaba vacío abajo
+    con contenido corto). Los 4 campos que pidió: nombre, orientación (el
+    texto libre que escribe cada profesional, no el filtro fijo), localidad
+    + modalidad, y a quién atiende. Foto en tarjeta rectangular en vez de
+    medallón circular, mismo lenguaje visual (manchas de fondo, paleta,
+    tipografías) que la historia para que se sientan de la misma familia.
+    """
+    canvas = Image.new('RGB', (FEED_W, FEED_H), CREMA)
+
+    _forma_organica(canvas, BLOB_FEED_1, (220, 231, 221))
+    _forma_organica(canvas, BLOB_FEED_2, (244, 229, 226))
+    _puntos_dispersos(canvas, 45, (0, 360), (0, 360), VERDE_OSCURO, seed=27)
+    _puntos_dispersos(canvas, 55, (740, FEED_W), (260, FEED_H - 60), (217, 137, 133), seed=28)
+
+    draw = ImageDraw.Draw(canvas)
+
+    # ── Tarjeta de foto ──
+    foto_w, foto_h = 560, 600
+    foto_x = (FEED_W - foto_w) // 2
+    foto_y = 90
+    _tarjeta_foto(canvas, foto_x, foto_y, foto_w, foto_h, getattr(psicologo, 'foto', None))
+    draw = ImageDraw.Draw(canvas)
+    cy = foto_y + foto_h + 46
+
+    # ── Nombre ──
+    nombre = _limpiar_nombre(psicologo.nombre)
+    f_nombre = _font('playfair', 700, 60)
+    lineas_nombre = _wrap(draw, nombre, f_nombre, FEED_W - 140)
+    if len(lineas_nombre) > 2:
+        f_nombre = _font('playfair', 700, 48)
+        lineas_nombre = _wrap(draw, nombre, f_nombre, FEED_W - 140)
+    for linea in lineas_nombre:
+        _center(draw, linea, FEED_W // 2, cy, f_nombre, TINTA)
+        cy += _th(draw, linea, f_nombre) + 10
+    cy += 10
+
+    # ── Orientación: texto libre que escribe cada profesional, en itálica
+    # (mismo efecto "escrito a mano" que ya se usa para la franja de a
+    # quién atiende) para que se lea distinto del nombre sin agregar otra
+    # tipografía nueva. ──
+    orientacion = (psicologo.orientacion or '').strip()
+    if orientacion:
+        f_orient = _font('playfair', 500, 33)
+        lineas_orient = _wrap(draw, orientacion, f_orient, FEED_W - 220)[:3]
+        for linea in lineas_orient:
+            capa = _texto_italica(linea, f_orient, TINTA_SUAVE)
+            canvas.paste(capa, ((FEED_W - capa.size[0]) // 2, cy), capa)
+            cy += _th(draw, linea, f_orient) + 8
+        cy += 22
+
+    # ── Modalidad + localidad (misma burbuja que la historia, pero acá la
+    # ciudad se muestra siempre que exista, no solo con 2+ modalidades --
+    # la localidad es uno de los 4 campos pedidos). ──
+    modalidades = list(psicologo.modalidades.values_list('nombre', flat=True))
+    ciudades = list(psicologo.ciudades.values_list('nombre', flat=True))
+    texto_modalidad = ' y '.join(modalidades) if modalidades else ''
+    texto_ciudad = ', '.join(ciudades) if ciudades else ''
+
+    if texto_modalidad:
+        f_dato = _font('montserrat', 800, 34)
+        f_dato_sub = _font('montserrat', 500, 22)
+        alto = 106 if texto_ciudad else 90
+        lineas_modal = [(texto_modalidad, f_dato)] + ([(texto_ciudad, f_dato_sub)] if texto_ciudad else [])
+        ancho_modal = _ancho_burbuja_dato(draw, lineas_modal)
+
+        def _dibujar_modalidad(d, x, alto=alto, texto_ciudad=texto_ciudad, texto_modalidad=texto_modalidad):
+            if texto_ciudad:
+                d.text((x, alto // 2 - 19), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
+                ancho_modalidad = _tw(d, texto_modalidad, f_dato)
+                ancho_ciudad = _tw(d, texto_ciudad, f_dato_sub)
+                x_ciudad = x + (ancho_modalidad - ancho_ciudad) / 2
+                d.text((x_ciudad, alto // 2 + 21), texto_ciudad, font=f_dato_sub, fill=TINTA_SUAVE, anchor='lm')
+            else:
+                d.text((x, alto // 2), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
+
+        capa = _dibujar_burbuja_dato(_dibujar_modalidad, ancho_modal, alto, _icono_ubicacion)
+        bx = (FEED_W - capa.size[0]) // 2
+        _pegar_con_sombra(canvas, capa, bx, cy, capa.size[1] // 2)
+        cy += capa.size[1] + 30
+    else:
+        cy += 10
+
+    # ── A quién atiende: misma franja de tipografía libre auto-achicable
+    # que la historia. ──
+
+    # ── Burbuja de sitio web, anclada abajo (pedido 2026-09-22: rellena el
+    # aire que quedaba vacío al final -- se calcula antes que "a quién
+    # atiende" para que esa franja sepa hasta dónde tiene lugar libre). ──
+    f_burbuja_web = _font('montserrat', 700, 36)
+    web_texto = DOMINIO_SITIO
+    pad_web_x, pad_web_y = 38, 19
+    icono_web_d = 42
+    web_texto_w = _tw(draw, web_texto, f_burbuja_web)
+    web_h = _th(draw, web_texto, f_burbuja_web) + pad_web_y * 2 + 10
+    web_w = pad_web_x * 2 + icono_web_d + 16 + web_texto_w
+    margen_inferior_web = 70
+    web_y = FEED_H - margen_inferior_web - web_h
+    web_x0 = (FEED_W - web_w) // 2
+    draw.rounded_rectangle([web_x0, web_y, web_x0 + web_w, web_y + web_h], radius=web_h // 2, fill=VERDE_OSCURO)
+    icono_web_cx = web_x0 + pad_web_x + icono_web_d // 2
+    icono_web_cy = web_y + web_h // 2
+    _icono_globo(draw, icono_web_cx, icono_web_cy, icono_web_d * 0.42, BLANCO)
+    draw.text((icono_web_cx + icono_web_d // 2 + 16, icono_web_cy), web_texto, font=f_burbuja_web, fill=BLANCO, anchor='lm')
+
+    destinatarios = ', '.join(psicologo.destinatarios.values_list('nombre', flat=True))
+    if destinatarios:
+        eyebrow = 'ATIENDE A'
+        f_eyebrow = _font('montserrat', 700, 23)
+        max_ancho_franja = FEED_W - 160
+        limite_superior_y = cy
+        limite_inferior_y = web_y - 40
+        alto_encabezado = _th(draw, eyebrow, f_eyebrow) + 16 + 20 + 12
+
+        for tam in (52, 46, 40, 34):
+            f_franja = _font('playfair', 600, tam)
+            lineas = _wrap(draw, destinatarios, f_franja, max_ancho_franja)
+            alto_linea = _th(draw, 'Ag', f_franja) + 12
+            alto_bloque = alto_linea * len(lineas)
+            if limite_superior_y + alto_encabezado + alto_bloque <= limite_inferior_y or tam == 34:
+                break
+
+        fy = limite_superior_y
+        _center(draw, eyebrow, FEED_W // 2, fy, f_eyebrow, VERDE_OSCURO)
+        fy += _th(draw, eyebrow, f_eyebrow) + 16
+        draw.line([(FEED_W // 2 - 32, fy + 8), (FEED_W // 2 + 32, fy + 8)], fill=VERDE, width=2)
+        fy += 20 + 12
+        for linea in lineas:
+            capa_linea = _texto_italica(linea, f_franja, TINTA)
+            canvas.paste(capa_linea, ((FEED_W - capa_linea.size[0]) // 2, fy), capa_linea)
             fy += alto_linea
 
     return canvas

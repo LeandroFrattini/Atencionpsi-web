@@ -100,7 +100,7 @@ class PsicologoAdmin(admin.ModelAdmin):
         return total
     clicks_totales.short_description = 'Clicks WA'
 
-    actions = ['generar_imagenes_action', 'crear_acceso_portal_action']
+    actions = ['generar_imagenes_action', 'generar_imagen_feed_action', 'crear_acceso_portal_action']
 
     def crear_acceso_portal_action(self, request, queryset):
         """
@@ -198,6 +198,36 @@ class PsicologoAdmin(admin.ModelAdmin):
         return TemplateResponse(request, 'admin/generar_imagenes.html', context)
 
     generar_imagenes_action.short_description = 'Generar historia de Instagram'
+
+    def generar_imagen_feed_action(self, request, queryset):
+        """Acción de admin: genera el post de feed (1080x1350) de cada psicólogo seleccionado."""
+        from .generador_imagenes import generar_imagen_feed
+
+        if 'apply' in request.POST:
+            buf = BytesIO()
+            with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+                for p in queryset:
+                    nombre_slug = p.slug or p.nombre.lower().replace(' ', '-')
+                    feed_img = generar_imagen_feed(p)
+                    feed_buf = BytesIO()
+                    feed_img.save(feed_buf, 'JPEG', quality=92)
+                    zf.writestr(f'{nombre_slug}_feed.jpg', feed_buf.getvalue())
+
+            buf.seek(0)
+            response = HttpResponse(buf.read(), content_type='application/zip')
+            response['Content-Disposition'] = 'attachment; filename="posts_feed_psicologos.zip"'
+            return response
+
+        context = {
+            **self.admin_site.each_context(request),
+            'title': 'Generar posts de feed de Instagram',
+            'queryset': queryset,
+            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+            'media': self.media,
+        }
+        return TemplateResponse(request, 'admin/generar_imagen_feed.html', context)
+
+    generar_imagen_feed_action.short_description = 'Generar post de feed de Instagram'
 
 
 

@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from .generador_imagenes import generar_imagen_story
+from .generador_imagenes import generar_imagen_feed, generar_imagen_story
 from .models import Ciudad, Modalidad, Psicologo, Publico
 
 
@@ -48,6 +48,40 @@ class GeneradorImagenesTests(TestCase):
         self.assertEqual(img2.size, (1080, 1920))
 
 
+class GeneradorImagenFeedTests(TestCase):
+    """Post de feed (2026-09-22): sin foto/orientación/ciudad no debe
+    romper, y con contenido largo el 'a quién atiende' se achica solo
+    (mismo criterio que la historia)."""
+
+    def setUp(self):
+        self.psico = Psicologo.objects.create(
+            nombre='Lic. Prueba Genérica', whatsapp='2911234567', orientacion='Psicoanálisis',
+        )
+        self.psico.modalidades.set([Modalidad.objects.create(nombre='Presencial')])
+        self.psico.destinatarios.set([Publico.objects.create(nombre='Adultos')])
+
+    def test_genera_imagen_del_tamano_correcto(self):
+        img = generar_imagen_feed(self.psico)
+        self.assertEqual(img.size, (1080, 1350))
+        self.assertEqual(img.mode, 'RGB')
+
+    def test_sin_foto_ni_orientacion_ni_ciudad_no_rompe(self):
+        vacio = Psicologo.objects.create(nombre='Lic. Sin Datos', whatsapp='2911234567')
+        img = generar_imagen_feed(vacio)
+        self.assertEqual(img.size, (1080, 1350))
+
+    def test_atiende_a_largo_no_se_corta(self):
+        todos = list(Publico.objects.all()) + [
+            Publico.objects.create(nombre='Familias'),
+            Publico.objects.create(nombre='Parejas'),
+            Publico.objects.create(nombre='Orientación Vocacional'),
+            Publico.objects.create(nombre='Orientación a Padres'),
+        ]
+        self.psico.destinatarios.set(todos)
+        img = generar_imagen_feed(self.psico)  # no debe lanzar excepción
+        self.assertEqual(img.size, (1080, 1350))
+
+
 class GenerarImagenesAdminActionTests(TestCase):
     def setUp(self):
         self.admin_user = User.objects.create_superuser('admin_gen_test', 'admin@example.com', 'ClaveAdminSegura2026')
@@ -82,6 +116,20 @@ class GenerarImagenesAdminActionTests(TestCase):
         self.assertEqual(resp['Content-Type'], 'application/zip')
         zf = zipfile.ZipFile(BytesIO(resp.content))
         self.assertEqual(len(zf.namelist()), 1)
+
+    def test_descarga_zip_con_el_post_de_feed(self):
+        url = reverse('admin:profesionales_psicologo_changelist')
+        resp = self.client.post(url, {
+            'action': 'generar_imagen_feed_action',
+            '_selected_action': [self.psico.pk],
+            'apply': '1',
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/zip')
+        zf = zipfile.ZipFile(BytesIO(resp.content))
+        nombres = zf.namelist()
+        self.assertEqual(len(nombres), 1)
+        self.assertTrue(nombres[0].endswith('_feed.jpg'))
 
 
 class PsicologoActivoTests(TestCase):
