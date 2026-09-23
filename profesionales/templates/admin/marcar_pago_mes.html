@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Marcar pago de {{ mes_nombre }} – Admin{% endblock %}
+
+{% block content %}
+<h1>Marcar pago de {{ mes_nombre }}</h1>
+
+{% if a_marcar %}
+<p>Se va a registrar el ingreso en Finanzas de <strong>{{ a_marcar|length }}</strong> profesional{{ a_marcar|length|pluralize:"es" }}, por el monto que tienen cargado:</p>
+<ul>
+  {% for p in a_marcar %}
+    <li>{{ p.nombre }} — ${{ p.monto_pagado }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if ya_pagados %}
+<p>Ya tenían un pago de este mes cargado -- no se va a duplicar:</p>
+<ul>
+  {% for p in ya_pagados %}
+    <li>{{ p.nombre }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if sin_monto %}
+<p>No tienen "Monto pagado" cargado en su ficha -- no se les puede registrar el pago (completalo primero en Datos comerciales):</p>
+<ul>
+  {% for p in sin_monto %}
+    <li>{{ p.nombre }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if a_marcar %}
+<form method="post">
+  {% csrf_token %}
+  {% for p in queryset %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ p.pk }}">
+  {% endfor %}
+  <input type="hidden" name="action" value="marcar_pago_mes_action">
+
+  <div style="margin-top:20px;">
+    <input
+      type="submit"
+      name="apply"
+      value="Confirmar pago de {{ a_marcar|length }} profesional{{ a_marcar|length|pluralize:"es" }}"
+      class="default"
+      style="padding:10px 20px; font-size:14px;"
+    >
+    &nbsp;
+    <a href="../" style="margin-left:12px;">Cancelar</a>
+  </div>
+</form>
+{% else %}
+<p><a href="../">Volver</a></p>
+{% endif %}
+{% endblock %}

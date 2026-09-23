@@ -4,6 +4,9 @@ from io import BytesIO
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils import timezone
+
+from portal.models import Pago
 
 from .generador_imagenes import generar_imagen_feed, generar_imagen_story
 from .models import Ciudad, Modalidad, Psicologo, Publico
@@ -130,6 +133,79 @@ class GenerarImagenesAdminActionTests(TestCase):
         nombres = zf.namelist()
         self.assertEqual(len(nombres), 1)
         self.assertTrue(nombres[0].endswith('_feed.jpg'))
+
+
+class MarcarPagoMesAdminActionTests(TestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser('admin_pago_test', 'admin@example.com', 'ClaveAdminSegura2026')
+        self.client = Client()
+        self.client.force_login(self.admin_user)
+        self.changelist_url = reverse('admin:profesionales_psicologo_changelist')
+
+    def _post(self, psicologos, apply=False):
+        data = {'action': 'marcar_pago_mes_action', '_selected_action': [p.pk for p in psicologos]}
+        if apply:
+            data['apply'] = '1'
+        return self.client.post(self.changelist_url, data)
+
+    def test_pantalla_de_confirmacion_separa_a_quien_se_le_va_a_cobrar(self):
+        con_monto = Psicologo.objects.create(nombre='Con Monto', whatsapp='2911111111', monto_pagado=25000)
+        sin_monto = Psicologo.objects.create(nombre='Sin Monto', whatsapp='2911111112')
+        resp = self._post([con_monto, sin_monto])
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn(con_monto, resp.context['a_marcar'])
+        self.assertIn(sin_monto, resp.context['sin_monto'])
+        # Todavía no se tocó la base -- recién se crea el Pago al confirmar.
+        self.assertEqual(Pago.objects.count(), 0)
+
+    def test_confirmar_crea_el_pago_con_el_monto_cargado(self):
+        psico = Psicologo.objects.create(nombre='Lic. Cobrable', whatsapp='2911111113', monto_pagado=18000)
+        resp = self._post([psico], apply=True)
+        self.assertEqual(resp.status_code, 302)
+        pago = Pago.objects.get(psicologo=psico)
+        self.assertEqual(pago.monto, 18000)
+        self.assertIn('Mensualidad', pago.concepto)
+        self.assertEqual(pago.fecha, timezone.localdate())
+
+    def test_sin_monto_pagado_no_crea_nada(self):
+        psico = Psicologo.objects.create(nombre='Lic. Sin Monto', whatsapp='2911111114')
+        self._post([psico], apply=True)
+        self.assertEqual(Pago.objects.filter(psicologo=psico).count(), 0)
+
+    def test_no_duplica_si_ya_tiene_un_pago_de_este_mes(self):
+        psico = Psicologo.objects.create(nombre='Lic. Ya Pagó', whatsapp='2911111115', monto_pagado=20000)
+        Pago.objects.create(
+            psicologo=psico, fecha=timezone.localdate(), monto=20000,
+            concepto='Mensualidad cargada a mano',
+        )
+        self._post([psico], apply=True)
+        # Sigue habiendo un solo Pago -- no se duplicó.
+        self.assertEqual(Pago.objects.filter(psicologo=psico).count(), 1)
+
+    def test_columna_pago_mes_actual_en_el_listado(self):
+        pagado = Psicologo.objects.create(nombre='Lic. Al Día', whatsapp='2911111116', monto_pagado=15000)
+        Pago.objects.create(psicologo=pagado, fecha=timezone.localdate(), monto=15000, concepto='Mensualidad septiembre')
+        sin_pagar = Psicologo.objects.create(nombre='Lic. Debe', whatsapp='2911111117', monto_pagado=15000)
+        resp = self.client.get(self.changelist_url)
+        contenido = resp.content.decode('utf-8')
+        # No hay una forma directa de mapear la fila a la celda sin parsear
+        # HTML de más -- alcanza con confirmar que aparece al menos un ✅
+        # (el pagado) y que el que debe sigue listado en la página.
+        self.assertIn('✅', contenido)
+        self.assertIn('Lic. Debe', contenido)
+
+    def test_filtro_pago_mes_separa_pagados_de_no_pagados(self):
+        pagado = Psicologo.objects.create(nombre='Lic. Filtro Sí', whatsapp='2911111118', monto_pagado=15000)
+        Pago.objects.create(psicologo=pagado, fecha=timezone.localdate(), monto=15000, concepto='Mensualidad septiembre')
+        no_pagado = Psicologo.objects.create(nombre='Lic. Filtro No', whatsapp='2911111119')
+
+        resp_si = self.client.get(self.changelist_url, {'pago_mes': 'si'})
+        self.assertIn(pagado, resp_si.context['cl'].queryset)
+        self.assertNotIn(no_pagado, resp_si.context['cl'].queryset)
+
+        resp_no = self.client.get(self.changelist_url, {'pago_mes': 'no'})
+        self.assertIn(no_pagado, resp_no.context['cl'].queryset)
+        self.assertNotIn(pagado, resp_no.context['cl'].queryset)
 
 
 class PsicologoActivoTests(TestCase):

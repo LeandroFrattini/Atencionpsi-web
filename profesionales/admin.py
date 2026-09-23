@@ -11,9 +11,10 @@ from django import forms
 from django.utils.html import format_html
 from django.urls import path
 from django.shortcuts import redirect, render
-from django.utils import timezone
+from django.utils import timezone, dateformat
 from datetime import timedelta
 from .models import Psicologo, Modalidad, Publico, Orientacion, Visita, ClickWhatsApp, Ciudad, ObraSocial
+from portal.models import Pago
 
 
 class CrearAccesoPortalForm(forms.Form):
@@ -49,6 +50,37 @@ class OrientacionAdmin(admin.ModelAdmin):
     ordering = ('orden', 'nombre')
 
 
+def _concepto_mensualidad(fecha):
+    """'Mensualidad <mes> <año>', ej 'Mensualidad septiembre 2026' -- con
+    dateformat de Django (no strftime) para que el nombre del mes salga
+    siempre en español sin depender del locale del sistema operativo."""
+    return f'Mensualidad {dateformat.format(fecha, "F Y")}'
+
+
+class PagoMesActualFilter(admin.SimpleListFilter):
+    """Filtro para elegir de un tiro a todos los que ya pagaron o a todos
+    los que todavía no pagaron este mes -- así se puede tildar 'No' y
+    seleccionar todos con el checkbox de 'elegir todos' antes de usar la
+    acción de marcar el pago, en vez de ir tildando uno por uno."""
+    title = 'pagó este mes'
+    parameter_name = 'pago_mes'
+
+    def lookups(self, request, model_admin):
+        return (('si', 'Sí'), ('no', 'No'))
+
+    def queryset(self, request, queryset):
+        if self.value() not in ('si', 'no'):
+            return queryset
+        hoy = timezone.localdate()
+        ids_pagados = Pago.objects.filter(
+            fecha__year=hoy.year, fecha__month=hoy.month,
+            concepto__istartswith='Mensualidad',
+        ).values_list('psicologo_id', flat=True)
+        if self.value() == 'si':
+            return queryset.filter(pk__in=ids_pagados)
+        return queryset.exclude(pk__in=ids_pagados)
+
+
 class PsicologoAdminForm(forms.ModelForm):
     class Meta:
         model = Psicologo
@@ -61,8 +93,14 @@ class PsicologoAdminForm(forms.ModelForm):
 @admin.register(Psicologo)
 class PsicologoAdmin(admin.ModelAdmin):
     form = PsicologoAdminForm
-    list_display = ('nombre', 'ciudades_display', 'plan', 'activo', 'destacado', 'clicks_totales')
-    list_filter = ('plan', 'activo', 'destacado', 'ciudades', 'modalidades', 'destinatarios', 'orientaciones')
+    list_display = (
+        'nombre', 'ciudades_display', 'plan', 'fecha_alta', 'tipo_pago',
+        'pago_mes_actual', 'activo', 'destacado', 'clicks_totales',
+    )
+    list_filter = (
+        'plan', 'tipo_pago', PagoMesActualFilter, 'activo', 'destacado',
+        'ciudades', 'modalidades', 'destinatarios', 'orientaciones',
+    )
     search_fields = ('nombre', 'orientacion', 'ciudades__nombre')
     prepopulated_fields = {'slug': ('nombre',)}
     filter_horizontal = ('modalidades', 'destinatarios', 'orientaciones', 'obras_sociales', 'ciudades')
@@ -100,7 +138,19 @@ class PsicologoAdmin(admin.ModelAdmin):
         return total
     clicks_totales.short_description = 'Clicks WA'
 
-    actions = ['generar_imagenes_action', 'generar_imagen_feed_action', 'crear_acceso_portal_action']
+    def pago_mes_actual(self, obj):
+        hoy = timezone.localdate()
+        pagado = Pago.objects.filter(
+            psicologo=obj, fecha__year=hoy.year, fecha__month=hoy.month,
+            concepto__istartswith='Mensualidad',
+        ).exists()
+        return '✅' if pagado else '—'
+    pago_mes_actual.short_description = 'Pagó este mes'
+
+    actions = [
+        'generar_imagenes_action', 'generar_imagen_feed_action',
+        'crear_acceso_portal_action', 'marcar_pago_mes_action',
+    ]
 
     def crear_acceso_portal_action(self, request, queryset):
         """
@@ -229,6 +279,76 @@ class PsicologoAdmin(admin.ModelAdmin):
 
     generar_imagen_feed_action.short_description = 'Generar post de feed de Instagram'
 
+    def marcar_pago_mes_action(self, request, queryset):
+        """
+        Registra en Finanzas el ingreso de la mensualidad de este mes para
+        cada profesional seleccionado, usando el monto que tiene cargado en
+        "Monto pagado". No duplica: si un profesional ya tiene un pago de
+        "Mensualidad <mes>" cargado este mes (a mano o por esta misma
+        acción), se lo salta. Si no tiene monto cargado, también se lo
+        salta -- no hay nada que registrar.
+        """
+        hoy = timezone.localdate()
+        mes_nombre = dateformat.format(hoy, 'F Y')
+        concepto = _concepto_mensualidad(hoy)
+
+        def _separar(queryset):
+            a_marcar, ya_pagados, sin_monto = [], [], []
+            for p in queryset:
+                ya_existe = Pago.objects.filter(
+                    psicologo=p, fecha__year=hoy.year, fecha__month=hoy.month,
+                    concepto__istartswith='Mensualidad',
+                ).exists()
+                if ya_existe:
+                    ya_pagados.append(p)
+                elif not p.monto_pagado:
+                    sin_monto.append(p)
+                else:
+                    a_marcar.append(p)
+            return a_marcar, ya_pagados, sin_monto
+
+        if 'apply' in request.POST:
+            a_marcar, ya_pagados, sin_monto = _separar(queryset)
+            for p in a_marcar:
+                Pago.objects.create(psicologo=p, fecha=hoy, monto=p.monto_pagado, concepto=concepto)
+
+            if a_marcar:
+                self.message_user(
+                    request,
+                    f'Pago de "{concepto}" registrado en Finanzas para: '
+                    f'{", ".join(p.nombre for p in a_marcar)}.',
+                    level=messages.SUCCESS,
+                )
+            if ya_pagados:
+                self.message_user(
+                    request,
+                    f'Ya tenían un pago de este mes cargado, no se duplicó: '
+                    f'{", ".join(p.nombre for p in ya_pagados)}.',
+                    level=messages.WARNING,
+                )
+            if sin_monto:
+                self.message_user(
+                    request,
+                    f'No tienen "Monto pagado" cargado en su ficha, no se les pudo '
+                    f'registrar el pago: {", ".join(p.nombre for p in sin_monto)}.',
+                    level=messages.ERROR,
+                )
+            return redirect(request.path)
+
+        a_marcar, ya_pagados, sin_monto = _separar(queryset)
+        context = {
+            **self.admin_site.each_context(request),
+            'title': f'Marcar pago de {mes_nombre}',
+            'mes_nombre': mes_nombre,
+            'a_marcar': a_marcar,
+            'ya_pagados': ya_pagados,
+            'sin_monto': sin_monto,
+            'queryset': queryset,
+            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+        }
+        return TemplateResponse(request, 'admin/marcar_pago_mes.html', context)
+
+    marcar_pago_mes_action.short_description = 'Marcar pago de este mes'
 
 
 @admin.register(Ciudad)
