@@ -94,8 +94,8 @@ class PsicologoAdminForm(forms.ModelForm):
 class PsicologoAdmin(admin.ModelAdmin):
     form = PsicologoAdminForm
     list_display = (
-        'nombre', 'ciudades_display', 'plan', 'fecha_alta', 'tipo_pago',
-        'pago_mes_actual', 'activo', 'destacado', 'clicks_totales',
+        'nombre', 'plan', 'fecha_alta', 'tipo_pago',
+        'pago_mes_actual', 'activo', 'clicks_totales',
     )
     list_filter = (
         'plan', 'tipo_pago', PagoMesActualFilter, 'activo', 'destacado',
@@ -128,10 +128,6 @@ class PsicologoAdmin(admin.ModelAdmin):
         }),
     )
     autocomplete_fields = ('usuario',)
-
-    def ciudades_display(self, obj):
-        return ', '.join(c.nombre for c in obj.ciudades.all()) or '—'
-    ciudades_display.short_description = 'Ciudades'
 
     def clicks_totales(self, obj):
         total = obj.clicks_wa.aggregate(t=Sum('cantidad'))['t'] or 0
