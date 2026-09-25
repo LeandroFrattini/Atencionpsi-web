@@ -385,3 +385,21 @@ class LoginCaseInsensitiveTests(TestCase):
 
         user_mayus.refresh_from_db()
         self.assertEqual(user_mayus.username, 'Juan.Perez@Gmail.com')  # no se tocó
+
+
+class BotonTurnosReservadosEnHomeAdminTests(TestCase):
+    """Botón agregado 2026-09-24: acceso rápido desde /admin/ a los turnos
+    reservados por pacientes desde la web (origen='publico'), más recientes
+    primero -- para chequear de un vistazo si están entrando reservas."""
+
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser('admin_home_test', 'admin@example.com', 'ClaveAdminSegura2026')
+        self.client = Client()
+        self.client.force_login(self.admin_user)
+
+    def test_el_boton_aparece_en_el_home_del_admin_con_el_link_correcto(self):
+        resp = self.client.get(reverse('admin:index'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Turnos reservados desde la web')
+        url_esperada = reverse('admin:portal_turno_changelist') + '?origen__exact=publico&o=-6'
+        self.assertContains(resp, url_esperada)
