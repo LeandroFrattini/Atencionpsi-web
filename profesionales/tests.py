@@ -219,6 +219,23 @@ class OptimizarFotosCommandTests(TestCase):
         Psicologo.objects.create(nombre='Lic. Sin Foto', whatsapp='2911111124')
         call_command('optimizar_fotos', apply=True)  # no debe tirar excepción
 
+    def test_foto_ya_del_tamano_correcto_se_refresca_con_el_mismo_nombre_y_contenido(self):
+        """Una foto que no necesita achicarse igual se resube (mismo nombre,
+        mismo contenido) para que le quede el Cache-Control nuevo -- antes
+        el comando la salteaba del todo y se quedaba con el cache viejo."""
+        chica = Psicologo.objects.create(nombre='Lic. Ya Optimizada', whatsapp='2911111125')
+        datos_originales = _jpeg_bytes(400, 400)
+        chica.foto.save('chica.jpg', ContentFile(datos_originales), save=False)
+        DjangoModel.save(chica, update_fields=['foto'])
+        nombre_antes = chica.foto.name
+
+        call_command('optimizar_fotos', apply=True)
+
+        chica.refresh_from_db()
+        self.assertEqual(chica.foto.name, nombre_antes)  # mismo nombre, no un duplicado
+        chica.foto.seek(0)
+        self.assertEqual(chica.foto.read(), datos_originales)  # mismo contenido
+
 
 class MarcarPagoMesAdminActionTests(TestCase):
     def setUp(self):
