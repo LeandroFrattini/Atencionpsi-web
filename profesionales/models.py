@@ -83,13 +83,24 @@ class ObraSocial(models.Model):
         return self.nombre
 
 
-def _foto_con_orientacion_correcta(foto_field):
+# Lado más largo al que se achica una foto nueva. La tarjeta más grande
+# del sitio (post de feed de Instagram) la muestra a 600px -- una foto de
+# celular sin tocar suele venir de 3000-4000px y pesar varios MB, y
+# servirla así en cada tarjeta del buscador es puro gasto de egress de
+# Supabase sin ninguna ganancia visual real (2026-09-28: Supabase cortó el
+# servicio por exceso de egress, esta es la causa más probable).
+FOTO_LADO_MAXIMO = 1200
+
+
+def _foto_optimizada(foto_field):
     """
-    Si la foto tiene tag EXIF de orientación (típico en fotos sacadas con
-    el celular en vertical), devuelve una versión nueva con los píxeles ya
-    rotados en el sentido correcto y ese tag eliminado -- así se ve bien en
-    cualquier visor, respete o no el EXIF. Si no tiene nada que corregir,
-    devuelve la foto tal cual (no se re-comprime sin necesidad).
+    Devuelve una versión de la foto lista para el sitio: orientación EXIF
+    corregida si hace falta (típico en fotos sacadas con el celular en
+    vertical: los píxeles quedan "acostados" con un tag que le dice al
+    que la mira "rotala" -- no todos los visores lo respetan) y el lado
+    más largo recortado a FOTO_LADO_MAXIMO px si lo excede. Si la foto ya
+    viene liviana y bien orientada, se devuelve tal cual -- no se
+    re-comprime sin necesidad.
     """
     from io import BytesIO
     from PIL import Image, ImageOps
@@ -107,16 +118,23 @@ def _foto_con_orientacion_correcta(foto_field):
     finally:
         foto_field.file.seek(0)
 
-    if not orientacion or orientacion == 1:
+    necesita_rotar = bool(orientacion) and orientacion != 1
+    necesita_achicar = max(imagen.size) > FOTO_LADO_MAXIMO
+    if not necesita_rotar and not necesita_achicar:
         return foto_field
 
     formato = imagen.format or 'JPEG'
-    imagen = ImageOps.exif_transpose(imagen)
+    if necesita_rotar:
+        imagen = ImageOps.exif_transpose(imagen)
+    if necesita_achicar:
+        imagen.thumbnail((FOTO_LADO_MAXIMO, FOTO_LADO_MAXIMO), Image.Resampling.LANCZOS)
+
     guardar_kwargs = {'format': formato}
     if formato == 'JPEG':
         if imagen.mode not in ('RGB', 'L'):
             imagen = imagen.convert('RGB')
-        guardar_kwargs['quality'] = 90
+        guardar_kwargs['quality'] = 85
+        guardar_kwargs['optimize'] = True
 
     buffer = BytesIO()
     imagen.save(buffer, **guardar_kwargs)
@@ -221,9 +239,13 @@ class Psicologo(models.Model):
         # todos (ni WhatsApp/redes al generar la vista previa) -- por eso
         # se ve derecha en algunos lados y de costado en otros. Achatamos
         # la rotación en los píxeles mismos al subir la foto, así se ve
-        # bien en cualquier lado sin depender de quién la mire.
+        # bien en cualquier lado sin depender de quién la mire. De paso se
+        # achica si viene con un lado más largo que FOTO_LADO_MAXIMO --
+        # una foto de celular sin tocar puede pesar varios MB, y servirla
+        # así en cada tarjeta del buscador es gasto de egress de Supabase
+        # sin ninguna ganancia visual real.
         if self.foto and not self.foto._committed:
-            self.foto = _foto_con_orientacion_correcta(self.foto)
+            self.foto = _foto_optimizada(self.foto)
         super().save(*args, **kwargs)
 
     def __str__(self):

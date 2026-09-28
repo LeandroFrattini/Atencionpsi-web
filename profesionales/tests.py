@@ -2,14 +2,29 @@ import zipfile
 from io import BytesIO
 
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
+from django.db.models import Model as DjangoModel
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from portal.models import Pago
 
 from .generador_imagenes import generar_imagen_feed, generar_imagen_story
-from .models import Ciudad, Modalidad, Psicologo, Publico
+from .models import FOTO_LADO_MAXIMO, Ciudad, Modalidad, Psicologo, Publico
+
+
+def _jpeg_bytes(ancho, alto, color=(180, 140, 120)):
+    buf = BytesIO()
+    Image.new('RGB', (ancho, alto), color).save(buf, 'JPEG', quality=95)
+    return buf.getvalue()
+
+
+def _foto_subida(ancho, alto, nombre='foto.jpg'):
+    return SimpleUploadedFile(nombre, _jpeg_bytes(ancho, alto), content_type='image/jpeg')
 
 
 class GeneradorImagenesTests(TestCase):
@@ -133,6 +148,76 @@ class GenerarImagenesAdminActionTests(TestCase):
         nombres = zf.namelist()
         self.assertEqual(len(nombres), 1)
         self.assertTrue(nombres[0].endswith('_feed.jpg'))
+
+
+class FotoOptimizadaTests(TestCase):
+    """
+    _foto_optimizada() se dispara sola desde Psicologo.save() para
+    cualquier foto NUEVA (ver el guard de _committed ahí) -- estos tests
+    prueban ese camino real (crear con una foto grande) en vez de llamar
+    a la función interna directo.
+    """
+
+    def test_foto_grande_se_achica_al_lado_maximo(self):
+        psico = Psicologo.objects.create(
+            nombre='Lic. Foto Grande', whatsapp='2911111120',
+            foto=_foto_subida(3000, 2000),
+        )
+        with Image.open(psico.foto) as img:
+            self.assertLessEqual(max(img.size), FOTO_LADO_MAXIMO)
+            # Se mantiene la proporción 3:2 original.
+            self.assertAlmostEqual(img.size[0] / img.size[1], 3000 / 2000, places=2)
+
+    def test_foto_chica_no_se_toca(self):
+        original = _jpeg_bytes(400, 400)
+        psico = Psicologo.objects.create(
+            nombre='Lic. Foto Chica', whatsapp='2911111121',
+            foto=SimpleUploadedFile('chica.jpg', original, content_type='image/jpeg'),
+        )
+        psico.foto.seek(0)
+        self.assertEqual(psico.foto.read(), original)
+
+    def test_resave_sin_tocar_la_foto_no_la_reprocesa(self):
+        """Guardar de nuevo por otro motivo (p.ej. update_fields=['destacado'])
+        no debe volver a pasar la foto ya guardada por el optimizador."""
+        psico = Psicologo.objects.create(
+            nombre='Lic. Resave', whatsapp='2911111122',
+            foto=_foto_subida(3000, 2000),
+        )
+        nombre_archivo_procesado = psico.foto.name
+        psico.destacado = True
+        psico.save(update_fields=['destacado'])
+        self.assertEqual(psico.foto.name, nombre_archivo_procesado)
+
+
+class OptimizarFotosCommandTests(TestCase):
+    def setUp(self):
+        self.grande = Psicologo.objects.create(nombre='Lic. Sin Optimizar', whatsapp='2911111123')
+        # foto.save(save=False) + Model.save() (el de Django, no el
+        # override de Psicologo) para dejar la foto grande tal cual en el
+        # storage, sin que Psicologo.save() la procese sola -- así se
+        # simula una foto vieja, subida antes de que existiera el resize
+        # automático.
+        self.grande.foto.save('vieja.jpg', ContentFile(_jpeg_bytes(3000, 2000)), save=False)
+        DjangoModel.save(self.grande, update_fields=['foto'])
+
+    def test_dry_run_no_toca_nada(self):
+        nombre_antes = self.grande.foto.name
+        call_command('optimizar_fotos')
+        self.grande.refresh_from_db()
+        self.assertEqual(self.grande.foto.name, nombre_antes)
+        with Image.open(self.grande.foto) as img:
+            self.assertGreater(max(img.size), FOTO_LADO_MAXIMO)
+
+    def test_apply_achica_la_foto_vieja(self):
+        call_command('optimizar_fotos', apply=True)
+        self.grande.refresh_from_db()
+        with Image.open(self.grande.foto) as img:
+            self.assertLessEqual(max(img.size), FOTO_LADO_MAXIMO)
+
+    def test_apply_no_rompe_con_profesional_sin_foto(self):
+        Psicologo.objects.create(nombre='Lic. Sin Foto', whatsapp='2911111124')
+        call_command('optimizar_fotos', apply=True)  # no debe tirar excepción
 
 
 class MarcarPagoMesAdminActionTests(TestCase):
