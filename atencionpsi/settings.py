@@ -159,6 +159,18 @@ if 'RENDER' in os.environ:
         AWS_S3_ADDRESSING_STYLE = 'path'
         AWS_S3_REGION_NAME = 'us-east-1'
 
+        # Cache-Control largo en cada foto subida -- sin esto Supabase no
+        # manda ningún header de cache propio, así que el navegador vuelve
+        # a pedir la foto completa a Supabase en cada visita, gastando
+        # egress de más sin necesidad. Es seguro ponerlo bien largo porque
+        # AWS_S3_FILE_OVERWRITE=False: al resubir una foto para el mismo
+        # profesional, el archivo nuevo queda con OTRO nombre (no pisa el
+        # viejo), así que una URL vieja en caché nunca puede terminar
+        # mostrando una foto distinta a la que apuntaba originalmente.
+        AWS_S3_OBJECT_PARAMETERS = {
+            'CacheControl': 'public, max-age=2592000, immutable',  # 30 días
+        }
+
         # URL pública para que las imágenes se vean (Usar solo para visualización)
         AWS_S3_CUSTOM_DOMAIN = f'{SUBDOMAIN}.supabase.co/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}'
     else:
