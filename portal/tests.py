@@ -734,6 +734,56 @@ class SincronizarPagosMercadoPagoCommandTests(TestCase):
         call_command('sincronizar_pagos_mercadopago', '--apply')
         self.assertEqual(Pago.objects.count(), 2)
 
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_recuerda_a_quien_se_le_asigno_un_mail_y_lo_asigna_y_une_solo_el_mes_siguiente(self, mock_buscar):
+        # Mes anterior: llegó "Sin asignar" y la dueña lo asignó a mano.
+        Pago.objects.create(
+            psicologo=self.psico, monto=13500, monto_bruto=15000, origen='suscripcion',
+            mp_payment_id='100', pagador_nombre='Desconocido@Example.com', fecha=datetime.date(2026, 7, 19),
+        )
+        a_mano = Pago.objects.create(psicologo=self.psico, monto=15000, fecha=datetime.date(2026, 8, 19), concepto='Mensualidad agosto')
+        mock_buscar.return_value = [{
+            'id': 101, 'status': 'approved', 'transaction_amount': 15000,
+            'preapproval_id': 'xyz', 'transaction_details': {'net_received_amount': 13500},
+            'payer': {'id': 999888777, 'email': 'desconocido@example.com'},
+            'date_approved': '2026-08-19T09:55:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        self.assertEqual(Pago.objects.count(), 2)  # el anterior + el de a mano ya vinculado
+        a_mano.refresh_from_db()
+        self.assertEqual(a_mano.mp_payment_id, '101')
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_si_el_profesional_recordado_no_tiene_pago_a_mano_igual_queda_asignado(self, mock_buscar):
+        Pago.objects.create(
+            psicologo=self.psico, monto=13500, origen='suscripcion', mp_payment_id='100',
+            pagador_nombre='desconocido@example.com', fecha=datetime.date(2026, 7, 19),
+        )
+        mock_buscar.return_value = [{
+            'id': 101, 'status': 'approved', 'transaction_amount': 15000,
+            'preapproval_id': 'xyz', 'transaction_details': {'net_received_amount': 13500},
+            'payer': {'id': 999888777, 'email': 'desconocido@example.com'},
+            'date_approved': '2026-08-19T09:55:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        self.assertEqual(Pago.objects.get(mp_payment_id='101').psicologo, self.psico)
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_no_recuerda_a_un_profesional_dado_de_baja(self, mock_buscar):
+        inactivo = Psicologo.objects.create(nombre='Lic. De Baja', whatsapp='999', activo=False)
+        Pago.objects.create(
+            psicologo=inactivo, monto=13500, origen='suscripcion', mp_payment_id='100',
+            pagador_nombre='desconocido@example.com', fecha=datetime.date(2026, 7, 19),
+        )
+        mock_buscar.return_value = [{
+            'id': 101, 'status': 'approved', 'transaction_amount': 15000,
+            'preapproval_id': 'xyz', 'transaction_details': {'net_received_amount': 13500},
+            'payer': {'id': 999888777, 'email': 'desconocido@example.com'},
+            'date_approved': '2026-08-19T09:55:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        self.assertIsNone(Pago.objects.get(mp_payment_id='101').psicologo)
+
 
 class PagoAsignarViewTests(TestCase):
     def setUp(self):

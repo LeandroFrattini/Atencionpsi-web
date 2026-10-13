@@ -54,7 +54,7 @@ class Command(BaseCommand):
             if not datos or datos['mp_payment_id'] in ya_importados:
                 continue
 
-            sugerido = mercadopago_client.sugerir_psicologo(datos['pagador_nombre'], psicologos_activos)
+            sugerido = mercadopago_client.psicologo_conocido(datos['pagador_nombre'], psicologos_activos)
             manual = mercadopago_client.pago_manual_equivalente(datos, sugerido)
             if manual:
                 etiqueta_sugerido = f' -- ya cargado a mano ({manual}): se vincula, no se duplica'

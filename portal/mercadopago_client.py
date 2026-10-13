@@ -201,7 +201,7 @@ def importar_pagos_nuevos(dias, vinculados=None):
         datos = normalizar_pago(crudo, mi_id=mi_id)
         if not datos or datos['mp_payment_id'] in ya_importados:
             continue
-        sugerido = sugerir_psicologo(datos['pagador_nombre'], psicologos_activos)
+        sugerido = psicologo_conocido(datos['pagador_nombre'], psicologos_activos)
         manual = pago_manual_equivalente(datos, sugerido)
         if manual:
             vincular_pago_manual(manual, datos)
@@ -252,6 +252,36 @@ def vincular_pago_manual(manual, datos):
     manual.pagador_nombre = datos.get('pagador_nombre') or ''
     manual.save(update_fields=['mp_payment_id', 'monto_bruto', 'pagador_nombre'])
     return manual
+
+
+def psicologo_conocido(pagador_nombre, psicologos_activos):
+    """
+    A quién corresponde este pagador: primero lo que ya se asignó a mano
+    alguna vez (mismo nombre/mail de pagador en MP -> mismo profesional, así
+    las suscripciones de cada mes se asignan y se unen solas), y si nunca se
+    vio, la sugerencia por coincidencia de nombre.
+    """
+    return psicologo_recordado(pagador_nombre, psicologos_activos) or sugerir_psicologo(pagador_nombre, psicologos_activos)
+
+
+def psicologo_recordado(pagador_nombre, psicologos_activos):
+    """El profesional que se le asignó por última vez a un pago de este mismo
+    pagador (se compara el nombre o mail que reporta MP, sin mayúsculas)."""
+    from portal.models import Pago
+
+    pagador = (pagador_nombre or '').strip()
+    if not pagador:
+        return None
+    activos = {p.pk: p for p in psicologos_activos}
+    previos = (
+        Pago.objects.filter(pagador_nombre__iexact=pagador, psicologo__isnull=False)
+        .exclude(mp_payment_id__isnull=True).exclude(mp_payment_id='')
+        .order_by('-fecha', '-pk').values_list('psicologo_id', flat=True)
+    )
+    for psicologo_id in previos:
+        if psicologo_id in activos:
+            return activos[psicologo_id]
+    return None
 
 
 def sugerir_psicologo(pagador_nombre, psicologos_activos):
