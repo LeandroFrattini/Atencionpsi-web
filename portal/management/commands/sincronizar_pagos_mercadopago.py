@@ -55,7 +55,11 @@ class Command(BaseCommand):
                 continue
 
             sugerido = mercadopago_client.sugerir_psicologo(datos['pagador_nombre'], psicologos_activos)
-            etiqueta_sugerido = f' -- posible: {sugerido.nombre}' if sugerido else ' -- sin asignar'
+            manual = mercadopago_client.pago_manual_equivalente(datos, sugerido)
+            if manual:
+                etiqueta_sugerido = f' -- ya cargado a mano ({manual}): se vincula, no se duplica'
+            else:
+                etiqueta_sugerido = f' -- posible: {sugerido.nombre}' if sugerido else ' -- sin asignar'
 
             self.stdout.write(
                 f"  {datos['fecha']} · {datos['pagador_nombre'] or '(sin nombre)'} · "
@@ -65,7 +69,10 @@ class Command(BaseCommand):
             nuevos += 1
 
             if aplicar:
-                Pago.objects.create(psicologo=sugerido, **datos)
+                if manual:
+                    mercadopago_client.vincular_pago_manual(manual, datos)
+                else:
+                    Pago.objects.create(psicologo=sugerido, **datos)
 
         if not nuevos:
             self.stdout.write('  (nada nuevo para importar)')

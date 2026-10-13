@@ -172,13 +172,15 @@ def dias_desde_ultimo_pago(default=30, tope=90):
     return max(1, min(dias, tope))
 
 
-def importar_pagos_nuevos(dias):
+def importar_pagos_nuevos(dias, vinculados=None):
     """
     Trae los pagos aprobados de los últimos `dias` días y crea los Pago que
-    falten -- nunca duplica (se identifican por mp_payment_id). A diferencia
-    del comando de management, esto siempre guarda (no tiene dry-run): lo
-    usa el botón "Actualizar" del Panel de Finanzas, pensado para un click
-    directo. Devuelve la lista de Pago recién creados.
+    falten -- nunca duplica (se identifican por mp_payment_id, y si ya lo
+    cargaste a mano para ese profesional, en vez de crear otro lo vincula:
+    esos van a la lista `vinculados`, si se pasa). A diferencia del comando
+    de management, esto siempre guarda (no tiene dry-run): lo usa el botón
+    "Actualizar" del Panel de Finanzas, pensado para un click directo.
+    Devuelve la lista de Pago recién creados.
     """
     from portal.models import Pago
     from profesionales.models import Psicologo
@@ -200,9 +202,56 @@ def importar_pagos_nuevos(dias):
         if not datos or datos['mp_payment_id'] in ya_importados:
             continue
         sugerido = sugerir_psicologo(datos['pagador_nombre'], psicologos_activos)
-        creados.append(Pago.objects.create(psicologo=sugerido, **datos))
+        manual = pago_manual_equivalente(datos, sugerido)
+        if manual:
+            vincular_pago_manual(manual, datos)
+            if vinculados is not None:
+                vinculados.append(manual)
+        else:
+            creados.append(Pago.objects.create(psicologo=sugerido, **datos))
         ya_importados.add(datos['mp_payment_id'])
     return creados
+
+
+def pago_manual_equivalente(datos, psicologo, margen_dias=15, excluir_pk=None):
+    """
+    Pago cargado a mano que casi seguro es este mismo pago de Mercado Pago:
+    mismo profesional, fecha cercana y monto igual al neto o al bruto (a mano
+    se suele cargar lo que cuesta el plan, o lo que llegó). Sin profesional
+    no se adivina nada: si no se sabe de quién es, no se puede asegurar que
+    sea un duplicado, y mejor dejarlo a la vista que perder un ingreso real.
+    """
+    from django.db.models import Q
+    from portal.models import Pago
+
+    if not psicologo:
+        return None
+    montos = [m for m in (datos.get('monto'), datos.get('monto_bruto')) if m is not None]
+    margen = datetime.timedelta(days=margen_dias)
+    candidatos = (
+        Pago.objects.filter(psicologo=psicologo, origen='manual', fecha__range=(datos['fecha'] - margen, datos['fecha'] + margen))
+        .filter(Q(mp_payment_id__isnull=True) | Q(mp_payment_id=''))
+        .order_by('fecha', 'pk')
+    )
+    if excluir_pk:
+        candidatos = candidatos.exclude(pk=excluir_pk)
+    for candidato in candidatos:
+        if any(abs(candidato.monto - monto) <= 1 for monto in montos):
+            return candidato
+    return None
+
+
+def vincular_pago_manual(manual, datos):
+    """
+    Marca el pago cargado a mano como "ya traído de Mercado Pago" (guarda el
+    id de MP, así la sincronización no lo vuelve a crear). Respeta lo que
+    cargó la dueña (fecha, monto y concepto): solo suma los datos de MP.
+    """
+    manual.mp_payment_id = datos['mp_payment_id']
+    manual.monto_bruto = datos.get('monto_bruto')
+    manual.pagador_nombre = datos.get('pagador_nombre') or ''
+    manual.save(update_fields=['mp_payment_id', 'monto_bruto', 'pagador_nombre'])
+    return manual
 
 
 def sugerir_psicologo(pagador_nombre, psicologos_activos):

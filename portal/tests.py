@@ -704,6 +704,36 @@ class SincronizarPagosMercadoPagoCommandTests(TestCase):
         self.assertEqual(pago.origen, 'suscripcion')
         self.assertEqual(pago.monto, 13500)
 
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_si_ya_estaba_cargado_a_mano_se_vincula_y_no_se_duplica(self, mock_buscar):
+        a_mano = Pago.objects.create(
+            psicologo=self.psico, monto=20000, fecha=datetime.date(2026, 8, 18), concepto='Mensualidad agosto',
+        )
+        mock_buscar.return_value = [{
+            'id': 555, 'status': 'approved', 'transaction_amount': 20000,
+            'operation_type': 'money_transfer', 'transaction_details': {},
+            'payer': {'id': 294300556, 'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'date_approved': '2026-08-19T22:12:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        call_command('sincronizar_pagos_mercadopago', '--apply')  # y una segunda vez, tampoco
+        self.assertEqual(Pago.objects.count(), 1)
+        a_mano.refresh_from_db()
+        self.assertEqual(a_mano.mp_payment_id, '555')
+        self.assertEqual(a_mano.concepto, 'Mensualidad agosto')
+
+    @mock.patch('portal.mercadopago_client.buscar_pagos')
+    def test_un_pago_a_mano_de_otro_monto_no_absorbe_al_de_mp(self, mock_buscar):
+        Pago.objects.create(psicologo=self.psico, monto=5000, fecha=datetime.date(2026, 8, 18), concepto='Otra cosa')
+        mock_buscar.return_value = [{
+            'id': 556, 'status': 'approved', 'transaction_amount': 20000,
+            'operation_type': 'money_transfer', 'transaction_details': {},
+            'payer': {'id': 294300556, 'first_name': 'Juliana', 'last_name': 'Nuñez Laya'},
+            'date_approved': '2026-08-19T22:12:00.000-03:00',
+        }]
+        call_command('sincronizar_pagos_mercadopago', '--apply')
+        self.assertEqual(Pago.objects.count(), 2)
+
 
 class PagoAsignarViewTests(TestCase):
     def setUp(self):
@@ -732,6 +762,29 @@ class PagoAsignarViewTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.pago.refresh_from_db()
         self.assertIsNone(self.pago.psicologo)
+
+    def test_asignar_a_quien_ya_tenia_el_pago_cargado_a_mano_no_lo_duplica(self):
+        """Caso real: Maribel pagó $15.000 por MP (llega 'Sin asignar', neto
+        13.352) y la dueña ya había cargado 'Mensualidad' de $15.000 a mano."""
+        a_mano = Pago.objects.create(psicologo=self.psico, monto=15000, concepto='Mensualidad octubre 2026')
+        mp = Pago.objects.create(
+            monto=13352, monto_bruto=15000, origen='suscripcion', mp_payment_id='888', pagador_nombre='maribel@gmail.com',
+        )
+        self.client_super.post(reverse('portal_pago_asignar', args=[mp.pk]), {'psicologo': self.psico.pk})
+        self.assertEqual(Pago.objects.count(), 2)  # el de setUp + el cargado a mano; el duplicado de MP se fue
+        self.assertFalse(Pago.objects.filter(pk=mp.pk).exists())
+        a_mano.refresh_from_db()
+        self.assertEqual(a_mano.mp_payment_id, '888')
+        self.assertEqual(a_mano.monto, 15000)  # respeta lo que había cargado
+        self.assertEqual(a_mano.monto_bruto, 15000)
+
+    def test_asignar_a_otro_profesional_no_une_con_pagos_ajenos(self):
+        otro = Psicologo.objects.create(nombre='Otra', whatsapp='333', activo=True)
+        Pago.objects.create(psicologo=otro, monto=15000, concepto='Mensualidad')
+        mp = Pago.objects.create(monto=13352, monto_bruto=15000, origen='suscripcion', mp_payment_id='889')
+        self.client_super.post(reverse('portal_pago_asignar', args=[mp.pk]), {'psicologo': self.psico.pk})
+        mp.refresh_from_db()
+        self.assertEqual(mp.psicologo, self.psico)  # se asigna normal, no se pierde el ingreso
 
 
 class DiasDesdeUltimoPagoTests(TestCase):

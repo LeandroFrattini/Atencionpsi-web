@@ -6,6 +6,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 from django.shortcuts import get_object_or_404, redirect, render
@@ -644,9 +645,32 @@ def pago_asignar(request, pk):
     pago = get_object_or_404(Pago, pk=pk)
     psicologo_id = request.POST.get('psicologo')
     if psicologo_id:
-        pago.psicologo = get_object_or_404(Psicologo, pk=psicologo_id)
-        pago.save(update_fields=['psicologo'])
-        messages.success(request, f'Pago asignado a {pago.psicologo.nombre}.')
+        psicologo = get_object_or_404(Psicologo, pk=psicologo_id)
+        manual = None
+        if pago.mp_payment_id:
+            # Si ese profesional ya tenía este pago cargado a mano, no se
+            # cuenta dos veces: el de Mercado Pago se une al que ya estaba.
+            manual = mercadopago_client.pago_manual_equivalente(
+                {'fecha': pago.fecha, 'monto': pago.monto, 'monto_bruto': pago.monto_bruto},
+                psicologo, excluir_pk=pago.pk,
+            )
+        if manual:
+            with transaction.atomic():
+                datos = {
+                    'mp_payment_id': pago.mp_payment_id, 'monto_bruto': pago.monto_bruto,
+                    'pagador_nombre': pago.pagador_nombre,
+                }
+                pago.delete()  # antes de vincular: mp_payment_id es único
+                mercadopago_client.vincular_pago_manual(manual, datos)
+            messages.success(
+                request,
+                f'{psicologo.nombre} ya tenía este pago cargado a mano ({manual.concepto or "sin concepto"}, '
+                f'{manual.fecha:%d/%m/%Y}): lo uní en vez de contarlo dos veces.',
+            )
+        else:
+            pago.psicologo = psicologo
+            pago.save(update_fields=['psicologo'])
+            messages.success(request, f'Pago asignado a {psicologo.nombre}.')
     return _redirect_a_finanzas()
 
 
@@ -659,16 +683,23 @@ def pago_sincronizar_mercadopago(request):
     para no depender de acordarse de correr el comando a mano.
     """
     dias = mercadopago_client.dias_desde_ultimo_pago()
+    vinculados = []
     try:
-        creados = mercadopago_client.importar_pagos_nuevos(dias)
+        creados = mercadopago_client.importar_pagos_nuevos(dias, vinculados=vinculados)
     except RuntimeError as error:
         messages.error(request, str(error))
     except Exception as error:
         messages.error(request, f'No se pudo consultar Mercado Pago: {error}')
     else:
+        if vinculados:
+            messages.info(
+                request,
+                f'{len(vinculados)} pago(s) de Mercado Pago ya los tenías cargados a mano: '
+                'los vinculé en vez de duplicarlos.',
+            )
         if creados:
             messages.success(request, f'Se importaron {len(creados)} pago(s) nuevo(s) de Mercado Pago.')
-        else:
+        elif not vinculados:
             messages.success(request, 'Ya estabas al día -- no había pagos nuevos en Mercado Pago.')
     return _redirect_a_finanzas()
 
