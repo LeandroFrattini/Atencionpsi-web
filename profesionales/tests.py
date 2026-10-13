@@ -505,3 +505,52 @@ class BotonTurnosReservadosEnHomeAdminTests(TestCase):
         self.assertContains(resp, 'Turnos reservados desde la web')
         url_esperada = reverse('admin:portal_turno_changelist') + '?origen__exact=publico&o=-6'
         self.assertContains(resp, url_esperada)
+
+
+class ApiDestacadosTests(TestCase):
+    """Listado público que lee atencionpsi.lat para su mix de destacados."""
+
+    def _psi(self, nombre, slug, **extra):
+        datos = dict(nombre=nombre, slug=slug, whatsapp='5492915000000', foto='psicologos/a.jpg', activo=True)
+        datos.update(extra)
+        return Psicologo.objects.create(**datos)
+
+    def test_devuelve_solo_datos_publicos(self):
+        p = self._psi('Ana Beltrán', 'ana-beltran', orientacion='Gestalt')
+        p.ciudades.add(Ciudad.objects.create(nombre='Bahía Blanca'))
+        resp = self.client.get(reverse('api_destacados'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/json')
+        fila = resp.json()['profesionales'][0]
+        self.assertEqual(set(fila), {'nombre', 'ciudad', 'orientacion', 'foto', 'url'})
+        self.assertEqual(fila['nombre'], 'Ana Beltrán')
+        self.assertEqual(fila['ciudad'], 'Bahía Blanca')
+        self.assertEqual(fila['orientacion'], 'Gestalt')
+        self.assertTrue(fila['url'].startswith('https://') and fila['url'].endswith('/psicologo/ana-beltran/'))
+        self.assertNotIn('5492915000000', resp.content.decode())   # nunca el WhatsApp
+
+    def test_no_incluye_inactivos_ni_sin_foto(self):
+        self._psi('Activa', 'activa')
+        self._psi('Inactiva', 'inactiva', activo=False)
+        self._psi('Sin foto', 'sin-foto', foto='')
+        nombres = [f['nombre'] for f in self.client.get(reverse('api_destacados')).json()['profesionales']]
+        self.assertEqual(nombres, ['Activa'])
+
+    def test_devuelve_como_mucho_doce(self):
+        for i in range(15):
+            self._psi(f'Psi {i}', f'psi-{i}')
+        self.assertEqual(len(self.client.get(reverse('api_destacados')).json()['profesionales']), 12)
+
+    def test_sin_profesionales_devuelve_lista_vacia(self):
+        self.assertEqual(self.client.get(reverse('api_destacados')).json(), {'profesionales': []})
+
+    def test_se_puede_cachear_unos_minutos(self):
+        self.assertIn('max-age=300', self.client.get(reverse('api_destacados'))['Cache-Control'])
+
+    def test_los_pedidos_de_otros_sitios_no_cuentan_como_visitas(self):
+        from .models import Visita
+        self.client.get(reverse('api_destacados'))
+        self.assertFalse(Visita.objects.filter(pagina='/api/destacados/').exists())
+
+    def test_robots_pide_no_indexar_la_api(self):
+        self.assertContains(self.client.get('/robots.txt'), 'Disallow: /api/')

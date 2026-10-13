@@ -23,6 +23,7 @@ urlpatterns = [
     path('psicologo/<slug:slug>/reservar/', views.reservar_turno, name='reservar_turno'),
     path('psicologo/<slug:slug>/reservar/confirmar/', views.reservar_confirmar, name='reservar_confirmar'),
     path('unete-al-equipo/', views.unete, name='unete'),
+    path('api/destacados/', views.api_destacados, name='api_destacados'),
     path('sobre-nosotros/', views.sobre_nosotros, name='sobre_nosotros'),  # guion, no underscore
     path('preguntas-frecuentes/', views.faq, name='faq'),
     path('formacion/', views.formacion, name='formacion'),

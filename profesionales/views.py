@@ -5,7 +5,9 @@ from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.db import transaction
+from django.conf import settings
 from django.http import JsonResponse
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 from .models import Psicologo, Modalidad, Publico, Orientacion, ClickWhatsApp, Ciudad
 from .bot_detector import es_bot
@@ -16,6 +18,37 @@ from portal.models import Paciente, Turno
 from portal.notificaciones import enviar_aviso_nuevo_turno
 
 logger = logging.getLogger(__name__)
+
+
+# --- LISTADO PÚBLICO PARA OTROS SITIOS DE LA RED ---
+def api_destacados(request):
+    """Lista corta y al azar de profesionales activos, para el "mix" de destacados de
+    atencionpsi.lat. Solo expone datos que ya son públicos en el buscador (nombre, ciudad,
+    orientación, foto y link al perfil): nunca el WhatsApp ni nada interno."""
+    candidatos = list(
+        Psicologo.objects.filter(activo=True)
+        .exclude(foto='').exclude(foto__isnull=True)
+        .exclude(slug__isnull=True).exclude(slug='')
+        .prefetch_related('ciudades')
+    )
+    random.shuffle(candidatos)
+    base = ('http://' if settings.DEBUG else 'https://') + request.get_host()
+    profesionales = []
+    for p in candidatos[:12]:
+        ciudades = [c.nombre for c in p.ciudades.all()]
+        foto = p.foto.url
+        if foto.startswith('/'):
+            foto = base + foto
+        profesionales.append({
+            'nombre': p.nombre,
+            'ciudad': ciudades[0] if ciudades else (p.ciudad or ''),
+            'orientacion': p.orientacion or '',
+            'foto': foto,
+            'url': base + reverse('perfil_psicologo', args=[p.slug]),
+        })
+    respuesta = JsonResponse({'profesionales': profesionales}, json_dumps_params={'ensure_ascii': False})
+    respuesta['Cache-Control'] = 'public, max-age=300'
+    return respuesta
 
 
 # --- VISTA DE INICIO ---
