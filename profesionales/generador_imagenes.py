@@ -351,7 +351,47 @@ def _icono_instagram(draw, cx, cy, r, color, ancho=3):
     draw.ellipse([px - pr, py - pr, px + pr, py + pr], fill=color)
 
 
-def _ancho_burbuja_dato(draw, lineas_y_fuentes, icono_cx=66, icono_r=33, gap=26, margen=None):
+# En las imágenes la localidad lleva la bandera de Argentina adelante
+# (la bandera + "Bahía Blanca"). El PNG vive en profesionales/flags/ar.png.
+FLAGS_DIR = os.path.join(_HERE, 'flags')
+GAP_BANDERA = 12
+
+
+def _bandera(alto, iso='ar'):
+    """Bandera de `alto` px de alto, con las esquinas redondeadas y un borde
+    finito (para que se note sobre la burbuja blanca aunque tenga blanco).
+    None si no existe el PNG: en ese caso solo se muestra el texto."""
+    path = os.path.join(FLAGS_DIR, f'{iso}.png')
+    if not os.path.exists(path):
+        return None
+    origen = Image.open(path).convert('RGBA')
+    ancho = max(1, round(origen.width * alto / origen.height))
+    esc = 4  # se dibuja 4 veces más grande y se achica, para que los bordes salgan suaves
+    grande = origen.resize((ancho * esc, alto * esc), Image.LANCZOS)
+    mascara = Image.new('L', grande.size, 0)
+    ImageDraw.Draw(mascara).rounded_rectangle([0, 0, grande.width - 1, grande.height - 1], radius=alto * esc // 7, fill=255)
+    capa = Image.new('RGBA', grande.size, (0, 0, 0, 0))
+    capa.paste(grande, (0, 0), mascara)
+    ImageDraw.Draw(capa).rounded_rectangle(
+        [0, 0, grande.width - 1, grande.height - 1], radius=alto * esc // 7, outline=(0, 0, 0, 55), width=esc,
+    )
+    return capa.resize((ancho, alto), Image.LANCZOS)
+
+
+def _ancho_linea_ciudad(draw, texto, fnt, bandera):
+    return _tw(draw, texto, fnt) + ((bandera.size[0] + GAP_BANDERA) if bandera else 0)
+
+
+def _dibujar_linea_ciudad(d, x, y_centro, texto, fnt, color, bandera):
+    """Bandera + ciudad. `x` es el borde izquierdo del conjunto y `y_centro`
+    la altura del centro del texto (la bandera se centra con él)."""
+    if bandera:
+        d._image.paste(bandera, (round(x), round(y_centro - bandera.size[1] / 2) + 1), bandera)
+        x += bandera.size[0] + GAP_BANDERA
+    d.text((x, y_centro), texto, font=fnt, fill=color, anchor='lm')
+
+
+def _ancho_burbuja_dato(draw, lineas_y_fuentes, icono_cx=66, icono_r=33, gap=26, margen=None, anchos_extra=()):
     """
     Ancho de la burbuja calculado a partir del contenido real (ícono +
     texto más largo) en vez de un porcentaje fijo del canvas. Con un
@@ -368,7 +408,7 @@ def _ancho_burbuja_dato(draw, lineas_y_fuentes, icono_cx=66, icono_r=33, gap=26,
     if margen is None:
         margen = icono_cx - icono_r
     x_texto = icono_cx + icono_r + gap
-    ancho_texto = max(_tw(draw, texto, fnt) for texto, fnt in lineas_y_fuentes)
+    ancho_texto = max([_tw(draw, texto, fnt) for texto, fnt in lineas_y_fuentes] + list(anchos_extra))
     return x_texto + ancho_texto + margen
 
 
@@ -645,18 +685,17 @@ def generar_imagen_story(psicologo, telefono_manual=None):
         datos_bloques.append(capa)
     if texto_modalidad:
         alto = 112 if texto_ciudad else 96
-        lineas_modal = [(texto_modalidad, f_dato)] + ([(texto_ciudad, f_dato_sub)] if texto_ciudad else [])
-        ancho_modal = _ancho_burbuja_dato(draw, lineas_modal)
-        def _dibujar_modalidad(d, x, alto=alto, texto_ciudad=texto_ciudad, texto_modalidad=texto_modalidad):
+        bandera = _bandera(27) if texto_ciudad else None
+        ancho_ciudad = _ancho_linea_ciudad(draw, texto_ciudad, f_dato_sub, bandera) if texto_ciudad else 0
+        ancho_modal = _ancho_burbuja_dato(draw, [(texto_modalidad, f_dato)], anchos_extra=[ancho_ciudad])
+        def _dibujar_modalidad(d, x, alto=alto, texto_ciudad=texto_ciudad, texto_modalidad=texto_modalidad, bandera=bandera, ancho_ciudad=ancho_ciudad):
             if texto_ciudad:
-                d.text((x, alto // 2 - 20), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
-                # "Bahia Blanca" centrado bajo "Presencial y Online" (no pegado
-                # al mismo margen izquierdo, que la dejaba corrida hacia la
-                # izquierda respecto al texto de arriba).
+                # Las dos líneas centradas entre sí, con la bandera delante de la
+                # ciudad ("Bahía Blanca" centrada bajo "Presencial y Online").
                 ancho_modalidad = _tw(d, texto_modalidad, f_dato)
-                ancho_ciudad = _tw(d, texto_ciudad, f_dato_sub)
-                x_ciudad = x + (ancho_modalidad - ancho_ciudad) / 2
-                d.text((x_ciudad, alto // 2 + 22), texto_ciudad, font=f_dato_sub, fill=TINTA_SUAVE, anchor='lm')
+                ancho_region = max(ancho_modalidad, ancho_ciudad)
+                d.text((x + (ancho_region - ancho_modalidad) / 2, alto // 2 - 20), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
+                _dibujar_linea_ciudad(d, x + (ancho_region - ancho_ciudad) / 2, alto // 2 + 22, texto_ciudad, f_dato_sub, TINTA_SUAVE, bandera)
             else:
                 d.text((x, alto // 2), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
         capa = _dibujar_burbuja_dato(_dibujar_modalidad, ancho_modal, alto, _icono_ubicacion)
@@ -811,16 +850,17 @@ def generar_imagen_feed(psicologo):
         f_dato = _font('montserrat', 800, 34)
         f_dato_sub = _font('montserrat', 500, 22)
         alto = 106 if texto_ciudad else 90
-        lineas_modal = [(texto_modalidad, f_dato)] + ([(texto_ciudad, f_dato_sub)] if texto_ciudad else [])
-        ancho_modal = _ancho_burbuja_dato(draw, lineas_modal)
+        bandera = _bandera(26) if texto_ciudad else None
+        ancho_ciudad = _ancho_linea_ciudad(draw, texto_ciudad, f_dato_sub, bandera) if texto_ciudad else 0
+        ancho_modal = _ancho_burbuja_dato(draw, [(texto_modalidad, f_dato)], anchos_extra=[ancho_ciudad])
 
-        def _dibujar_modalidad(d, x, alto=alto, texto_ciudad=texto_ciudad, texto_modalidad=texto_modalidad):
+        def _dibujar_modalidad(d, x, alto=alto, texto_ciudad=texto_ciudad, texto_modalidad=texto_modalidad, bandera=bandera, ancho_ciudad=ancho_ciudad):
             if texto_ciudad:
-                d.text((x, alto // 2 - 19), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
+                # Las dos líneas centradas entre sí, con la bandera delante de la ciudad.
                 ancho_modalidad = _tw(d, texto_modalidad, f_dato)
-                ancho_ciudad = _tw(d, texto_ciudad, f_dato_sub)
-                x_ciudad = x + (ancho_modalidad - ancho_ciudad) / 2
-                d.text((x_ciudad, alto // 2 + 21), texto_ciudad, font=f_dato_sub, fill=TINTA_SUAVE, anchor='lm')
+                ancho_region = max(ancho_modalidad, ancho_ciudad)
+                d.text((x + (ancho_region - ancho_modalidad) / 2, alto // 2 - 19), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
+                _dibujar_linea_ciudad(d, x + (ancho_region - ancho_ciudad) / 2, alto // 2 + 21, texto_ciudad, f_dato_sub, TINTA_SUAVE, bandera)
             else:
                 d.text((x, alto // 2), texto_modalidad, font=f_dato, fill=TINTA, anchor='lm')
 

@@ -99,6 +99,33 @@ class GeneradorImagenFeedTests(TestCase):
         img = generar_imagen_feed(self.psico)  # no debe lanzar excepción
         self.assertEqual(img.size, (1080, 1350))
 
+    @staticmethod
+    def _pixeles_celeste_bandera(img):
+        """Cuántos píxeles tienen el celeste de la bandera argentina (#74ACDF)."""
+        objetivo = (116, 172, 223)
+        return sum(
+            1 for px in img.getdata()
+            if all(abs(c - o) <= 10 for c, o in zip(px, objetivo))
+        )
+
+    def test_la_localidad_lleva_la_bandera_de_argentina(self):
+        """Con ciudad cargada aparece la bandera delante; sin ciudad no hay bandera."""
+        sin_ciudad = generar_imagen_feed(self.psico)
+        self.psico.ciudades.add(Ciudad.objects.create(nombre='Bahía Blanca'))
+        con_ciudad = generar_imagen_feed(self.psico)
+        self.assertEqual(self._pixeles_celeste_bandera(sin_ciudad), 0)
+        self.assertGreater(self._pixeles_celeste_bandera(con_ciudad), 100)
+
+    def test_la_bandera_sale_del_png_y_tiene_el_alto_pedido(self):
+        from .generador_imagenes import _bandera
+        bandera = _bandera(27)
+        self.assertEqual(bandera.size[1], 27)
+        self.assertGreater(bandera.size[0], 27)
+
+    def test_si_falta_el_png_de_la_bandera_no_rompe(self):
+        from .generador_imagenes import _bandera
+        self.assertIsNone(_bandera(27, iso='zz'))
+
 
 class GenerarImagenesAdminActionTests(TestCase):
     def setUp(self):
