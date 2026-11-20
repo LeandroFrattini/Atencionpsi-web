@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 from .models import Psicologo, Modalidad, Publico, Orientacion, ClickWhatsApp, Ciudad
 from .bot_detector import es_bot
+from . import origen_clicks
 
 from portal.disponibilidad import fecha_larga, fechas_horizonte, slot_disponible, slots_para_fecha
 from portal.forms import ReservaPublicaForm
@@ -309,6 +310,12 @@ def registrar_click_whatsapp(request, slug):
                 ClickWhatsApp.objects.filter(pk=click.pk).update(cantidad=click.cantidad + 1)
     except Exception:
         pass
+
+    # Origen del click (IP, navegador, anuncio): nunca puede romper el conteo ni la página.
+    try:
+        origen_clicks.registrar_click(request, psicologo)
+    except Exception:
+        logger.exception('No se pudo guardar el origen del click de WhatsApp')
 
     return JsonResponse({'ok': True})
 

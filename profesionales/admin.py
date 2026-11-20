@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.contrib.admin import helpers
-from django.db.models import Sum
+from django.db.models import Count, Max, Min, Sum
 from django.db.models.functions import TruncMonth
 from django import forms
 from django.utils.html import format_html
@@ -13,7 +13,7 @@ from django.urls import path
 from django.shortcuts import redirect, render
 from django.utils import timezone, dateformat
 from datetime import timedelta
-from .models import Psicologo, Modalidad, Publico, Orientacion, Visita, ClickWhatsApp, Ciudad, ObraSocial
+from .models import Psicologo, Modalidad, Publico, Orientacion, Visita, ClickWhatsApp, ClickWhatsAppDetalle, Ciudad, ObraSocial
 from portal.models import Pago
 
 
@@ -401,6 +401,74 @@ class ClickWhatsAppAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(ClickWhatsAppDetalle)
+class ClickWhatsAppDetalleAdmin(admin.ModelAdmin):
+    """Cada click con su IP, navegador y anuncio. Solo lectura. Arriba a la derecha: resumen por IP."""
+    list_display = ('creado', 'ip', 'psicologo_nombre', 'gclid_corto', 'navegador')
+    list_filter = ('creado',)
+    search_fields = ('ip', 'gclid', 'cabeceras', 'psicologo__nombre')
+    readonly_fields = ('creado', 'psicologo', 'ip', 'cabeceras', 'user_agent', 'referer', 'gclid')
+    change_list_template = 'admin/profesionales/clickwhatsappdetalle/change_list.html'
+    list_per_page = 100
+
+    def psicologo_nombre(self, obj):
+        return obj.psicologo.nombre
+    psicologo_nombre.short_description = 'Profesional'
+
+    def gclid_corto(self, obj):
+        return (obj.gclid[:14] + '…') if len(obj.gclid) > 14 else obj.gclid
+    gclid_corto.short_description = 'Anuncio (gclid)'
+
+    def navegador(self, obj):
+        return obj.user_agent[:70]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_urls(self):
+        return [
+            path('por-ip/', self.admin_site.admin_view(self.por_ip_view), name='clicks_por_ip'),
+        ] + super().get_urls()
+
+    def por_ip_view(self, request):
+        """Quién hizo más clicks en más profesionales distintos en las últimas horas. Un paciente real contacta
+        a 1 o 3 profesionales; quien recorre a todos aparece arriba."""
+        try:
+            horas = int(request.GET.get('horas', 24))
+        except ValueError:
+            horas = 24
+        if horas not in (1, 6, 24, 72, 168):
+            horas = 24
+        desde = timezone.now() - timedelta(hours=horas)
+        base = ClickWhatsAppDetalle.objects.filter(creado__gte=desde)
+
+        por_ip = []
+        for fila in (base.values('ip').annotate(
+                clicks=Count('id'), profesionales=Count('psicologo', distinct=True), anuncios=Count('gclid', distinct=True),
+                primero=Min('creado'), ultimo=Max('creado')).order_by('-profesionales', '-clicks')[:50]):
+            propios = base.filter(ip=fila['ip'])
+            navegador = (propios.values('user_agent').annotate(n=Count('id')).order_by('-n').first() or {}).get('user_agent', '')
+            nombres = list(propios.values_list('psicologo__nombre', flat=True).distinct()[:12])
+            por_ip.append({**fila, 'navegador': navegador, 'nombres': nombres, 'sospechosa': fila['profesionales'] >= 6})
+
+        por_anuncio = []
+        for fila in (base.exclude(gclid='').values('gclid').annotate(
+                clicks=Count('id'), profesionales=Count('psicologo', distinct=True), ips=Count('ip', distinct=True),
+                primero=Min('creado'), ultimo=Max('creado')).order_by('-profesionales', '-clicks')[:30]):
+            por_anuncio.append({**fila, 'sospechoso': fila['profesionales'] >= 6})
+
+        contexto = {
+            **self.admin_site.each_context(request),
+            'title': f'Clicks de WhatsApp por IP (últimas {horas} h)', 'horas': horas,
+            'opciones': (1, 6, 24, 72, 168), 'por_ip': por_ip, 'por_anuncio': por_anuncio,
+            'total': base.count(), 'opts': self.model._meta,
+        }
+        return TemplateResponse(request, 'admin/clicks_por_ip.html', contexto)
 
 
 # ── PANEL DE ANALYTICS PERSONALIZADO ──────────────────────

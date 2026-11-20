@@ -293,3 +293,23 @@ class ClickWhatsApp(models.Model):
 
     def __str__(self):
         return f"{self.fecha} | {self.psicologo.nombre} ({self.cantidad})"
+
+
+class ClickWhatsAppDetalle(models.Model):
+    """Cada click humano en el botón de WhatsApp, con su origen (IP, navegador, anuncio). Sirve para detectar a
+    quien recorre a los profesionales uno por uno. Se conserva 30 días (ver origen_clicks.CONSERVAR_DIAS)."""
+    creado = models.DateTimeField(auto_now_add=True, db_index=True)
+    psicologo = models.ForeignKey(Psicologo, on_delete=models.CASCADE, related_name='clicks_detalle')
+    ip = models.CharField('IP', max_length=45, blank=True, db_index=True)
+    cabeceras = models.CharField('Encabezados de IP (tal cual llegaron)', max_length=500, blank=True)
+    user_agent = models.CharField('Navegador', max_length=300, blank=True)
+    referer = models.CharField('Página de origen', max_length=500, blank=True)
+    gclid = models.CharField('Click del anuncio (gclid)', max_length=120, blank=True, db_index=True)
+
+    class Meta:
+        verbose_name = 'Click WhatsApp (detalle)'
+        verbose_name_plural = 'Clicks WhatsApp (detalle)'
+        ordering = ['-creado']
+
+    def __str__(self):
+        return f'{self.creado:%d/%m %H:%M} {self.ip} -> {self.psicologo.nombre}'

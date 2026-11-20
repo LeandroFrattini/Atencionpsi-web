@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Clicks de WhatsApp por IP | Atención Psi Admin{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Inicio</a> &rsaquo;
+  <a href="{% url 'admin:profesionales_clickwhatsappdetalle_changelist' %}">Clicks WhatsApp (detalle)</a> &rsaquo; Por IP
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+.cx-tabla { width: 100%; border-collapse: collapse; margin: 12px 0 28px; }
+.cx-tabla th { text-align: left; padding: 8px 10px; background: #f3f3f3; }
+.cx-tabla td { padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+.cx-alerta td { background: #fff1f0; }
+.cx-alerta .cx-ip { color: #c62828; font-weight: 700; }
+.cx-chico { color: #666; font-size: 12px; }
+.cx-filtros a { display: inline-block; margin-right: 8px; padding: 4px 10px; border: 1px solid #ccc; border-radius: 99px; text-decoration: none; }
+.cx-filtros a.activo { background: #417690; color: #fff; border-color: #417690; }
+</style>
+
+<p>Cada click humano en un botón de WhatsApp, con la IP desde la que se hizo. Un paciente real contacta a 1 o 3 profesionales:
+quien aparece arriba con muchos profesionales distintos está recorriendo la lista. En rojo: <b>6 o más profesionales</b>.
+Solo se guardan los últimos 30 días y solo hay datos desde que se activó este registro.</p>
+
+<p class="cx-filtros">
+  {% for h in opciones %}<a href="?horas={{ h }}" class="{% if h == horas %}activo{% endif %}">{% if h == 1 %}1 hora{% elif h == 6 %}6 horas{% elif h == 24 %}24 horas{% elif h == 72 %}3 días{% else %}7 días{% endif %}</a>{% endfor %}
+  &nbsp; <b>{{ total }}</b> clicks en este período.
+</p>
+
+<h2>Por IP</h2>
+<table class="cx-tabla">
+  <thead><tr><th>IP</th><th>Clicks</th><th>Profesionales distintos</th><th>Anuncios distintos</th><th>Primero</th><th>Último</th><th>Navegador y profesionales</th></tr></thead>
+  <tbody>
+  {% for f in por_ip %}
+    <tr class="{% if f.sospechosa %}cx-alerta{% endif %}">
+      <td class="cx-ip"><a href="{% url 'admin:profesionales_clickwhatsappdetalle_changelist' %}?q={{ f.ip|urlencode }}">{{ f.ip|default:"(sin IP)" }}</a></td>
+      <td>{{ f.clicks }}</td><td><b>{{ f.profesionales }}</b></td><td>{{ f.anuncios }}</td>
+      <td>{{ f.primero|date:"d/m H:i" }}</td><td>{{ f.ultimo|date:"d/m H:i" }}</td>
+      <td class="cx-chico">{{ f.navegador|truncatechars:90 }}<br>{{ f.nombres|join:", " }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7">Todavía no hay clicks registrados en este período.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Por click de anuncio de Google (gclid)</h2>
+<p class="cx-chico">Cada click en un anuncio genera un identificador distinto. Si el mismo aparece en muchos clicks sobre profesionales distintos, es una sola visita recorriendo la lista.</p>
+<table class="cx-tabla">
+  <thead><tr><th>gclid</th><th>Clicks</th><th>Profesionales distintos</th><th>IPs distintas</th><th>Primero</th><th>Último</th></tr></thead>
+  <tbody>
+  {% for f in por_anuncio %}
+    <tr class="{% if f.sospechoso %}cx-alerta{% endif %}">
+      <td class="cx-chico"><a href="{% url 'admin:profesionales_clickwhatsappdetalle_changelist' %}?q={{ f.gclid|urlencode }}">{{ f.gclid|truncatechars:40 }}</a></td>
+      <td>{{ f.clicks }}</td><td><b>{{ f.profesionales }}</b></td><td>{{ f.ips }}</td>
+      <td>{{ f.primero|date:"d/m H:i" }}</td><td>{{ f.ultimo|date:"d/m H:i" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6">Sin clicks con anuncio en este período.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

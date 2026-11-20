@@ -213,3 +213,12 @@ USE_TZ = True
 # en cualquier lugar que ya use |floatformat, sin tocar los templates.
 USE_THOUSAND_SEPARATOR = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Registro de clicks de WhatsApp con su IP (se ve en los logs de Render).
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'simple': {'format': '%(levelname)s %(message)s'}},
+    'handlers': {'consola': {'class': 'logging.StreamHandler', 'formatter': 'simple'}},
+    'loggers': {'clicks.whatsapp': {'handlers': ['consola'], 'level': 'INFO', 'propagate': False}},
+}
