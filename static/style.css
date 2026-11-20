@@ -1662,6 +1662,8 @@ main.buscador-main {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* Foto vertical en un cuadro: por defecto se prioriza la parte de arriba (donde suele estar la cara). */
+    object-position: 50% var(--foto-y, 10%);
     display: block;
 }
 
@@ -2216,6 +2218,8 @@ main.buscador-main {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* Foto vertical en un cuadro: por defecto se prioriza la parte de arriba (donde suele estar la cara). */
+    object-position: 50% var(--foto-y, 10%);
     display: block;
 }
 

@@ -3,7 +3,7 @@
     <div class="card-destacado-foto-frame">
         <div class="card-destacado-foto-clip">
             {% if p.foto %}
-                <img src="{{ p.foto.url }}" alt="{{ p.nombre }}, psicólogo/a en Atención Psi">
+                <img src="{{ p.foto.url }}" alt="{{ p.nombre }}, psicólogo/a en Atención Psi"{% if p.foto_posicion_vertical is not None %} style="--foto-y: {{ p.foto_posicion_vertical }}%"{% endif %}>
             {% else %}
                 <img src="{% static 'img/default.png' %}" alt="{{ p.nombre }}">
             {% endif %}

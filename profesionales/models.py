@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils.text import slugify
 import re
@@ -146,6 +147,14 @@ class Psicologo(models.Model):
     nombre = models.CharField(max_length=100)
     slug = models.SlugField(max_length=150, unique=True, blank=True, null=True)
     foto = models.ImageField(upload_to='psicologos/', null=True, blank=True)
+    # Qué parte de la foto se ve en el cuadro de las tarjetas y del perfil (es un cuadrado: una foto vertical
+    # se recorta). 0 = se ve la parte de arriba, 100 = la de abajo. Vacío = el predeterminado del sitio, que
+    # favorece la parte de arriba para que no se corten las caras.
+    foto_posicion_vertical = models.PositiveSmallIntegerField(
+        'Ajuste vertical de la foto', null=True, blank=True, validators=[MaxValueValidator(100)],
+        help_text='De 0 a 100. Si en la tarjeta se corta la cara, probá con un número más chico (0 muestra lo más '
+                  'alto de la foto) o más grande (100, lo más bajo). Vacío = automático.',
+    )
     ciudad = models.CharField(max_length=100, blank=True, default='')  # campo legado
     ciudades = models.ManyToManyField('Ciudad', blank=True, verbose_name='Ciudades')
     modalidades = models.ManyToManyField(Modalidad, blank=True)

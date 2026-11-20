@@ -106,7 +106,7 @@ class PsicologoAdmin(admin.ModelAdmin):
     filter_horizontal = ('modalidades', 'destinatarios', 'orientaciones', 'obras_sociales', 'ciudades')
     fieldsets = (
         ('Datos personales', {
-            'fields': ('nombre', 'slug', 'foto', 'descripcion')
+            'fields': ('nombre', 'slug', 'foto', 'foto_posicion_vertical', 'descripcion')
         }),
         ('Datos comerciales (privado -- solo vos lo ves acá)', {
             'fields': ('fecha_alta', 'plan', 'monto_pagado', 'tipo_pago'),
