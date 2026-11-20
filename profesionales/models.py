@@ -1,5 +1,8 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.db import models
 from django.utils.text import slugify
 import re
@@ -313,3 +316,46 @@ class ClickWhatsAppDetalle(models.Model):
 
     def __str__(self):
         return f'{self.creado:%d/%m %H:%M} {self.ip} -> {self.psicologo.nombre}'
+
+
+class IPBloqueada(models.Model):
+    """IP (o rango) que no puede entrar al sitio. Se maneja desde el admin; ver profesionales/bloqueo.py."""
+    ip = models.CharField(
+        'IP o rango', max_length=50, unique=True,
+        help_text='Una IP (190.1.2.3) o un rango (190.1.2.0/24). Las IPs de redes de celulares las comparten muchas '
+                  'personas: en esos casos conviene poner una fecha en «Bloqueada hasta».',
+    )
+    motivo = models.CharField(max_length=200, blank=True)
+    creada = models.DateTimeField(auto_now_add=True)
+    hasta = models.DateTimeField('Bloqueada hasta', null=True, blank=True, help_text='Vacío = hasta que la quites.')
+    activa = models.BooleanField(default=True, help_text='Destildala para dejar de bloquear sin borrar el registro.')
+
+    class Meta:
+        verbose_name = 'IP bloqueada'
+        verbose_name_plural = 'IPs bloqueadas'
+        ordering = ['-creada']
+
+    def __str__(self):
+        return self.ip
+
+    def clean(self):
+        from . import bloqueo
+        try:
+            self.ip = bloqueo.normalizar(self.ip)
+        except ValueError as error:
+            raise ValidationError({'ip': str(error)})
+
+    def save(self, *args, **kwargs):
+        from . import bloqueo
+        try:
+            self.ip = bloqueo.normalizar(self.ip)
+        except ValueError as error:
+            raise ValidationError({'ip': str(error)})
+        super().save(*args, **kwargs)
+
+
+@receiver([post_save, post_delete], sender=IPBloqueada)
+def _aplicar_bloqueos_ya(sender, **kwargs):
+    """Cualquier cambio en la lista rige enseguida, sin esperar a que venza la memoria rápida."""
+    from . import bloqueo
+    bloqueo.invalidar()

@@ -84,6 +84,7 @@ AXES_COOLOFF_TIME = 1  # hora de bloqueo automático tras superar el límite de 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', # Mantiene tus estilos vivos
+    'profesionales.bloqueo.BloqueoDeIPsMiddleware',   # IPs bloqueadas desde el admin
     'profesionales.middleware.VisitaMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

@@ -31,7 +31,7 @@ Solo se guardan los últimos 30 días y solo hay datos desde que se activó este
 
 <h2>Por IP</h2>
 <table class="cx-tabla">
-  <thead><tr><th>IP</th><th>Clicks</th><th>Profesionales distintos</th><th>Anuncios distintos</th><th>Primero</th><th>Último</th><th>Navegador y profesionales</th></tr></thead>
+  <thead><tr><th>IP</th><th>Clicks</th><th>Profesionales distintos</th><th>Anuncios distintos</th><th>Primero</th><th>Último</th><th>Navegador y profesionales</th><th></th></tr></thead>
   <tbody>
   {% for f in por_ip %}
     <tr class="{% if f.sospechosa %}cx-alerta{% endif %}">
@@ -39,9 +39,19 @@ Solo se guardan los últimos 30 días y solo hay datos desde que se activó este
       <td>{{ f.clicks }}</td><td><b>{{ f.profesionales }}</b></td><td>{{ f.anuncios }}</td>
       <td>{{ f.primero|date:"d/m H:i" }}</td><td>{{ f.ultimo|date:"d/m H:i" }}</td>
       <td class="cx-chico">{{ f.navegador|truncatechars:90 }}<br>{{ f.nombres|join:", " }}</td>
+      <td>
+        {% if f.bloqueada %}<b style="color:#2e7d32">Bloqueada</b>
+        {% elif f.ip %}
+        <form method="post" action="{% url 'admin:bloquear_ip' %}" onsubmit="return confirm('¿Bloquear la IP {{ f.ip }}? No va a poder entrar al sitio.');">
+          {% csrf_token %}<input type="hidden" name="ip" value="{{ f.ip }}"><input type="hidden" name="horas" value="{{ horas }}">
+          <input type="hidden" name="motivo" value="Clicks en {{ f.profesionales }} profesionales distintos">
+          <button type="submit" class="button" style="background:#c62828">Bloquear</button>
+        </form>
+        {% endif %}
+      </td>
     </tr>
   {% empty %}
-    <tr><td colspan="7">Todavía no hay clicks registrados en este período.</td></tr>
+    <tr><td colspan="8">Todavía no hay clicks registrados en este período.</td></tr>
   {% endfor %}
   </tbody>
 </table>

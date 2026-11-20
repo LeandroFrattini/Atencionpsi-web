@@ -9,11 +9,13 @@ from django.db.models import Count, Max, Min, Sum
 from django.db.models.functions import TruncMonth
 from django import forms
 from django.utils.html import format_html
-from django.urls import path
+from django.core.exceptions import PermissionDenied
+from django.urls import path, reverse
+from . import bloqueo
 from django.shortcuts import redirect, render
 from django.utils import timezone, dateformat
 from datetime import timedelta
-from .models import Psicologo, Modalidad, Publico, Orientacion, Visita, ClickWhatsApp, ClickWhatsAppDetalle, Ciudad, ObraSocial
+from .models import Psicologo, Modalidad, Publico, Orientacion, Visita, ClickWhatsApp, ClickWhatsAppDetalle, Ciudad, IPBloqueada, ObraSocial
 from portal.models import Pago
 
 
@@ -433,6 +435,7 @@ class ClickWhatsAppDetalleAdmin(admin.ModelAdmin):
     def get_urls(self):
         return [
             path('por-ip/', self.admin_site.admin_view(self.por_ip_view), name='clicks_por_ip'),
+            path('bloquear-ip/', self.admin_site.admin_view(self.bloquear_ip_view), name='bloquear_ip'),
         ] + super().get_urls()
 
     def por_ip_view(self, request):
@@ -454,7 +457,8 @@ class ClickWhatsAppDetalleAdmin(admin.ModelAdmin):
             propios = base.filter(ip=fila['ip'])
             navegador = (propios.values('user_agent').annotate(n=Count('id')).order_by('-n').first() or {}).get('user_agent', '')
             nombres = list(propios.values_list('psicologo__nombre', flat=True).distinct()[:12])
-            por_ip.append({**fila, 'navegador': navegador, 'nombres': nombres, 'sospechosa': fila['profesionales'] >= 6})
+            por_ip.append({**fila, 'navegador': navegador, 'nombres': nombres, 'sospechosa': fila['profesionales'] >= 6,
+                           'bloqueada': bloqueo.esta_bloqueada(fila['ip'])})
 
         por_anuncio = []
         for fila in (base.exclude(gclid='').values('gclid').annotate(
@@ -469,6 +473,49 @@ class ClickWhatsAppDetalleAdmin(admin.ModelAdmin):
             'total': base.count(), 'opts': self.model._meta,
         }
         return TemplateResponse(request, 'admin/clicks_por_ip.html', contexto)
+
+
+    def bloquear_ip_view(self, request):
+        """Botón «Bloquear» del resumen por IP. Solo por POST."""
+        try:
+            horas = int(request.POST.get('horas', 24))
+        except ValueError:
+            horas = 24
+        destino = f"{reverse('admin:clicks_por_ip')}?horas={horas if horas in (1, 6, 24, 72, 168) else 24}"
+        if request.method != 'POST':
+            return redirect(destino)
+        if not request.user.has_perm('profesionales.add_ipbloqueada'):
+            raise PermissionDenied
+        try:
+            texto = bloqueo.normalizar(request.POST.get('ip', ''))
+            red = __import__('ipaddress').ip_network(texto, strict=False)
+        except ValueError as error:
+            messages.error(request, f'No se bloqueó: {error}')
+            return redirect(destino)
+        if any(ip in red for ip in bloqueo.ips_del_visitante(request)):
+            messages.error(request, 'No se bloqueó: esa es tu propia conexión y te dejarías afuera.')
+            return redirect(destino)
+        motivo = (request.POST.get('motivo') or 'Bloqueada desde el resumen de clicks de WhatsApp')[:200]
+        registro, creada = IPBloqueada.objects.get_or_create(ip=texto, defaults={'motivo': motivo})
+        if not creada and (not registro.activa or registro.hasta):
+            registro.activa, registro.hasta = True, None
+            registro.save()
+        messages.success(request, f'IP {texto} bloqueada: ya no puede entrar al sitio. La podés quitar desde «IPs bloqueadas».')
+        return redirect(destino)
+
+
+@admin.register(IPBloqueada)
+class IPBloqueadaAdmin(admin.ModelAdmin):
+    """Lista de IPs que no pueden entrar al sitio. Cualquier cambio rige enseguida."""
+    list_display = ('ip', 'motivo', 'creada', 'hasta', 'activa', 'vigente')
+    list_filter = ('activa',)
+    search_fields = ('ip', 'motivo')
+    readonly_fields = ('creada',)
+
+    def vigente(self, obj):
+        return obj.activa and (obj.hasta is None or obj.hasta > timezone.now())
+    vigente.boolean = True
+    vigente.short_description = 'Bloqueando ahora'
 
 
 # ── PANEL DE ANALYTICS PERSONALIZADO ──────────────────────
