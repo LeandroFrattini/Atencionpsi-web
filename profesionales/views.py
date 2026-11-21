@@ -16,7 +16,7 @@ from . import origen_clicks
 from portal.disponibilidad import fecha_larga, fechas_horizonte, slot_disponible, slots_para_fecha
 from portal.forms import ReservaPublicaForm
 from portal.models import Paciente, Turno
-from portal.notificaciones import enviar_aviso_nuevo_turno
+from portal.notificaciones import intentar_aviso_nuevo_turno
 
 logger = logging.getLogger(__name__)
 
@@ -248,13 +248,7 @@ def reservar_confirmar(request, slug):
         # tiene que tirar abajo la confirmación: el paciente ya reservó de
         # verdad y tiene que ver la pantalla de éxito igual. Se loguea el
         # error para poder darse cuenta y, si hace falta, avisar a mano.
-        try:
-            enviar_aviso_nuevo_turno(turno)
-        except Exception:
-            logger.exception(
-                'No se pudo enviar el mail de aviso del turno %s (psicólogo %s, paciente %s)',
-                turno.pk, psicologo.nombre, paciente.pk,
-            )
+        intentar_aviso_nuevo_turno(turno)   # anota en el turno si salió o por qué no; nunca tira la confirmación
         return render(request, 'reserva_confirmada.html', {'p': psicologo, 'turno': turno})
 
     elegido = {

@@ -156,6 +156,13 @@ class Turno(models.Model):
         default=False, help_text='Se marca solo cuando se cambia la fecha/hora original.'
     )
     notas_sesion = models.TextField(blank=True, verbose_name='Comentarios de la sesión')
+    # Constancia del mail de aviso al profesional (solo turnos reservados desde la web). Sin esto, si el mail
+    # fallaba (Brevo, credenciales, límite diario) nadie se enteraba: el paciente ve la reserva igual.
+    aviso_enviado_en = models.DateTimeField('Aviso enviado', null=True, blank=True)
+    aviso_error = models.CharField(
+        'Aviso: error', max_length=300, blank=True,
+        help_text='Por qué no salió el mail de aviso (vacío si salió bien o si es un turno anterior a este control).',
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
